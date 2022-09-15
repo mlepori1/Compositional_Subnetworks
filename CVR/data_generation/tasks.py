@@ -9,8 +9,6 @@ from PIL import Image
 import itertools
 import math
 
-import cv2
-
 from data_generation.shape import Shape
 from data_generation.utils import *
 
@@ -20,7 +18,7 @@ render = render_cv
 # shape
 # The images contain objects of the same shape.
 def task_shape(condition='xysc'): # condition='xysc'
-     
+
     n_samples = 4
 
     max_size = 0.4
@@ -47,7 +45,7 @@ def task_shape(condition='xysc'): # condition='xysc'
     else:
         y = np.random.rand() * (1-size.max()) + size.max()/2
         y = y*np.ones(n_samples)
-    
+
     xy = np.stack([x,y], 1)[:,None,:]
     size = size[:,None]
 
@@ -81,7 +79,7 @@ def task_pos(condition='xyc'):
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.4
     min_size = max_size/2
 
@@ -96,7 +94,7 @@ def task_pos(condition='xyc'):
     elif 'y' in condition:
         xy_odd = np.random.rand(2) * (1-size) + size/2
         xy_odd[1] = xy[1]
-    
+
     while np.linalg.norm(xy_odd - xy) < 0.2:
         # xy_odd = np.random.rand(2)
 
@@ -122,11 +120,11 @@ def task_pos(condition='xyc'):
     else:
         shape = Shape()
         shapes = [[shape.clone()] for i in range(n_samples)]
-    
+
     xy = np.ones([n_samples, 1, 2]) * xy[None,None,:]
     xy[-1,0] = xy_odd
     size = np.ones([n_samples, 1]) * size
-    
+
     return xy, size, shapes, color
 
 #################################################################################
@@ -139,16 +137,16 @@ def task_size(condition='xyid'):
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.4
     min_size = max_size/2
-    
+
     min_diff = (max_size - min_size)/3
-    
+
     size = np.random.rand() * (max_size-min_size) + min_size
     min_prop, max_prop = 1.5/5, 1/2
     prop = np.random.rand() * (max_prop - min_prop) + min_prop
-    
+
     if np.random.randint(2)==0:
         prop = 1/prop
 
@@ -157,7 +155,7 @@ def task_size(condition='xyid'):
         size, size_odd = size/(size + size_odd)*0.9, size_odd/(size + size_odd)*0.9
     # size_odd = np.random.rand(20) * (max_size-min_size) + min_size
     # size_odd = [s for s in size_odd if np.abs(s-size)>min_diff][0]
-    
+
     size = np.ones(n_samples)*size
     size[-1] = size_odd
 
@@ -192,17 +190,17 @@ def task_size(condition='xyid'):
 
     xy = np.stack([x,y], 1)[:,None,:]
     size = size[:,None]
-    
+
     return xy, size, shape, color
 
 
 #################################################################################
 # color
 # The images contain objects of the same color.
-def task_color(condition='xysid'): # condition='xysc' 'r' only if not 'id' 
-     
+def task_color(condition='xysid'): # condition='xysc' 'r' only if not 'id'
+
     n_samples = 4
-    
+
     max_size = 0.6
     min_size = max_size/3
 
@@ -237,7 +235,7 @@ def task_color(condition='xysid'): # condition='xysc' 'r' only if not 'id'
     else:
         y = np.random.rand() * (1-size.max()) + size.max()/2
         y = y*np.ones(n_samples)
-    
+
     xy = np.stack([x,y], 1)[:,None,:]
     size = size[:,None]
 
@@ -262,38 +260,38 @@ task_flip = lambda: task_shape(condition='xyscf')
 # inside
 # The images contain an object inside another object.
 def task_inside(condition='c'):
-    
+
     n_samples = 4
-    
+
     max_size = 0.5
     min_size = max_size/2
 
-    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size 
+    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size_b = np.random.rand(n_samples) * (size_a/2.5 - size_a/4) + size_a/4
 
     done = False
-    max_attempts = 10 
+    max_attempts = 10
 
 
     range_1 = 1 - size_a[:,None]
     starting_1 = size_a[:,None]/2
 
-    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1 
+    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1
 
     xy2 = []
     shapes = []
-    
+
     for i in range(n_samples-1):
         done = False
 
         s1 = Shape(gap_max=0.07, hole_radius=0.2)
         s2 = Shape(gap_max=0.01)
         for _ in range(max_attempts):
-            
+
             samples = sample_position_inside_1(s1, s2, size_b[i]/size_a[i])
             if len(samples)>0:
                 done = True
-            
+
             if done:
                 break
             else:
@@ -308,7 +306,7 @@ def task_inside(condition='c'):
 
     range_2 = 1 - size_b[-1]
     starting_2 = size_b[-1]/2
-    xy2_odd = np.random.rand(100,2) * range_2 + starting_2 
+    xy2_odd = np.random.rand(100,2) * range_2 + starting_2
     xy1_odd = xy1[-1:]
 
     xy2_odd = xy2_odd[(np.abs(xy2_odd - xy1_odd) > (size_a[-1] + size_b[-1])/2).any(1)]
@@ -318,7 +316,7 @@ def task_inside(condition='c'):
     s2 = Shape(gap_max=0.01)
     shapes.append([s1,s2])
     xy2 = np.concatenate([np.array(xy2)*size_a[:-1,None] + xy1[:-1],xy2_odd], 0)
-    
+
     xy = np.stack([xy1, xy2], axis=1)
     size = np.stack([size_a, size_b], axis=1)
 
@@ -336,14 +334,14 @@ def task_inside(condition='c'):
 # contact
 # The images contain an object in contact with another object.
 def task_contact(condition='xys'):
-        
+
     n_samples = 4
     n_objects = 2
 
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.4
     min_size = max_size/2
 
@@ -352,7 +350,7 @@ def task_contact(condition='xys'):
     shape = []
     xy = []
     for i in range(n_samples):
-            
+
         s1 = Shape()
         s1.randomize()
         s2 = Shape()
@@ -362,20 +360,20 @@ def task_contact(condition='xys'):
             xy_ = np.random.rand(2,2) * (1-size[i,:,None]) + size[i,:,None]/2
             while not (np.abs(xy_[0] - xy_[1]) - size[i].sum()/2 > 0).any():
                 xy_ = np.random.rand(2,2) * (1-size[i,:,None]) + size[i,:,None]/2
-            
+
             xy.append(xy_)
-            
+
         else:
             positions, clump_size = sample_contact_many([s1, s2], size[i])
-        
+
             xy0 = np.random.rand(2) * (1-clump_size) + clump_size/2
             xy_ = positions + xy0[None,:]
 
             xy.append(xy_)
 
-            # dir_ = np.random.randint(4) 
+            # dir_ = np.random.randint(4)
             # xy2_r = sample_contact(s1, s2, size[i,1]/size[i,0], direction=dir_)
-            
+
             # xy2_r = xy2_r * size[i,0]
 
             # bb = np.stack([- size[i,0]*np.ones(2)/2, size[i,0]*np.ones(2)/2, xy2_r - size[i,1]/2, xy2_r + size[i,1]/2], 0)
@@ -385,7 +383,7 @@ def task_contact(condition='xys'):
             # bb = bb[1] - bb[0]
 
             # xy_ = np.random.rand(2) * (1-bb) + bb/2
-            
+
             # xy1 = xy1_r + xy_
             # xy2 = xy2_r + xy_
 
@@ -394,7 +392,7 @@ def task_contact(condition='xys'):
         shape.append([s1,s2])
 
     xy = np.stack(xy, 0)
-    
+
 
     if 'c' in condition:
         color = sample_random_colors(n_samples)
@@ -402,24 +400,24 @@ def task_contact(condition='xys'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
 # count
 # The images contain the same number of objects.
 def task_count(condition='xysid', condition_arr='xysid'):
-        
+
     n_samples = 4
     n_objects = np.random.randint(1,6)
     n_objects_odd = [n for n in np.random.randint(1,6, size=20) if n!=n_objects][0]
 
     max_n_objs = max(n_objects, n_objects_odd)
-    
+
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.8/max_n_objs
     min_size = max_size/2
 
@@ -444,13 +442,13 @@ def task_count(condition='xysid', condition_arr='xysid'):
         s_idx = np.arange(max_n_objs*n_samples).reshape([n_samples, max_n_objs])
 
     unique_s_idx = np.unique(s_idx)
-    
+
     unique_sizes = np.random.rand(len(unique_s_idx)) * (max_size - min_size) + min_size
     sizes = unique_sizes[s_idx.flatten().astype(int)].reshape(s_idx.shape)
 
     if 'x' in condition and 'y' in condition:
         # x = np.random.rand(n_samples)
-        
+
         xy = np.random.rand(n_samples, max_n_objs, 2) * (1-sizes[:,:,None]) + sizes[:,:,None]/2
         def stop_cond(xy, sizes):
             dists = np.abs(xy[:,:,None,:] - xy[:,None,:,:])
@@ -462,7 +460,7 @@ def task_count(condition='xysid', condition_arr='xysid'):
             xy = np.random.rand(n_samples, max_n_objs, 2) * (1-sizes[:,:,None]) + sizes[:,:,None]/2
 
     else:
-            
+
         xy = np.random.rand(max_n_objs,2) * (1-sizes.max(0)[:,None]) + sizes.max(0)[:,None]/2
         def stop_cond(xy, sizes):
             dists = np.abs(xy[None,:,None,:] - xy[None,None,:,:])
@@ -489,7 +487,7 @@ def task_count(condition='xysid', condition_arr='xysid'):
     n_objs = np.ones(n_samples, dtype=int)*n_objects
     n_objs[-1] = n_objects_odd
 
-        
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objs[i], 3]) * color[i:i+1] for i in range(n_samples)]
@@ -515,22 +513,22 @@ def task_count(condition='xysid', condition_arr='xysid'):
 
 # The images contain a set of objects that have the same spatial configuration.
 def task_pos_pos_1(condition='xyc'):
-    
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(3,7)
-    
+
     max_size_sc = 0.7
     min_size_sc = max_size_sc/2
-    
+
     size_sc = np.random.rand() * (max_size_sc - min_size_sc) + min_size_sc
 
     max_size = size_sc/(n_objects)*1.3
     min_size = max_size/2
-    
+
     # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size = np.random.rand() * (max_size - min_size) + min_size
-    
+
     triu_idx = np.triu_indices(n_objects, k=1)
     triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -541,13 +539,13 @@ def task_pos_pos_1(condition='xyc'):
     while valid.sum() < 2:
         spatial_config = np.random.rand(n_samples_over, n_objects, 2) * (size_sc - size)
         valid = (np.abs(spatial_config[:,:,None,:] - spatial_config[:,None,:,:]) - size > 0).any(3).reshape([n_samples_over, n_objects**2])[:, triu_idx].all(1)
-    
+
     spatial_config = spatial_config[valid]
     spatial_config = spatial_config - spatial_config.mean(1)[:,None,:]
 
     sc = spatial_config[0]
     sc_odd = spatial_config[1]
-    
+
     if 'xy' in condition:
         xy_sc = np.random.rand(n_samples,2) * (1 - size_sc) + size_sc/2
     else:
@@ -557,7 +555,7 @@ def task_pos_pos_1(condition='xyc'):
     xy[-1] = xy_sc[-1:,:] + sc_odd
 
     size = size * np.ones([n_samples, n_objects])
-    
+
     shape = Shape()
 
     if 'c' in condition:
@@ -569,7 +567,7 @@ def task_pos_pos_1(condition='xyc'):
 
 
     shapes = []
-    for i in range(n_samples):        
+    for i in range(n_samples):
         shapes_ = []
         for j in range(n_objects):
             shapes_.append(shape.clone())
@@ -579,22 +577,22 @@ def task_pos_pos_1(condition='xyc'):
 
 # Each image contains 2 sets of objects that have the same spatial configuration.
 def task_pos_pos_2(condition='xyc'):
-        
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(3,6)
-    
+
     max_size_sc = 0.9/2 # n_forms
     min_size_sc = max_size_sc/2
-    
+
     size_sc = np.random.rand() * (max_size_sc - min_size_sc) + min_size_sc
 
     max_size = size_sc/(n_objects)*1.1
     min_size = max_size/2
-    
+
     # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size = np.random.rand() * (max_size - min_size) + min_size
-    
+
     triu_idx = np.triu_indices(n_objects, k=1)
     triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -615,7 +613,7 @@ def task_pos_pos_2(condition='xyc'):
     unique_sc = unique_sc - unique_sc.mean(1)[:,None,:]
 
     # sc = unique_sc[0]
-    # sc_odd = 
+    # sc_odd =
 
     xy_sc_ = []
     n_unique_xy_sc_left = n_samples
@@ -626,19 +624,19 @@ def task_pos_pos_2(condition='xyc'):
             xy_sc_.append(xy_sc[valid][:n_unique_xy_sc_left])
             n_unique_xy_sc_left = n_unique_xy_sc_left - valid.sum()
 
-    xy_sc = np.concatenate(xy_sc_)    
-    
+    xy_sc = np.concatenate(xy_sc_)
+
     xy = xy_sc[:,:,None,:] + unique_sc[:n_samples, None,:,:]
     xy[-1,-1] = xy_sc[-1,-1,None,:] + unique_sc[-1,:,:]
 
     xy = xy.reshape([n_samples, n_objects*2, 2])
     size = size * np.ones([n_samples, n_objects*2])
-    
+
     # shape = Shape()
 
     shape1 = Shape()
     shape2 = Shape()
-    
+
 
     if 'c' in condition:
         c = sample_random_colors(n_samples)
@@ -649,7 +647,7 @@ def task_pos_pos_2(condition='xyc'):
 
 
     shapes = []
-    for i in range(n_samples):        
+    for i in range(n_samples):
         shapes_ = []
         # for j in range(n_objects*2):
             # shapes_.append(shape.clone())
@@ -657,14 +655,14 @@ def task_pos_pos_2(condition='xyc'):
             shapes_.append(shape1.clone())
         for j in range(n_objects):
             shapes_.append(shape2.clone())
-        
+
         shapes.append(shapes_)
 
     return xy, size, shapes, color
 
 # the top objects have a smaller distance between them than the lower objects
 def task_pos_pos_3(condition='s_id_c'):
-    
+
     n_samples = 4
 
     # image and object parameters
@@ -672,12 +670,12 @@ def task_pos_pos_3(condition='s_id_c'):
     pad = (1-internal_frame)/2
 
     n_objects = 4
-    
+
     index = np.random.randint(n_objects)
-    
+
     max_size = 0.8/3
     min_size = max_size/2
-    
+
 
 
     # min_s_d, max_s_d = 0.02, (max_size-min_size)/(n_objects+1)
@@ -688,7 +686,7 @@ def task_pos_pos_3(condition='s_id_c'):
     else:
         size = np.random.rand() * (max_size-min_size) + min_size
         size = np.ones([n_samples, 4]) * size
-    
+
     if 'id' in condition:
         shapes = [[Shape() for _ in range(4)] for _ in range(n_samples)]
     else:
@@ -700,13 +698,13 @@ def task_pos_pos_3(condition='s_id_c'):
     dist = np.random.rand(n_samples, 2) * range_d[:,None] + starting_d[:,None]
     idx_change = dist[:,0]>dist[:,1]
     dist[idx_change] = dist[idx_change, ::-1]
-    
+
     dist[-1] = dist[-1, ::-1]
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size.reshape([n_samples, 2, 2]).max(2))
     # y1 = np.random.rand(n_samples) * internal_frame / 2
     # y2 = np.random.rand(n_samples) * (internal_frame - (y1 + size[:, :2].max(1)/2 + size[:, 2:].max(1)/2 )) + (y1 + size[:, :2].max(1)/2 + size[:, 2:].max(1)/2 )
-    
+
     range_x = (1 - dist - size.reshape([n_samples, 2, 2]).sum(2)/2)
     starting_x = dist/2 + size.reshape([n_samples, 2, 2])[:,:,0]/2
     xc = np.random.rand(n_samples, 2) * range_x + starting_x
@@ -717,19 +715,19 @@ def task_pos_pos_3(condition='s_id_c'):
     # x_d1 = np.random.rand(n_samples) * (internal_frame / 2 - (size[:,0]+size[:,1])/2) + (size[:,0]+size[:,1])/2
     # x_d2 = x_d1 + np.random.rand(n_samples) * internal_frame / 2
     # x_d2[x_d2<internal_frame / 2] = internal_frame / 2
-    
+
     # x1_p = x1 + x_d1
     # x2_p = x2 + x_d2
-    
+
     x = np.stack([xc[:,0] - dist[:,0]/2, xc[:,0] + dist[:,0]/2, xc[:,1] - dist[:,1]/2, xc[:,1] + dist[:,1]/2], 1)
     y = np.stack([y[:,0], y[:,0], y[:,1], y[:,1]], 1)
 
     # # odd one out
     # y[-1, :2] = y2[-1]
     # y[-1, 2:] = y1[-1]
-    
+
     xy = np.stack([x,y], 2)
-    
+
 
     if 'c' in condition:
         color = sample_random_colors(n_samples)
@@ -741,9 +739,9 @@ def task_pos_pos_3(condition='s_id_c'):
 
     return xy, size, shapes, color
 
-# Each image contains 2 pairs of objects. Objects of each pair have the same position in one spatial dimension (for example the x axis) but different positions in the other dimension (for example the y axis). The distance between 2 objects of a pair along the second dimension and the position of the pair along the first dimension maintain the same order across images. 
+# Each image contains 2 pairs of objects. Objects of each pair have the same position in one spatial dimension (for example the x axis) but different positions in the other dimension (for example the y axis). The distance between 2 objects of a pair along the second dimension and the position of the pair along the first dimension maintain the same order across images.
 def task_pos_pos_4(condition='max_cid', axis='y'):
-   
+
     n_samples = 4
 
     # image and object parameters
@@ -751,20 +749,20 @@ def task_pos_pos_4(condition='max_cid', axis='y'):
     pad = (1-internal_frame)/2
 
     n_objects = np.random.randint(3, 5)
-    
+
     index = np.random.randint(n_objects)
-    
+
     max_size = 0.8/n_objects
     min_size = max_size/2
-    
+
     k = np.random.rand()
 
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
 
     size = np.ones([n_samples, n_objects]) * size[:,None]
 
-    x = sample_over_range_t(n_samples, np.array([0,1]), size)    
-    y = sample_over_range_t(n_samples, np.array([0.1,0.9]), size/3)    
+    x = sample_over_range_t(n_samples, np.array([0,1]), size)
+    y = sample_over_range_t(n_samples, np.array([0.1,0.9]), size/3)
 
     if np.math.factorial(n_objects-1) < n_samples:
         perms = np.array([np.random.permutation(n_objects-1)]*n_samples)
@@ -786,24 +784,24 @@ def task_pos_pos_4(condition='max_cid', axis='y'):
 
     for i in range(n_samples-1):
         y_all[i] = y_all[i][perms[i]]
-    
+
     # get the highest ys
     y_reg = np.insert(y_all[:-1], index, y_max[:-1], axis=1)
     # sample  index other than index
-    index_odd = [i for i in np.random.randint(n_objects, size=10) if i!=index][0] 
+    index_odd = [i for i in np.random.randint(n_objects, size=10) if i!=index][0]
     y_odd = np.insert(y_all[-1], index_odd, y_max[-1])
-    
+
     y = np.concatenate([y_reg, y_odd[None,:]], 0)
 
     xy = np.stack([x,y], 2)
 
-    
+
     if 'id' in condition:
         s = Shape()
         shapes = [[s.clone() for _ in range(n_objects)] for _ in range(n_samples)]
     else:
         shapes = [[Shape() for _ in range(n_objects)] for _ in range(n_samples)]
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -825,10 +823,10 @@ def task_pos_pos_4(condition='max_cid', axis='y'):
 
 # In each image, the large object is always positioned similarly with respect to the small object along the same dimension.
 def task_pos_size_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_size = 0.6
     min_size = max_size/2
 
@@ -883,16 +881,16 @@ def task_pos_size_1(condition='xyscid_hsv'):
 
 # In each image, the large object is always positioned similarly with respect to the small object along the same dimension.
 def task_pos_size_2(condition='xyc'):
-        
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(3,6)
-    
+
     max_size_sc = 0.9*2/3 # n_forms
     min_size_sc = max_size_sc/2
     max_r, min_r = 2/3, 1/2
     r = np.random.rand(n_samples) * (max_r-min_r) + min_r
-    
+
     size_sc = np.random.rand(n_samples) * (max_size_sc - min_size_sc) + min_size_sc
 
     size_sc = np.stack([size_sc, size_sc*r], 1)
@@ -906,7 +904,7 @@ def task_pos_size_2(condition='xyc'):
 
     max_size = size_sc.min(0)/(n_objects)*1.1
     min_size = max_size #*2/3
-    
+
     # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size = np.random.rand(2) * (max_size - min_size) + min_size
 
@@ -937,7 +935,7 @@ def task_pos_size_2(condition='xyc'):
 
     sc = ((size_sc - size[None,:])/ (size_sc.min(0)[None,:] - size[None,:]))[:, :, None, None] * unique_sc[None, :, :, :]
     # sc = unique_sc[0]
-    # sc_odd = 
+    # sc_odd =
 
     xy_sc_ = []
     n_unique_xy_sc_left = n_samples
@@ -950,14 +948,14 @@ def task_pos_size_2(condition='xyc'):
             n_unique_xy_sc_left = n_unique_xy_sc_left - 1
             i += 1
 
-    xy_sc = np.stack(xy_sc_, 0)    
-    
+    xy_sc = np.stack(xy_sc_, 0)
+
     xy = xy_sc[:,:,None,:] + sc
 
     xy = xy.reshape([n_samples, n_objects*2, 2])
     size = size[None,:,None] * np.ones([n_samples, 2, n_objects])
     size = size.reshape([n_samples, n_objects*2])
-    
+
     if 'c' in condition:
         c = sample_random_colors(n_samples)
         color = c[:,None,:] * np.ones([n_samples, n_objects*2, 3])
@@ -977,7 +975,7 @@ def task_pos_size_2(condition='xyc'):
             shapes_.append(shape1.clone())
         for j in range(n_objects):
             shapes_.append(shape2.clone())
-        
+
         shapes.append(shapes_)
 
     return xy, size, shapes, color
@@ -989,7 +987,7 @@ def task_pos_size_2(condition='xyc'):
 def task_pos_shape_1(condition='s', task='>'):
 
     n_samples = 4
-    
+
     max_size = 0.25
     min_size = max_size/2
 
@@ -1014,17 +1012,17 @@ def task_pos_shape_1(condition='s', task='>'):
                 co2[:-1] = np.random.rand(n_samples-1, 2) * (1-size[:-1]) + size[:-1]/2
 
         xy = [co1, co2] if np.random.randint(2)==0 else [co2, co1]
-        
+
         xy = np.stack(xy, axis=2)
 
     elif task in ['>', '<']:
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size)
         co2 = np.random.rand(n_samples, 2) * (1-size) + size/2
-        
+
         if odd_condition == 0:
             co1[-1] = co1[-1, ::-1]
         xy = [co1, co2] if np.random.randint(2)==0 else [co2, co1]
-        
+
         xy = np.stack(xy, axis=2)
 
     s1 = Shape()
@@ -1055,10 +1053,10 @@ def task_pos_shape_2(condition='c'):
     n_object_pairs = np.random.randint(2, 5) # always <5
 
     n_objects = n_object_pairs*2
-    
+
     reg_pairs = np.arange(n_objects).reshape([n_object_pairs, 2])
     odd_pairs = np.copy(reg_pairs)
-    
+
     # exchange 1 with 3
     odd_pairs[0,1] = 3
     odd_pairs[1,1] = 1
@@ -1066,15 +1064,15 @@ def task_pos_shape_2(condition='c'):
     shapes = []
     for i in range(n_objects):
         shapes.append(Shape())
-    
+
     size = 0.9 / n_objects
 
     # xy = np.array([[0.25, 0.25], [0.25, 0.75], [0.75, 0.25], [0.75, 0.75]])
-    
+
     # xy = np.random.rand(4,2)*internal_frame
     # while not (np.abs(xy[None,:,:] - xy[:,None,:]) > size*3).any(2)[np.triu_indices(4,1)].all():
     #     xy = np.random.rand(4,2)*internal_frame
-        
+
     # xy = sample_positions(size*4 * np.ones([1, n_object_pairs]), n_sample_min=1)
     # xy = xy[0]
 
@@ -1095,7 +1093,7 @@ def task_pos_shape_2(condition='c'):
 
     # x = xy[:,0]
     # y = xy[:,1]
-    
+
     # x = np.stack([x]*n_samples, 0)
     # y = np.stack([y]*n_samples, 0)
 
@@ -1119,7 +1117,7 @@ def task_pos_shape_2(condition='c'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, all_shapes, color
 
 #################################################################################
@@ -1131,7 +1129,7 @@ def task_pos_rot_3(condition='xyc'):
     n_samples = 4
 
     n_objects = 3
-    
+
     max_size = 0.9/np.sqrt(n_objects*2)
     min_size = max_size/2
 
@@ -1146,7 +1144,7 @@ def task_pos_rot_3(condition='xyc'):
     else:
         size = np.random.rand() * (max_size-min_size) + min_size
         size = size * np.ones([n_samples, n_objects])
-    
+
     non_valid = (size).sum(1)>0.9/np.sqrt(2)
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].sum(1)[:,None] / np.sqrt(2) * 0.9
@@ -1167,7 +1165,7 @@ def task_pos_rot_3(condition='xyc'):
         s1.rotate(angles0[i] - angles[i])
         s2.rotate(angles0[i])
         s3.rotate(angles0[i] + angles[i])
-        
+
         if i == n_samples-1:
             l = np.random.randint(3)
             if l == 0:
@@ -1176,7 +1174,7 @@ def task_pos_rot_3(condition='xyc'):
                 shape.append([s2, s1, s3])
             else:
                 shape.append([s1, s3, s2])
-        
+
         else:
             shape.append([s1, s2, s3])
 
@@ -1194,24 +1192,24 @@ def task_pos_rot_3(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # The images contain a set of objects that have the same spatial configuration. The spatial configurations are rotated and objects in the configuration are rotated with the same angle.
 def task_pos_rot_1(condition='xyc'):
-    
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(3,6)
-    
+
     max_size_sc = 0.7
     min_size_sc = max_size_sc/2
-    
+
     size_sc = np.random.rand() * (max_size_sc - min_size_sc) + min_size_sc
 
     max_size = size_sc/(n_objects)*1.3
     min_size = max_size/2
-    
+
     angles = np.random.rand(n_objects) * 2 * np.pi
     angles_odd = np.random.rand(n_objects) * 2 * np.pi
 
@@ -1220,7 +1218,7 @@ def task_pos_rot_1(condition='xyc'):
 
     # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size = np.random.rand() * (max_size - min_size) + min_size
-    
+
     triu_idx = np.triu_indices(n_objects, k=1)
     triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -1231,13 +1229,13 @@ def task_pos_rot_1(condition='xyc'):
     while valid.sum() < 2:
         spatial_config = np.random.rand(n_samples_over, n_objects, 2) * (size_sc - size)
         valid = (np.abs(spatial_config[:,:,None,:] - spatial_config[:,None,:,:]) - size > 0).any(3).reshape([n_samples_over, n_objects**2])[:, triu_idx].all(1)
-    
+
     spatial_config = spatial_config[valid]
     spatial_config = spatial_config - spatial_config.mean(1)[:,None,:]
 
     sc = spatial_config[0]
     # sc_odd = spatial_config[1]
-    
+
     if 'xy' in condition:
         xy_sc = np.random.rand(n_samples,2) * (1 - size_sc) + size_sc/2
     else:
@@ -1247,7 +1245,7 @@ def task_pos_rot_1(condition='xyc'):
     # xy[-1] = xy_sc[-1:,:] + sc_odd
 
     size = size * np.ones([n_samples, n_objects])
-    
+
     if 'c' in condition:
         c = sample_random_colors(n_samples)
         color = c[:,None,:] * np.ones([n_samples, n_objects, 3])
@@ -1258,7 +1256,7 @@ def task_pos_rot_1(condition='xyc'):
     shape = Shape()
 
     shapes = [[shape.clone() for j in range(n_objects)] for i in range(n_samples)]
-   
+
     for i in range(n_samples):
         for j in range(n_objects):
             shapes[i][j].rotate(angles[i,j])
@@ -1267,22 +1265,22 @@ def task_pos_rot_1(condition='xyc'):
 
 # Each image contains 2 sets of objects that have the same spatial configuration. One of the spatial configurations is rotated and objects in the configuration are rotated with the same angle.
 def task_pos_rot_2(condition='xyc'):
-        
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(4,6)
-    
+
     max_size_sc = 0.9/2 # n_forms
     min_size_sc = max_size_sc/2
-    
+
     size_sc = np.random.rand() * (max_size_sc - min_size_sc) + min_size_sc
 
     max_size = size_sc/(n_objects)*1.1
     min_size = max_size/2
-    
+
     # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size = np.random.rand() * (max_size - min_size) + min_size
-    
+
     triu_idx = np.triu_indices(n_objects, k=1)
     triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -1305,7 +1303,7 @@ def task_pos_rot_2(condition='xyc'):
     unique_sc = unique_sc - unique_sc.mean(1)[:,None,:]
 
     sc = unique_sc[:4]
-    
+
     ####
     rot_matrix = np.stack([np.cos(angles), -np.sin(angles), np.sin(angles), np.cos(angles)], 1)
     sc_rot = (np.concatenate([sc, sc],2) * rot_matrix[:,None,:]).reshape([n_samples, n_objects, 2, 2]).sum(-1)
@@ -1323,13 +1321,13 @@ def task_pos_rot_2(condition='xyc'):
             xy_sc_.append(xy_sc[valid][:n_unique_xy_sc_left])
             n_unique_xy_sc_left = n_unique_xy_sc_left - valid.sum()
 
-    xy_sc = np.concatenate(xy_sc_)    
-    
+    xy_sc = np.concatenate(xy_sc_)
+
     xy = xy_sc[:,:,None,:] + sc
-    
+
     xy = xy.reshape([n_samples, n_objects*2, 2])
     size = size * np.ones([n_samples, n_objects*2])
-        
+
 
     if 'c' in condition:
         c = sample_random_colors(n_samples)
@@ -1359,7 +1357,7 @@ def task_pos_flip_1(condition='xyc'):
     n_samples = 4
 
     n_objects = 3
-    
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -1373,7 +1371,7 @@ def task_pos_flip_1(condition='xyc'):
     else:
         size = np.random.rand() * (max_size-min_size) + min_size
         size = size * np.ones([n_samples, n_objects])
-    
+
     flips = np.random.randint(2, size=n_objects-1)
 
     odd_flips = np.random.randint(2, size=n_objects-1)
@@ -1394,7 +1392,7 @@ def task_pos_flip_1(condition='xyc'):
         s1 = s.clone()
         s2 = s.clone()
         s3 = s.clone()
-        
+
         if flips[i,0]==1:
             s1.flip()
         if flips[i,1]==1:
@@ -1405,7 +1403,7 @@ def task_pos_flip_1(condition='xyc'):
         s1.rotate(angles[i,0])
         s2.rotate(angles[i,1])
         s3.rotate(angles[i,2])
-        
+
         # if i == n_samples-1:
         #     if odd_condition == 0:
         #         shape.append([s3, s2, s1])
@@ -1431,7 +1429,7 @@ def task_pos_flip_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 2 objects with similar shapes. One of the objects is flipped along the axis formed by the two objects.
@@ -1447,15 +1445,15 @@ def task_pos_flip_2(condition='xyc'):
 
     max_size = 0.9/n_objects
     min_size = max_size/2
-    
+
     size = np.random.rand(n_samples, 2) * (max_size - min_size) + min_size
     # size = np.stack([size]*n_objects, axis=1)
-    
+
     # if odd_condition == 1:
     #     idx = np.random.randint(2)
     #     size[-1,idx] = size[-1,idx] * (np.random.rand()* (2/3 - 1/3) + 1/3)
 
-    a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi 
+    a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi
     r = np.random.rand(n_samples) * (0.4-size.max(1)) + size.max(1)/2
 
     a_g = a + np.pi/2
@@ -1463,12 +1461,12 @@ def task_pos_flip_2(condition='xyc'):
 
     range_ = 1 - np.sqrt(2) * size.max(1)[:,None] - 2 * np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
     starting_ = np.sqrt(2) * size.max(1)[:,None]/2 + np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
-    
+
     xy0 = np.random.rand(n_samples, n_objects) * range_ + starting_
 
     xy = xy0[:,None,:] + np.stack([r * np.cos(a_g), r * np.sin(a_g), r * np.cos(a_g + np.pi), r * np.sin(a_g + np.pi)], 1).reshape([n_samples, 2, 2])
 
-    
+
     if 'id' not in condition:
         s = Shape()
     shape = []
@@ -1482,13 +1480,13 @@ def task_pos_flip_2(condition='xyc'):
         if odd_condition == 1 and i == n_samples-1:
             a_ = a_ + np.random.choice([-1,1]) * np.pi/4
             s1.rotate(a_)
-        
+
         else:
             s1.rotate(a_)
 
         if not (odd_condition == 0 and i == n_samples-1):
             s2.flip()
-        
+
         s2.rotate(a_)
 
         # if odd_condition == 0 and i == n_samples-1:
@@ -1507,7 +1505,7 @@ def task_pos_flip_2(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -1515,10 +1513,10 @@ def task_pos_flip_2(condition='xyc'):
 
 # In each image, the objects are always positioned similarly along the same dimension with respect to their colors.
 def task_pos_col_1(condition='xyscid_'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -1544,13 +1542,13 @@ def task_pos_col_1(condition='xyscid_'):
     xy = [co1, co2] if np.random.randint(2)==0 else [co2, co1]
     xy = np.stack(xy, axis=2)
 
-    
+
     h1 = np.random.rand()
     min_diff = 0.15
     h2 = (h1 + (np.random.rand() * (1-min_diff*2) + min_diff) * np.random.choice([-1,1]))%1
     h = np.array([h1, h2])[None,:] * np.ones([n_samples, 2])
     h[-1] = h[-1,::-1]
-    
+
     # if 'h' in condition:
     #     h = np.random.rand(n_samples, 2)
     # else:
@@ -1562,13 +1560,13 @@ def task_pos_col_1(condition='xyscid_'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, 2])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, 2) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, 2])
- 
+
     color = np.stack([h,s,v], 2)
 
     # if 'c' in condition:
@@ -1601,19 +1599,19 @@ def task_pos_col_1(condition='xyscid_'):
 
 # The images contain a set of objects that have the same spatial configuration and color configuration. Both configurations are maintained in all images.
 def task_pos_col_2(condition='xych'):
-    
+
     n_samples = 4
-    
+
     n_objects = np.random.randint(4,7)
-    
+
     max_size_sc = 0.7
     min_size_sc = max_size_sc/2
-    
+
     size_sc = np.random.rand() * (max_size_sc - min_size_sc) + min_size_sc
 
     max_size = size_sc/(n_objects)*1.3
     min_size = max_size/2
-    
+
     # angles = np.random.rand(n_objects) * 2 * np.pi
     # angles_odd = np.random.rand(n_objects) * 2 * np.pi
 
@@ -1631,7 +1629,7 @@ def task_pos_col_2(condition='xych'):
         n_cols.append(sampled_n)
         color_idx += [i]*sampled_n
         n_cols_left = n_cols_left - sampled_n
-    
+
     n_cols.append(n_cols_left)
     color_idx += [unique_colors-1]*n_cols_left
 
@@ -1647,17 +1645,17 @@ def task_pos_col_2(condition='xych'):
     else:
         h_unique = np.mod(np.arange(unique_colors) / unique_colors + np.random.rand(), 1)
         h = h_unique[color_idx][None,:] * np.ones([n_samples, n_objects])
-    
+
     h[-1] = h_unique[color_idx_odd]
     s = np.random.rand() * 0.4 + 0.6
     s = s * np.ones([n_samples, n_objects])
     v = np.random.rand() * 0.5 + 0.5
     v = v * np.ones([n_samples, n_objects])
- 
+
     color = np.stack([h,s,v], 2)
 
     size = np.random.rand() * (max_size - min_size) + min_size
-    
+
     triu_idx = np.triu_indices(n_objects, k=1)
     triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -1668,13 +1666,13 @@ def task_pos_col_2(condition='xych'):
     while valid.sum() < 2:
         spatial_config = np.random.rand(n_samples_over, n_objects, 2) * (size_sc - size)
         valid = (np.abs(spatial_config[:,:,None,:] - spatial_config[:,None,:,:]) - size > 0).any(3).reshape([n_samples_over, n_objects**2])[:, triu_idx].all(1)
-    
+
     spatial_config = spatial_config[valid]
     spatial_config = spatial_config - spatial_config.mean(1)[:,None,:]
 
     sc = spatial_config[0]
     # sc_odd = spatial_config[1]
-    
+
     if 'xy' in condition:
         xy_sc = np.random.rand(n_samples,2) * (1 - size_sc) + size_sc/2
     else:
@@ -1684,7 +1682,7 @@ def task_pos_col_2(condition='xych'):
     # xy[-1] = xy_sc[-1:,:] + sc_odd
 
     size = size * np.ones([n_samples, n_objects])
-    
+
     # if 'c' in condition:
     #     c = sample_random_colors(n_samples)
     #     color = c[:,None,:] * np.ones([n_samples, n_objects, 3])
@@ -1695,9 +1693,9 @@ def task_pos_col_2(condition='xych'):
     shape = Shape()
 
     shapes = [[shape.clone() for j in range(n_objects)] for i in range(n_samples)]
-   
+
     shape = shapes
-    # for i in range(n_samples):        
+    # for i in range(n_samples):
     #     for j in range(n_objects):
     #         shapes[i][j].rotate(angles[i,j])
 
@@ -1706,28 +1704,28 @@ def task_pos_col_2(condition='xych'):
 #################################################################################
 # position + inside # set 1
 
-# In each image, an object contains another object. The inner object is always on the same side of the outer object. 
+# In each image, an object contains another object. The inner object is always on the same side of the outer object.
 def task_pos_inside_1(condition='min', axis='x'):
-    
+
     n_samples = 4
-    
+
     max_size = 0.5
     min_size = max_size/2
 
-    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size 
+    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size_b = np.random.rand(n_samples) * (size_a/3.5 - size_a/5) + size_a/5
 
     done = False
-    max_attempts = 10 
-    
+    max_attempts = 10
+
     range_1 = 1 - size_a[:,None]
     starting_1 = size_a[:,None]/2
 
-    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1 
+    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1
 
     xy2 = []
     shapes = []
-    
+
     for i in range(n_samples):
         done = False
 
@@ -1738,7 +1736,7 @@ def task_pos_inside_1(condition='min', axis='x'):
             samples = sample_position_inside_1(s1, s2, size_b[i]/size_a[i])
             if len(samples)>0:
                 done = True
-            
+
             if done:
                 break
             else:
@@ -1752,26 +1750,26 @@ def task_pos_inside_1(condition='min', axis='x'):
             comp_samples = samples[:,0]
         elif axis == 'y':
             comp_samples = samples[:,1]
-        
+
         if condition == 'min':
             if i == n_samples-1:
                 idx = np.argmax(comp_samples)
             else:
                 idx = np.argmin(comp_samples)
         elif condition == 'max':
-            
+
             if i == n_samples-1:
                 idx = np.argmin(comp_samples)
             else:
                 idx = np.argmax(comp_samples)
-        
-        
+
+
         xy2.append(samples[idx])
         shapes.append([s1, s2])
 
     # range_2 = 1 - size_b[-1]
     # starting_2 = size_b[-1]/2
-    # xy2_odd = np.random.rand(100,2) * range_2 + starting_2 
+    # xy2_odd = np.random.rand(100,2) * range_2 + starting_2
     # xy1_odd = xy1[-1:]
 
     # xy2_odd = xy2_odd[(np.abs(xy2_odd - xy1_odd) > (size_a[-1] + size_b[-1])/2).any(1)]
@@ -1781,9 +1779,9 @@ def task_pos_inside_1(condition='min', axis='x'):
     # s2 = Shape(gap_max=0.01)
     # shapes.append([s1,s2])
     # xy2 = np.concatenate([np.array(xy2)*size_a[:-1,None] + xy1[:-1],xy2_odd], 0)
-    
+
     xy2 = np.array(xy2)*size_a[:,None] + xy1
-    
+
     xy = np.stack([xy1, xy2], axis=1)
     size = np.stack([size_a, size_b], axis=1)
 
@@ -1797,30 +1795,30 @@ def task_pos_inside_1(condition='min', axis='x'):
 
     return xy, size, shapes, color
 
-# In each image, an object contains 2 objects. The 2 inner objects are always positioned similarly within the outer object.  
+# In each image, an object contains 2 objects. The 2 inner objects are always positioned similarly within the outer object.
 def task_pos_inside_2(condition='c', axis='x'):
 
     n_samples = 4
-    
+
     max_size = 0.6
     min_size = max_size/2
 
-    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size 
+    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size_b = np.random.rand(n_samples) * (size_a/4 - size_a/5) + size_a/5
     size_c = np.random.rand(n_samples) * (size_a/4 - size_a/5) + size_a/5
 
     done = False
-    max_attempts = 10 
+    max_attempts = 10
 
     range_1 = 1 - size_a[:,None]
     starting_1 = size_a[:,None]/2
 
-    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1 
+    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1
 
     xy2 = []
     shapes = []
 
-    # positive: 
+    # positive:
     # a(b,c) and x_b > x_c
 
     # negative:
@@ -1839,11 +1837,11 @@ def task_pos_inside_2(condition='c', axis='x'):
 
             samples = sample_position_inside_many(s1, [s2,s3], [size_b[i]/size_a[i], size_c[i]/size_a[i]])
             if len(samples)>0:
-                
+
                 # comp_samples = np.abs(samples[:,0,0] - samples[:,1,0]) - np.abs(samples[:,0,1] - samples[:,1,1]) > 0
                 comp_samples = np.abs(samples[:,0,0] - samples[:,1,0]) - np.abs(samples[:,0,1] - samples[:,1,1])
                 if axis == 'y':
-                    comp_samples = -comp_samples # np.logical_not(comp_samples)        
+                    comp_samples = -comp_samples # np.logical_not(comp_samples)
                 if i == n_samples-1:
                     comp_samples = -comp_samples # np.logical_not(comp_samples)
 
@@ -1866,7 +1864,7 @@ def task_pos_inside_2(condition='c', axis='x'):
 
 
     xy2 = np.stack(xy2, 0)*size_a[:,None,None] + xy1[:,None,:]
-    
+
     xy = np.concatenate([xy1[:,None], xy2], axis=1)
     size = np.stack([size_a, size_b, size_c], axis=1)
 
@@ -1884,20 +1882,20 @@ def task_pos_inside_2(condition='c', axis='x'):
 def task_pos_inside_3(condition='min', axis='x'):
 
     max_attempts = 10
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_objects_samples = np.random.randint(low=2, high=6, size=n_samples)
     # n_objects = n_objects_samples.max()
     # min_size_obj = 0.2
     min_btw_size = 0.3
 
-    
+
     all_xy = []
     all_size = []
     all_shape = []
-    
+
     n_objects_all = n_objects_samples.copy()
 
     for i in range(n_samples):
@@ -1911,11 +1909,11 @@ def task_pos_inside_3(condition='min', axis='x'):
 
         min_size_obj = min(0.9/n_objects, 0.3)
         min_btw_size = min_size_obj
-        
+
         for _ in range(max_attempts):
-            xy = np.random.rand(n_samples_over, n_objects, 2) * (1-min_size_obj) + min_size_obj/2 
+            xy = np.random.rand(n_samples_over, n_objects, 2) * (1-min_size_obj) + min_size_obj/2
             xy = xy.reshape([n_samples_over*n_objects, 2])
-            
+
             if axis == 'x':
                 change_xy = xy[np.logical_and(xy[:,0]>0.45, xy[:,0]<0.55), 0]
                 change_xy = change_xy + np.random.choice([-1,1], size=change_xy.shape[0])*0.2
@@ -1934,7 +1932,7 @@ def task_pos_inside_3(condition='min', axis='x'):
             if no_overlap.sum()>0:
                 done = True
                 break
-            
+
         if not done:
             print('')
 
@@ -1949,7 +1947,7 @@ def task_pos_inside_3(condition='min', axis='x'):
         # max_size = np.stack([xy, 1-xy],2).min(2).min(2)
         min_size = max_size/2
 
-        size = np.random.rand(n_objects) * (max_size - min_size) + min_size 
+        size = np.random.rand(n_objects) * (max_size - min_size) + min_size
         size_in = np.random.rand(n_objects) * (size/2.5 - size/4) + size/4
 
         if axis == 'x':
@@ -1964,13 +1962,13 @@ def task_pos_inside_3(condition='min', axis='x'):
         # odd one out
         if i == n_samples -1:
             object_in = np.logical_not(object_in)
-        
+
         n_objects_all[i] = n_objects_all[i] + object_in.sum()
 
         for j in range(n_objects_samples[i]):
             if object_in[j]:
-                    
-                done = False                
+
+                done = False
                 s1 = Shape(gap_max=0.08, hole_radius=0.2)
                 s2 = Shape(gap_max=0.01)
                 for _ in range(max_attempts):
@@ -1978,24 +1976,24 @@ def task_pos_inside_3(condition='min', axis='x'):
                     samples = sample_position_inside_1(s1, s2, size_in[j]/size[j])
                     if len(samples)>0:
                         done = True
-                    
+
                     if done:
                         break
                     else:
                         s1.randomize()
                         s2.randomize()
-                
+
                 if done:
                     xy_in = samples[0]
 
                     xy_.append(xy[j])
                     shape_.append(s1)
                     size_.append(size[j])
-                    
+
                     xy_.append(xy_in * size[j] + xy[j])
                     shape_.append(s2)
                     size_.append(size_in[j])
-            
+
             else:
                 if np.random.randint(2) == 0:
                     s1 = Shape(gap_max=0.01)
@@ -2003,7 +2001,7 @@ def task_pos_inside_3(condition='min', axis='x'):
                 else:
                     s1 = Shape(gap_max=0.08, hole_radius=0.2)
                     size_.append(size_in[j])
-                
+
                 xy_.append(xy[j])
                 shape_.append(s1)
 
@@ -2026,7 +2024,7 @@ def task_pos_inside_3(condition='min', axis='x'):
 def task_pos_inside_4(condition='s_id_c', variable='x'):
 
     n_samples = 4
-    
+
     max_size = 0.3
     min_size = max_size/2
 
@@ -2049,13 +2047,13 @@ def task_pos_inside_4(condition='s_id_c', variable='x'):
     shuffle_ = np.random.randint(2, size=n_samples)
     # idx = np.arange(3)[None,:] * np.ones([n_samples, 3])
     size_shuffle = size.copy()
-    
+
     for i in range(n_samples):
         if shuffle_[i] == 1:
             size_shuffle[i] = size_shuffle[i][np.array([0,2,1,3])]
 
     x = sample_over_range_t(n_samples, np.array([0,1]), size_shuffle[:,:3])
-    
+
     for i in range(n_samples):
         if shuffle_[i] == 1:
             x[i] = x[i][np.array([0,2,1])]
@@ -2066,27 +2064,27 @@ def task_pos_inside_4(condition='s_id_c', variable='x'):
         x = 1-x
 
     y = np.random.rand(n_samples, 3) * (1-size[:,:3]) + size[:,:3]/2
-        
+
     xy123 = np.stack([x,y], axis=2)
 
     max_attempts = 10
     shapes = []
     xy4 = []
     for i in range(n_samples):
-    
+
         done = False
 
         s1 = Shape(gap_max=0.07, hole_radius=0.2)
         s2 = Shape(gap_max=0.07, hole_radius=0.2)
         s3 = Shape(gap_max=0.01)
         s4 = Shape(gap_max=0.01)
-        
+
         for _ in range(max_attempts):
-    
+
             samples = sample_position_inside_1(s1, s4, size[i,3]/size[i,0])
             if len(samples)>0:
                 done = True
-            
+
             if done:
                 break
             else:
@@ -2097,7 +2095,7 @@ def task_pos_inside_4(condition='s_id_c', variable='x'):
             xy4_ = np.array(samples[0]) * size[i,0] + xy123[i,0]
         else:
             xy4_ = xy123[i,0]
-              
+
 
         xy4.append(xy4_)
 
@@ -2106,7 +2104,7 @@ def task_pos_inside_4(condition='s_id_c', variable='x'):
 
         # shapes += [s1, s2, s3]
 
-    xy = np.concatenate([xy123,np.array(xy4)[:,None]], axis=1) 
+    xy = np.concatenate([xy123,np.array(xy4)[:,None]], axis=1)
     # size = np.concatenate([size, size_in[:,None]], axis=1)
 
 
@@ -2131,14 +2129,14 @@ def task_pos_inside_4(condition='s_id_c', variable='x'):
 
 # The images contain two objects in contact along the same direction.
 def task_pos_contact(condition='xys'):
-        
+
     n_samples = 4
     n_objects = 2
 
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.4
     min_size = max_size/2
 
@@ -2148,16 +2146,16 @@ def task_pos_contact(condition='xys'):
     angle2 = angle1 + np.pi / 2 * np.random.choice([-1, 1])
     angle = np.ones(n_samples) * angle1
     angle[-1] = angle2
-    
+
     shape = []
     xy = []
     for i in range(n_samples):
-            
+
         s1 = Shape()
         s2 = Shape()
 
         positions, clump_size = sample_contact_many([s1, s2], size[i], angle[i])
-        
+
         xy0 = np.random.rand(2) * (1-clump_size) + clump_size/2
         xy_ = positions + xy0[None,:]
 
@@ -2166,7 +2164,7 @@ def task_pos_contact(condition='xys'):
         shape.append([s1,s2])
 
     xy = np.stack(xy, 0)
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([2, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -2179,11 +2177,11 @@ def task_pos_contact(condition='xys'):
 #################################################################################
 # position + count
 
-# In each image, the relationship between the number of objects on one side and the number of objects on the other side is the same. For example, if the number of objects on the left is always bigger than the number of objects on the right. 
+# In each image, the relationship between the number of objects on one side and the number of objects on the other side is the same. For example, if the number of objects on the left is always bigger than the number of objects on the right.
 def task_pos_count_1(condition='cid'):
-    
+
     n_samples = 4
-    
+
     n_objects = [np.random.choice(np.arange(3,8), size=2, replace=False) for _ in range(n_samples)]
     n_objects = np.sort(n_objects, axis=1)
     # n_objs_odd = n_objects[-1]
@@ -2197,7 +2195,7 @@ def task_pos_count_1(condition='cid'):
 
     size = np.random.rand(len(n_objects), max(n_objects)) * (max_size[:,None] - min_size[:,None]) + min_size[:,None]
     # size = np.random.rand(len(n_objects)) * (max_size - min_size) + min_size
-    # size = size[:, None]* np.ones([len(n_objects), max(n_objects)]) 
+    # size = size[:, None]* np.ones([len(n_objects), max(n_objects)])
 
     n_samples_over = 100
 
@@ -2214,7 +2212,7 @@ def task_pos_count_1(condition='cid'):
         xy_ = xy_[valid][0]
 
         xy.append(xy_)
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects[i*2] + n_objects[i*2 + 1], 3]) * color[i:i+1] for i in range(n_samples)]
@@ -2231,21 +2229,21 @@ def task_pos_count_1(condition='cid'):
     for i in range(n_samples):
         if i == n_samples-1:
             left = xy[i*2+1]
-            right = xy[i*2]        
+            right = xy[i*2]
         else:
             left = xy[i*2]
             right = xy[i*2+1]
-        
+
         right[:,0] = right[:,0] + 0.6
         xy_ = np.concatenate([left, right], 0)
-        
+
         size_ = np.concatenate([size[i*2,:n_objects[i*2]], size[i*2+1,:n_objects[i*2+1]]])
         shapes_ = []
         for j in range(n_objects[i*2] + n_objects[i*2 + 1]):
             if 'id' in condition:
                 shape.randomize()
             shapes_.append(shape.clone())
-        
+
         xyr.append(xy_)
         sizer.append(size_)
         shapes.append(shapes_)
@@ -2257,9 +2255,9 @@ def task_pos_count_1(condition='cid'):
 
 # The images contain a sets of objects that are aligned. The number of objects in the set is the same.
 def task_pos_count_2(condition='cid'):
-    
+
     n_samples = 4
-    
+
 
     n_objects_aligned_v = np.random.choice(np.arange(3,7), size=2, replace=False)
 
@@ -2268,7 +2266,7 @@ def task_pos_count_2(condition='cid'):
 
     n_objects_other = np.random.choice(np.arange(2,4), size=n_samples)
     n_objects = n_objects_aligned + n_objects_other
-    
+
     n_objects_aligned = n_objects_aligned.astype(int)
     n_objects_other = n_objects_other.astype(int)
     n_objects = n_objects.astype(int)
@@ -2278,27 +2276,27 @@ def task_pos_count_2(condition='cid'):
 
     # size = np.random.rand(n_samples, max(n_objects)) * (max_size[:,None] - min_size[:,None]) + min_size[:,None]
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
-    size = size[:, None]* np.ones([n_samples, max(n_objects)]) 
+    size = size[:, None]* np.ones([n_samples, max(n_objects)])
 
     n_samples_over = 100
 
     xy = []
     for i in range(n_samples):
-                
+
         dists = np.random.rand(n_objects_aligned[i])
         dists = dists / dists.sum() * (1-size[i,:n_objects_aligned[i]].sum())
         dists[0] = dists[0] * np.random.rand()
         dists = dists + size[i,:n_objects_aligned[i]]
         xy_al = np.cumsum(dists)
         xy_al = xy_al - size[i,:n_objects_aligned[i]]/2
-        
+
         # apply segment
         seg = np.random.rand(2)
         seg = seg/seg.max()
         idx = np.argmin(seg)
-        
+
         xy_al = xy_al[:,None] * seg[None,:]
-        xy_al[:,idx] = xy_al[:,idx] + np.random.rand() * (1 - seg[idx] - size[i,0]/2 - size[i,n_objects_aligned[i]-1]/2) + size[i,0]/2 
+        xy_al[:,idx] = xy_al[:,idx] + np.random.rand() * (1 - seg[idx] - size[i,0]/2 - size[i,n_objects_aligned[i]-1]/2) + size[i,0]/2
 
         if np.random.rand()>0.5:
             xy_al[:,idx] = 1 - xy_al[:,idx]
@@ -2316,11 +2314,11 @@ def task_pos_count_2(condition='cid'):
             valid_al = (np.abs(xy_ot[:,:,None,:] - xy_al[None,None,:,:]) - (size[i,-n_objects_other[i]:][None,:,None,None]+size[i,:n_objects_aligned[i]][None,None,:,None])/2 > 0).any(3).all(2).all(1)
             valid_ot = (np.abs(xy_ot[:,:,None,:] - xy_ot[:,None,:,:]) - (size[i,-n_objects_other[i]:][None,:,None,None]+size[i, -n_objects_other[i]:][None,None,:,None])/2 > 0).any(3).reshape([n_samples_over, n_objects_other[i]**2])[:, triu_idx].all(1)
             valid = np.logical_and(valid_al, valid_ot)
-        
+
         xy_ot = xy_ot[valid][0]
 
         xy.append(np.concatenate([xy_al, xy_ot],0))
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects[i], 3]) * color[i:i+1] for i in range(n_samples)]
@@ -2336,37 +2334,37 @@ def task_pos_count_2(condition='cid'):
     else:
         shapes = [[Shape() for _ in range(n_objects[i])] for i in range(n_samples)]
 
-    
+
     size = [size[i,:n_objects[i]] for i in range(n_samples)]
 
     return xy, size, shapes, color
 
 # The images contain sets of aligned objects. The number of sets is the same in all images.
 def task_pos_count_3(condition='cid'):
-    
+
     n_samples = 4
-    
+
     n_lines_v = np.random.choice(np.arange(3,7), size=2, replace=False)
 
     n_lines = np.ones(n_samples) * n_lines_v[0]
     n_lines[-1] = n_lines_v[1]
     n_lines = n_lines.astype(int)
-    
+
     n_lines_objects = np.random.randint(3,6, size=[n_samples, n_lines_v.max()])
     n_lines_objects = n_lines_objects.astype(int)
 
-    n_objects = [n_lines_objects[i,:n_lines[i]].sum().astype(int) for i in range(n_samples)] 
-    
+    n_objects = [n_lines_objects[i,:n_lines[i]].sum().astype(int) for i in range(n_samples)]
+
 
     max_size = 0.6/np.stack([n_lines, n_lines_objects.max(1)], 1).max(1)
     min_size = max_size/2
 
     # size = np.random.rand(n_samples, max(n_objects)) * (max_size[:,None] - min_size[:,None]) + min_size[:,None]
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
-    size = size[:, None]* np.ones([n_samples, max(n_objects)]) 
+    size = size[:, None]* np.ones([n_samples, max(n_objects)])
 
     xy = []
-    
+
     for i in range(n_samples):
         dists = np.random.rand(n_lines[i])
         dists = dists / dists.sum() * (1 - size[i,0]*n_lines[i])
@@ -2374,10 +2372,10 @@ def task_pos_count_3(condition='cid'):
         dists = dists + size[i,0]
         x_lines = np.cumsum(dists)
         x_lines = x_lines - size[i,0]/2
-        
+
         y_lines_ = []
         x_lines_ = []
-        
+
         for l in range(n_lines[i]):
             dists = np.random.rand(n_lines_objects[i,l])
             dists = dists / dists.sum() * (1 - size[i,0]*n_lines_objects[i,l])
@@ -2387,12 +2385,12 @@ def task_pos_count_3(condition='cid'):
             y_lines = y_lines - size[i,0]/2
             y_lines_.append(y_lines)
             x_lines_.append([x_lines[l]]*n_lines_objects[i,l])
-            
+
         x_lines = np.concatenate(x_lines_)
         y_lines = np.concatenate(y_lines_)
 
         xy.append(np.stack([x_lines, y_lines],1))
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects[i], 3]) * color[i:i+1] for i in range(n_samples)]
@@ -2407,30 +2405,30 @@ def task_pos_count_3(condition='cid'):
         shapes = [[s.clone() for _ in range(n_objects[i])] for i in range(n_samples)]
     else:
         shapes = [[Shape() for _ in range(n_objects[i])] for i in range(n_samples)]
-    
+
     size = [size[i,:n_objects[i]] for i in range(n_samples)]
 
     return xy, size, shapes, color
 
 # The images contain 3 sets of aligned objects. The sum of the numbers of objects in 2 sets equals the number of objects in the third set.
 def task_pos_count_4(condition='xyscid', cue='xid'):
-    
+
     n_samples = 4
-    
+
     n_objects_1 = np.random.randint(1, 5, size=n_samples)
     n_objects_2 = np.random.randint(1, 5, size=n_samples)
     n_objects_3 = n_objects_1 + n_objects_2
 
     n_objects_3[-1] = max(n_objects_3[-1] + np.random.choice([-1, 1])*np.random.randint(1,3),1)
-    
+
     n_objects = n_objects_1 + n_objects_2 + n_objects_3
-    
+
     max_n_objs = n_objects.max()
-    
-    # image and object parameters    
+
+    # image and object parameters
     max_size = 0.8/(n_objects)
     min_size = max_size/2
-    
+
     ## cue by id -> condition on position, size
     # shape_1 = Shape()
     # shape_2 = Shape()
@@ -2464,12 +2462,12 @@ def task_pos_count_4(condition='xyscid', cue='xid'):
 
 
     s_idx = np.zeros([n_samples, max_n_objs])
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
 
-    
+
     x_idx = [[0]*n_objects_1[i] + [1]*n_objects_2[i] + [2]*n_objects_3[i] for i in range(n_samples)]
-    
+
     triu_idx = np.triu_indices(3,k=1)
     triu_idx = triu_idx[0]*3 + triu_idx[1]
 
@@ -2479,7 +2477,7 @@ def task_pos_count_4(condition='xyscid', cue='xid'):
     dists_x = dists_x + size[:,None]
     dists_x[:,0] = dists_x[:,0] - size/2
     x = np.cumsum(dists_x, axis=1)
-    
+
 
     # x = np.random.rand(n_samples, 3) * (1-size[:,None]) + size[:,None]/2
     # while not (np.abs(x[:,:,None] - x[:,None,:]).reshape([n_samples, 3*3])[:, triu_idx] < size[:,None]).all(1).all(0):
@@ -2504,9 +2502,9 @@ def task_pos_count_4(condition='xyscid', cue='xid'):
 
         shape.append([unique_shapes[idx].clone() for idx in id_idx[i]])
         size_.append([size[i]]*(n_objects_1[i] + n_objects_2[i] + n_objects_3[i]))
-    
+
     size = size_
-    
+
     xy = [np.stack([np.array(xs[i]), np.array(ys[i])], axis=1) for i in range(n_samples)]
     size = [np.array(size[i]) for i in range(n_samples)]
 
@@ -2528,18 +2526,18 @@ def task_pos_count_4(condition='xyscid', cue='xid'):
 #################################################################################
 # size + size
 
-# Each image contains 2 objects. The first object is smaller than the second object in all images. 
+# Each image contains 2 objects. The first object is smaller than the second object in all images.
 def task_size_size_1(condition='xyc', reference='id'):
-    
+
     n_samples = 4
 
     # image and object parameters
-    
+
     max_size = 0.4
     min_size = max_size/4
-    
+
     min_diff = (max_size - min_size)/2
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size - min_diff) + min_size
     diff = np.random.rand(n_samples) * (max_size - size - min_diff) + min_diff
     size = np.stack([size, size + diff], axis=1)
@@ -2551,7 +2549,7 @@ def task_size_size_1(condition='xyc', reference='id'):
         shape = []
         s1 = Shape()
         s2 = Shape()
-            
+
         for i in range(n_samples):
             shape.append([s1.clone(), s2.clone()])
 
@@ -2561,7 +2559,7 @@ def task_size_size_1(condition='xyc', reference='id'):
             s1 = Shape()
             s2 = Shape()
             shape.append([s1.clone(), s2.clone()])
-            
+
     else:
         s = Shape()
         shape = []
@@ -2644,7 +2642,7 @@ def task_size_size_2(condition='xyc'):
     n_samples = 4
 
     n_objects = 3
-    
+
     max_size = 0.9/2
     min_size = max_size/2
 
@@ -2655,7 +2653,7 @@ def task_size_size_2(condition='xyc'):
 
     size_2 = r_prop * size_1
 
-    # # r st. 2*s1*r + s2*r < 0.8 
+    # # r st. 2*s1*r + s2*r < 0.8
     # r = 0.8/(2*size_1 + size_2)
     # size_1 = size_1*r
     # size_2 = size_2*r
@@ -2667,7 +2665,7 @@ def task_size_size_2(condition='xyc'):
         size_2[non_valid] = size_2[non_valid] / s[non_valid] * 0.9
 
     size_reg = np.stack([size_1, size_1, size_2], axis=1)
-    
+
 
     odd_condition = np.random.randint(2)
 
@@ -2677,8 +2675,8 @@ def task_size_size_2(condition='xyc'):
         if size_*3 >0.9:
             size_ = size_*0.9/3
         size_ = np.ones([3])*size_
-    else: 
-        # odd_n_unique_sizes = 3 
+    else:
+        # odd_n_unique_sizes = 3
         size_ = np.random.rand() * (max_size - min_size) + min_size
         r_prop = np.random.rand(2) * (2/3 - 1/3) + 1/3
         size_ = np.array([size_, size_*r_prop[0], size_*r_prop[0]*r_prop[1]])
@@ -2696,7 +2694,7 @@ def task_size_size_2(condition='xyc'):
             s2 = Shape()
             s3 = Shape()
             shape.append([s1, s2, s3])
-            
+
     else:
         s = Shape()
         shape = []
@@ -2705,7 +2703,7 @@ def task_size_size_2(condition='xyc'):
 
 
     if 'xy' in condition:
-        
+
         triu_idx = np.triu_indices(n_objects, k=1)
         triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -2740,12 +2738,12 @@ def task_size_size_2(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 3 objects. The 3 objects of each image have different sizes.
 def task_size_size_3(condition='xyc'):
-    
+
     n_samples = 4
 
     n_objects = 3
@@ -2753,7 +2751,7 @@ def task_size_size_3(condition='xyc'):
     max_size = 0.9/2
     min_size = max_size/2
 
-    # odd_n_unique_sizes = 3 
+    # odd_n_unique_sizes = 3
     size_ = np.random.rand(n_samples-1) * (max_size - min_size) + min_size
     r_prop = np.random.rand(n_samples-1, 2) * (2/3 - 1/3) + 1/3
     size_ = np.stack([size_, size_*r_prop[:,0], size_*r_prop[:,0]*r_prop[:,1]],1)
@@ -2762,7 +2760,7 @@ def task_size_size_3(condition='xyc'):
     r = 0.9 / size_.sum(1)
     size_ = size_ * r[:,None]
     size_reg = size_
-    
+
     odd_condition = np.random.randint(2)
 
     if odd_condition==0:
@@ -2771,7 +2769,7 @@ def task_size_size_3(condition='xyc'):
         if size_*3 >0.9:
             size_ = size_*0.8/9
         size_ = np.ones([3])*size_
-    else: 
+    else:
         size_1 = np.random.rand() * (max_size - min_size) + min_size
         r_prop = np.random.rand() * (2/3 - 1/3) + 1/3
         if np.random.randint(2)==1:
@@ -2779,7 +2777,7 @@ def task_size_size_3(condition='xyc'):
 
         size_2 = r_prop * size_1
 
-        # r st. 2*s1*r + s2*r < 0.8 
+        # r st. 2*s1*r + s2*r < 0.8
         r = 0.8/(2*size_1 + size_2)
         size_1 = size_1*r
         size_2 = size_2*r
@@ -2795,7 +2793,7 @@ def task_size_size_3(condition='xyc'):
             s2 = Shape()
             s3 = Shape()
             shape.append([s1, s2, s3])
-            
+
     else:
         s = Shape()
         shape = []
@@ -2804,7 +2802,7 @@ def task_size_size_3(condition='xyc'):
 
 
     if 'xy' in condition:
-        
+
         triu_idx = np.triu_indices(n_objects, k=1)
         triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -2840,21 +2838,21 @@ def task_size_size_3(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 2 objects. In each image, one object's size is half the other object's size.
 def task_size_size_4(condition='xyc'):
-    
+
     n_samples = 4
 
     # image and object parameters
-    
+
     n_objects = 2
 
     max_size = 0.5
     min_size = max_size/2
-        
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size = np.stack([size, size/2], axis=1)
 
@@ -2867,7 +2865,7 @@ def task_size_size_4(condition='xyc'):
     #     shape = []
     #     s1 = Shape()
     #     s2 = Shape()
-            
+
     #     for i in range(n_samples):
     #         shape.append([s1.clone(), s2.clone()])
 
@@ -2877,7 +2875,7 @@ def task_size_size_4(condition='xyc'):
         for i in range(n_samples):
             s = Shape()
             shape.append([s.clone(), s.clone()])
-            
+
     else:
         s = Shape()
         shape = []
@@ -2887,7 +2885,7 @@ def task_size_size_4(condition='xyc'):
     n_objects = 2
 
     if 'xy' in condition:
-        
+
         triu_idx = np.triu_indices(n_objects, k=1)
         triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -2923,18 +2921,18 @@ def task_size_size_4(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 3 pairs of aligned objects. The object sizes in each pair are maintained in all images.
 def task_size_size_5(condition='xyc', reference='id'):
-    
+
     n_samples = 4
     n_objects = 3
 
     max_size = 0.8/n_objects
     min_size = max_size/5
-    
+
     size = sample_over_range_t(n_samples, np.array([min_size, max_size]), np.ones([n_samples,n_objects])*(max_size - min_size)/4)
     y = sample_over_range_t(n_samples, np.array([0.1, 0.9]), np.ones([n_samples,n_objects])*size.max(1)[:,None])
     x = np.random.rand(n_samples, n_objects) * (0.5 - size) + size/2
@@ -2945,9 +2943,9 @@ def task_size_size_5(condition='xyc', reference='id'):
         shuf_perm_odd, _ = sample_shuffle_unshuffle_indices(n_objects)
 
     size2 = size.copy()
-    
+
     perms = np.stack([shuf_perm]*(n_samples-1)+ [shuf_perm_odd], 0)
-    
+
     shuffle_t(size2, perms)
 
     size = np.concatenate([size,size2],1)
@@ -2968,7 +2966,7 @@ def task_size_size_5(condition='xyc', reference='id'):
 
     elif 'id' in condition:
         shape = [[Shape() for _ in range(n_objects*2)] for i in range(n_samples)]
-    
+
     else:
         s = Shape()
         shape = [[s.clone() for _ in range(n_objects*2)] for i in range(n_samples)]
@@ -2979,7 +2977,7 @@ def task_size_size_5(condition='xyc', reference='id'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects*2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -2987,12 +2985,12 @@ def task_size_size_5(condition='xyc', reference='id'):
 
 # The images contain two pairs of objects. Each pair of objects have the same size and shape.
 def task_size_shape_1(condition='nxyscid_hsv'):
-        
+
     n_samples = 4
 
     n_objects = 4
     n_objects_max = n_objects
- 
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -3008,7 +3006,7 @@ def task_size_shape_1(condition='nxyscid_hsv'):
     #         shape += [[s1, s1.clone(), s2, s2.clone()]]
     # else:
     s1 = Shape()
-    s2 = Shape()    
+    s2 = Shape()
     shape = [[s1.clone(), s1.clone(), s2.clone(), s2.clone()] for i in range(n_samples)]
 
     if 'r' in condition:
@@ -3046,34 +3044,34 @@ def task_size_shape_1(condition='nxyscid_hsv'):
         # odd one out
         size[-1] = np.array([size[-1,0], size[-1,2], size[-1,1], size[-1,3]])
 
-    if 'xy' in condition:        
+    if 'xy' in condition:
         xy = []
         for i in range(n_samples):
             xy_ = sample_positions(size[i:i+1], n_sample_min=1)
             xy.append(xy_[0])
-        
+
     else:
         xy = sample_positions(size.max(0)[None,:], n_sample_min=n_samples)
 
     return xy, size, shape, color
 
-# The images contain 4 objects with 4 different shapes (a,b,c,d). When a is bigger than b, c is bigger d. Conversly, when a is smaller than b, c is smaller than d. 
+# The images contain 4 objects with 4 different shapes (a,b,c,d). When a is bigger than b, c is bigger d. Conversly, when a is smaller than b, c is smaller than d.
 def task_size_shape_2(condition='xyc', reference='id'):
 
 
     n_samples = 4
 
     n_objects = 4
-    
-    # odd_n_unique_sizes = 3 
+
+    # odd_n_unique_sizes = 3
     size_ = np.random.rand(n_samples-1)
     size = np.random.rand()
 
     max_size = 0.8/n_objects
     min_size = max_size/4
-    
+
     min_diff = (max_size - min_size)/2
-    
+
     size = np.random.rand(n_samples, 2) * (max_size - min_size - min_diff) + min_size
     diff = np.random.rand(n_samples, 2) * (max_size - size - min_diff) + min_diff
     size = np.concatenate([size, size + diff], axis=1)
@@ -3082,7 +3080,7 @@ def task_size_shape_2(condition='xyc', reference='id'):
     # a>b <=> b>c
 
     odd_condition = np.random.randint(2)
-    
+
     size_switch = (size[-1,1], size[-1,3])
     size[-1:,1] = size_switch[1]
     size[-1:,3] = size_switch[0]
@@ -3105,7 +3103,7 @@ def task_size_shape_2(condition='xyc', reference='id'):
             s3 = Shape()
             s4 = Shape()
             shape.append([s1, s2, s3, s4])
-            
+
     else:
         s = Shape()
         shape = []
@@ -3131,7 +3129,7 @@ def task_size_shape_2(condition='xyc', reference='id'):
         xy = np.stack([xy]*n_samples, 0)
 
     if 'xy' in condition:
-        
+
         triu_idx = np.triu_indices(n_objects, k=1)
         triu_idx = triu_idx[0]*n_objects + triu_idx[1]
 
@@ -3149,7 +3147,7 @@ def task_size_shape_2(condition='xyc', reference='id'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -3157,10 +3155,10 @@ def task_size_shape_2(condition='xyc', reference='id'):
 
 # Each image contains 2 objects. The larger object always has the same color.
 def task_size_color_1(condition='xyscid_hs'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_size = 0.6
     min_size = max_size/2
 
@@ -3175,14 +3173,14 @@ def task_size_color_1(condition='xyscid_hs'):
     size[-1] = size[-1,::-1]
 
     if 'xy' in condition:
-            
+
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size*np.sqrt(2))
         co2 = np.random.rand(n_samples, 2) * (1-size*np.sqrt(2)) + size*np.sqrt(2)/2
         xy = [co1, co2]# if np.random.randint(2)==0 else [co2, co1]
         xy = np.stack(xy, axis=2)
         perm = np.random.randint(2, size=n_samples)
         xy[perm==0] = xy[perm==0, :, ::-1]
-       
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -3193,12 +3191,12 @@ def task_size_color_1(condition='xyscid_hs'):
     min_diff = 0.15
     # h2 = (h1 + (np.random.rand() * (1-min_diff*2) + min_diff) * np.random.choice([-1,1]))%1
     # h = np.array([h1, h2])[None,:] * np.ones([n_samples, 2])
-    
+
     h2 = (h1 + (np.random.rand(n_samples) * (1-min_diff*2) + min_diff) * np.random.choice([-1,1]))%1
-    h = np.stack([h1 * np.ones([n_samples]),h2], 1) 
-    
+    h = np.stack([h1 * np.ones([n_samples]),h2], 1)
+
     # h[-1] = h[-1,::-1]
-    
+
     # if 'h' in condition:
     #     h = np.random.rand(n_samples, 2)
     # else:
@@ -3210,16 +3208,16 @@ def task_size_color_1(condition='xyscid_hs'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, 2])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, 2) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, 2])
- 
+
     color = np.stack([h,s,v], 2)
 
-    
+
 
     if 'id' in condition:
         shape = [[Shape(), Shape()] for i in range(n_samples)]
@@ -3245,23 +3243,23 @@ def task_size_color_1(condition='xyscid_hs'):
 def task_size_color_2(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.choice([2,3,4], replace=False)
     # n_unique_sizes = n_groups
     n_objects_samples = np.random.randint(2, 4, size=n_groups)
     n_objects = n_objects_samples.sum()
-    
+
     size_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    size_idx = np.array(cat_lists(size_idx)) 
-    
+    size_idx = np.array(cat_lists(size_idx))
+
     max_size = 0.9/(np.sqrt(n_objects))
     min_size = max_size/2
 
     max_r, min_r = 2/3, 1/5
-    
+
     min_diff = (max_r - min_r)/4
     r = sample_over_range_t(1, np.array([min_r - min_diff/2, max_r + min_diff/2]), np.ones([1, n_groups])* min_diff)
     u_size = np.random.rand(n_samples) * (max_size - min_size) + min_size
@@ -3274,7 +3272,7 @@ def task_size_color_2(condition='xyidc'):
 
     size = [u_size[i, size_idx] for i in range(n_samples)] # + [u_size_odd[0, size_idx_odd]]
     size = np.stack(size, 0)
-    
+
     non_valid = size.__pow__(2).sum(1).__pow__(1/2)>0.9
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].__pow__(2).sum(1).__pow__(1/2)[:,None] * 0.8
@@ -3284,7 +3282,7 @@ def task_size_color_2(condition='xyidc'):
 
     # color_idx = [cat_lists([[j]*n_objects_samples[i][j] for j in range(n_groups)]) for i in range(n_samples)]
     # color_idx += [cat_lists([[j]*n_objects_samples[-1][j] for j in range(n_groups_odd)])]
-    # shape_idx = cat_lists(shape_idx) 
+    # shape_idx = cat_lists(shape_idx)
     color_idx[-1] = np.roll(color_idx[-1], 1).tolist()
 
     max_size = 0.9/n_objects
@@ -3300,7 +3298,7 @@ def task_size_color_2(condition='xyidc'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, n_groups])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, n_groups) * 0.5 + 0.5)
     else:
@@ -3311,14 +3309,14 @@ def task_size_color_2(condition='xyidc'):
     # color_u_odd = np.stack([h_u_odd,s[-1:, :n_groups_odd],v[-1:, :n_groups_odd]], 2)
 
     color = [color_u[i, color_idx[i]] for i in range(n_samples)]
-    
+
     #########
 
     xy = []
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -3336,10 +3334,10 @@ def task_size_color_2(condition='xyidc'):
 
 # Each image contain 3 objects with the same shape. The smallest is rotated to the left and the largest is rotated to the right with respect to the average one.
 def task_size_rot(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 3
-    
+
     max_size = 0.9/(np.sqrt(n_objects*2))
     min_size = max_size*2/3
 
@@ -3347,12 +3345,12 @@ def task_size_rot(condition='xyscid_hsv'):
     r = np.random.rand(n_samples, 2) * (max_r-min_r) + min_r
     size = np.random.rand(n_samples) * (max_size-min_size) + min_size
     size = np.stack([size, size*r[:,0], size*r[:,0]*r[:,1]], 1)
-    
+
     non_valid = size.sum(1)>0.9
-    
+
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].sum(1)[:,None] * 0.9
-    
+
     # odd one out
     size[-1] = size[-1, ::-1]
 
@@ -3375,7 +3373,7 @@ def task_size_rot(condition='xyscid_hsv'):
         shape[i][0].rotate(angles[i,0])
         shape[i][1].rotate(angles[i,1])
         shape[i][2].rotate(angles[i,2])
-    
+
     xy = []
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
@@ -3388,10 +3386,10 @@ def task_size_rot(condition='xyscid_hsv'):
 
 # Each image contain 3 objects with the same shape. The smallest object is vertically flipped and the largest object is horizantally flipped with respect to the average one.
 def task_size_flip_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 3
-    
+
     max_size = 0.9/(np.sqrt(n_objects*2))
     min_size = max_size*2/3
 
@@ -3399,12 +3397,12 @@ def task_size_flip_1(condition='xyscid_hsv'):
     r = np.random.rand(n_samples, 2) * (max_r-min_r) + min_r
     size = np.random.rand(n_samples) * (max_size-min_size) + min_size
     size = np.stack([size, size*r[:,0], size*r[:,0]*r[:,1]], 1)
-    
+
     non_valid = size.sum(1)>0.9
-    
+
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].sum(1)[:,None] * 0.9
-    
+
     # odd one out
     size[-1] = size[-1, ::-1]
 
@@ -3425,7 +3423,7 @@ def task_size_flip_1(condition='xyscid_hsv'):
         # shape[i][1].rotate(angles[i,1])
         shape[i][2].flip()
         shape[i][2].rotate(np.pi)
-    
+
     xy = []
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
@@ -3438,10 +3436,10 @@ def task_size_flip_1(condition='xyscid_hsv'):
 
 # In each image, one of the objects contains an object. The object that contains an object is either always the larger one or always the smaller one.
 def task_size_inside_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_attempts = 10
 
     max_size = 0.9/n_objects*1.1
@@ -3458,12 +3456,12 @@ def task_size_inside_1(condition='xyscid_hsv'):
     # odd one out
     size[-1] = size[-1, ::-1]
 
-    # size = np.random.rand(n_objects) * (max_size - min_size) + min_size 
+    # size = np.random.rand(n_objects) * (max_size - min_size) + min_size
     size_in = np.random.rand(n_samples) * (size[:,0]/2.5 - size[:,0]/4) + size[:,0]/4
     size = np.concatenate([size, size_in[:,None]], 1)
 
     if 'xy' in condition:
-            
+
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size[:,:2])
         co2 = np.random.rand(n_samples, 2) * (1-size[:,:2]) + size[:,:2]/2
         xy = [co1, co2] if np.random.randint(2)==0 else [co2, co1]
@@ -3471,7 +3469,7 @@ def task_size_inside_1(condition='xyscid_hsv'):
 
         perm = np.random.randint(2, size=n_samples)
         xy[perm==0] = xy[perm==0, :, ::-1]
-       
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -3499,7 +3497,7 @@ def task_size_inside_1(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s1, s2, size_in[i]/size[i,0])
             if len(samples)>0:
                 done = True
-            
+
             if done:
                 break
             else:
@@ -3509,25 +3507,25 @@ def task_size_inside_1(condition='xyscid_hsv'):
         if done:
             xy_ = samples[0]
             xy_in.append(xy_ * size[i,0] + xy[i,0])
-    
+
         shape.append([s1, Shape(gap_max=0.06, hole_radius=0.2), s2])
-    
+
     xy_in = np.array(xy_in)
     xy = np.concatenate([xy, xy_in[:, None, :]], 1)
 
     return xy, size, shape, color
 
 def task_size_inside_2(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_attempts = 10
 
     max_size = 0.9/n_objects
     min_size = max_size/2
 
-    
+
     max_r, min_r = 2/5, 1/5
     min_diff_r = 0.5
     r1 = np.random.rand(n_samples)
@@ -3546,7 +3544,7 @@ def task_size_inside_2(condition='xyscid_hsv'):
     size = np.concatenate([size, size_in], 1)
 
     if 'xy' in condition:
-            
+
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size[:,:2])
         co2 = np.random.rand(n_samples, 2) * (1-size[:,:2]) + size[:,:2]/2
         xy = [co1, co2]# if np.random.randint(2)==0 else [co2, co1]
@@ -3554,7 +3552,7 @@ def task_size_inside_2(condition='xyscid_hsv'):
 
         perm = np.random.randint(2, size=n_samples)
         xy[perm==0] = xy[perm==0, :, ::-1]
-       
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -3585,7 +3583,7 @@ def task_size_inside_2(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s1, s3, size_in[i,0]/size[i,0])
             if len(samples)>0:
                 done1 = True
-            
+
             if done1:
                 break
             else:
@@ -3599,7 +3597,7 @@ def task_size_inside_2(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s2, s4, size_in[i,1]/size[i,1])
             if len(samples)>0:
                 done2 = True
-            
+
             if done2:
                 break
             else:
@@ -3609,9 +3607,9 @@ def task_size_inside_2(condition='xyscid_hsv'):
         if done2:
             xy_ = samples[0]
             xy_in.append(xy_ * size[i,1] + xy[i,1])
-    
+
         shape.append([s1, s2, s3, s4])
-    
+
     xy_in = np.stack(xy_in, 0).reshape([n_samples, 2, 2])
     xy = np.concatenate([xy, xy_in], 1)
 
@@ -3622,10 +3620,10 @@ def task_size_inside_2(condition='xyscid_hsv'):
 
 # The images contain 4 objects a,b,c and d. The contact and size configurations are constant across images. For example, a contact configuration is A being in contact with B and C being in contact with D. A size configuration is A and B having the same size which is bigger than C and D.
 def task_size_contact(condition='xys'):
-        
+
     n_samples = 4
     n_objects = 4
-    
+
     max_size = 0.9/n_objects*1.5
     min_size = max_size/2
 
@@ -3639,7 +3637,7 @@ def task_size_contact(condition='xys'):
     # a<c c<b b<d 4 smaller-big small-bigger
     # a<c c<d d<b 4 smaller-bigger small-big
 
-    perm = np.array([    
+    perm = np.array([
         [0,0,0,0],
         [0,0,1,1],
         [0,1,0,1],
@@ -3653,7 +3651,7 @@ def task_size_contact(condition='xys'):
 
     all_conditions = [0,1,2,3,4,5,6,7,8]
     cond_reg, cond_odd = np.random.choice(all_conditions, replace=False, size=2)
-    
+
     n_unique_sizes = [1,2,2,3,3,3,4,4,4]
     n_uniques_sizes_reg = n_unique_sizes[cond_reg]
     n_uniques_sizes_odd = n_unique_sizes[cond_odd]
@@ -3685,7 +3683,7 @@ def task_size_contact(condition='xys'):
     else:
         u_size_odd = np.random.rand(1) * (max_size - min_size) + min_size
         u_size_odd = np.ones([1,1]) * u_size_odd
-    
+
     perm_reg = perm[cond_reg]
     perm_odd = perm[cond_odd]
 
@@ -3693,7 +3691,7 @@ def task_size_contact(condition='xys'):
     size += [u_size_odd[0, perm_odd]]
 
     size = np.stack(size, 0)
-    
+
     non_valid = size.sum(1)>0.9
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].sum(1)[:,None] * 0.9
@@ -3724,7 +3722,7 @@ def task_size_contact(condition='xys'):
     # shape = []
     xy = []
     for i in range(n_samples):
-            
+
         s1 = shape[i][0]
         s2 = shape[i][1]
         s3 = shape[i][2]
@@ -3749,25 +3747,25 @@ def task_size_contact(condition='xys'):
         xy.append(xy_)
 
     xy = np.stack(xy, 0)
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 
 #################################################################################
 # size + count
 
-# Each image contains sets of objects. Within each set, objects have the same size. All images have the same number of objects in each set. 
+# Each image contains sets of objects. Within each set, objects have the same size. All images have the same number of objects in each set.
 def task_size_count_1(condition='xyidc'):
-    
+
     n_samples = 4
-    
+
     n_groups = np.random.randint(2, 4)
     # n_unique_sizes = np.min(np.random.randint(2, 5), n_groups)
     n_unique_sizes = n_groups
@@ -3779,10 +3777,10 @@ def task_size_count_1(condition='xyidc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1).astype(int)
 
     size_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    size_idx = np.array(cat_lists(size_idx)) 
+    size_idx = np.array(cat_lists(size_idx))
     size_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    size_idx_odd = np.array(cat_lists(size_idx_odd)) 
-    
+    size_idx_odd = np.array(cat_lists(size_idx_odd))
+
     # n_objects_samples = np.stack([n_objects_samples]*n_samples, 0)
     # n_objects_samples[-1] = n_objects_samples_odd
 
@@ -3790,7 +3788,7 @@ def task_size_count_1(condition='xyidc'):
     min_size = max_size/2
 
     max_r, min_r = 2/3, 1/4
-    
+
     min_diff = (max_r - min_r)/4
     r = sample_over_range_t(1, np.array([min_r - min_diff/2, max_r + min_diff/2]), np.ones([1, n_unique_sizes])* min_diff)
     u_size = np.random.rand(n_samples-1) * (max_size - min_size) + min_size
@@ -3798,7 +3796,7 @@ def task_size_count_1(condition='xyidc'):
 
     size = [u_size[i, size_idx] for i in range(n_samples-1)] + [u_size[-1, size_idx_odd]]
     size = np.stack(size, 0)
-    
+
     non_valid = size.__pow__(2).sum(1).__pow__(1/2)>0.9
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].__pow__(2).sum(1).__pow__(1/2)[:,None] * 0.8
@@ -3807,7 +3805,7 @@ def task_size_count_1(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
 
     if 'id' in condition:
         shape = []
@@ -3818,7 +3816,7 @@ def task_size_count_1(condition='xyidc'):
         s = Shape()
         shape = [[s.clone() for i in range(n_objects)] for _ in range(n_samples)]
 
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -3830,11 +3828,11 @@ def task_size_count_1(condition='xyidc'):
 
     return xy, size, shape, color
 
-# Each image contains sets of objects. Within each set, objects have the same size. All images have the same number of sets. 
+# Each image contains sets of objects. Within each set, objects have the same size. All images have the same number of sets.
 def task_size_count_2(condition='xyidc'):
 
     n_samples = 4
-    
+
     n_groups = np.random.choice([2,3,4], size=2, replace=False)
     # n_unique_sizes = n_groups
     n_objects_samples = np.random.randint(2, 4, size=n_groups[0])
@@ -3842,10 +3840,10 @@ def task_size_count_2(condition='xyidc'):
     n_objects_samples_odd = sample_int_sum_n(n_groups[1], n_objects, min_v=1)
 
     size_idx = [[i]*n_objects_samples[i] for i in range(n_groups[0])]
-    size_idx = np.array(cat_lists(size_idx)) 
+    size_idx = np.array(cat_lists(size_idx))
     size_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups[1])]
-    size_idx_odd = np.array(cat_lists(size_idx_odd)) 
-    
+    size_idx_odd = np.array(cat_lists(size_idx_odd))
+
     # n_objects_samples = np.stack([n_objects_samples]*n_samples, 0)
     # n_objects_samples[-1] = n_objects_samples_odd
 
@@ -3853,7 +3851,7 @@ def task_size_count_2(condition='xyidc'):
     min_size = max_size/2
 
     max_r, min_r = 2/3, 1/5
-    
+
     min_diff = (max_r - min_r)/4
     r = sample_over_range_t(1, np.array([min_r - min_diff/2, max_r + min_diff/2]), np.ones([1, n_groups[0]])* min_diff)
     u_size = np.random.rand(n_samples-1) * (max_size - min_size) + min_size
@@ -3866,7 +3864,7 @@ def task_size_count_2(condition='xyidc'):
 
     size = [u_size[i, size_idx] for i in range(n_samples-1)] + [u_size_odd[0, size_idx_odd]]
     size = np.stack(size, 0)
-    
+
     non_valid = size.__pow__(2).sum(1).__pow__(1/2)>0.9
     if non_valid.any():
         size[non_valid] = size[non_valid] / size[non_valid].__pow__(2).sum(1).__pow__(1/2)[:,None] * 0.8
@@ -3875,7 +3873,7 @@ def task_size_count_2(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -3885,7 +3883,7 @@ def task_size_count_2(condition='xyidc'):
         s = Shape()
         shape = [[s.clone() for i in range(n_objects)] for _ in range(n_samples)]
 
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -3905,7 +3903,7 @@ def task_size_sym_1(condition='xyc'):
 
     # mir sym:
     # (x0,y0), r, a
-    # o_1 = (0, a - pi/2) 
+    # o_1 = (0, a - pi/2)
     # pos_1 = r * (cos(a1),sin(a1)) + (x0,y0)
     # o_2 = (1, a + pi/2)
     # pos_2 = r * (cos(a2),sin(a2)) + (x0,y0)
@@ -3914,14 +3912,14 @@ def task_size_sym_1(condition='xyc'):
     n_samples = 4
 
     n_objects = 5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     odd_condition = np.random.randint(2)
     # odd_condition = 0
-    
+
     max_size = 0.25
     min_size = max_size/5
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     non_valid = size.sum(1) > 0.9
     if non_valid.any():
@@ -3931,13 +3929,13 @@ def task_size_sym_1(condition='xyc'):
 
     x_range = (0.5 - (size.max(1) + size.min(1))/2*margin_r)
     x_starting = size.min(1)/2*margin_r
-    
+
     x1 = (size - size.min(1)[:,None]) / (size.max(1) - size.min(1))[:,None] * x_range[:,None] + x_starting[:,None]
     x1 = 0.5 - x1
 
     if odd_condition == 0:
         x1[-1] = np.random.rand(n_objects) * (0.5 - size[-1]) + size[-1]/2
-        
+
     x2 = 1 - x1
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size)
@@ -3951,16 +3949,16 @@ def task_size_sym_1(condition='xyc'):
     # choose x based on size
     # choose y st there's no overlap
 
-    
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -3970,12 +3968,12 @@ def task_size_sym_1(condition='xyc'):
 
                 # if odd_condition == 4 and i == n_samples-1:
                 #     a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-                
+
                 # s1.rotate(a_)
 
                 if not (odd_condition == 2 and i == n_samples-1 and j in odd_samples):
                     s2.flip()
-                
+
                 # s2.rotate(a_)
 
                 if odd_condition == 1 and i == n_samples-1 and j in odd_samples:
@@ -3987,34 +3985,34 @@ def task_size_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
                 s2 = s.clone()
 
                 # a_ = a[i]
-                
+
                 # if odd_condition == 4 and i == n_samples-1:
                 #     a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
 
                 # s1.rotate(a_)
-                
+
                 if not (odd_condition == 2 and i == n_samples-1 and j in odd_samples):
                     s2.flip()
-                
+
                 # s2.rotate(a_)
 
                 if odd_condition == 1 and i == n_samples-1 and j in odd_samples:
@@ -4026,7 +4024,7 @@ def task_size_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
 
     if 'c' in condition:
@@ -4035,7 +4033,7 @@ def task_size_sym_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects*2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains objects in a rotational symmetry with respect to the center of the image. The distance to the center is correlated with the size for each object.
@@ -4046,21 +4044,21 @@ def task_size_sym_2(condition='xyc'):
     n_objects = 3
 
     xy0 = np.ones([n_samples, 1, 2]) * 0.5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     odd_condition = np.random.randint(2)
     # odd_condition = 0
-    
+
     max_size = 0.20
     min_size = max_size/5
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     size = np.concatenate([size]*2, 1)
     size_margin = 0.02
     size = (size-size.min(1)[:,None])/(size.max(1)-size.min(1))[:,None] * (max_size - min_size - size_margin*2) + min_size + size_margin
     # rad = np.random.rand(n_samples, n_objects) * (0.5 - size[:,:n_objects]*np.sqrt(2)) + size[:,:n_objects]*np.sqrt(2)/2
     # rad = np.concatenate([rad]*2, 1)
-    
+
     # non_valid = np.pi - (size[:,:n_objects]*np.sqrt(2)/rad[:,:n_objects]).sum(1) < 0
     # if non_valid.any():
     #     size[non_valid] = size[non_valid] / (size[non_valid,:n_objects]*np.sqrt(2)/rad[non_valid,:n_objects]).sum(1) * np.pi * 0.9
@@ -4071,7 +4069,7 @@ def task_size_sym_2(condition='xyc'):
     shuffle_perm, unshuffle_perm = zip(*[sample_shuffle_unshuffle_indices(n_objects*2) for _ in range(n_samples)])
     shuffle_perm, unshuffle_perm = np.stack(shuffle_perm, 0), np.stack(unshuffle_perm, 0)
 
-    
+
     n_samples_over = 100
 
     angles_ = []
@@ -4099,7 +4097,7 @@ def task_size_sym_2(condition='xyc'):
         # shuffle_t(angles, unshuffle_perm)
         xy = xy0[0:1,:,:] + rad[:,:,None] * np.stack([np.cos(angles), np.sin(angles)], 2)[:,:,:]
         valid = (np.linalg.norm(xy[:,:,None,:] - xy[:,None,:,:], axis=-1) - (shuf_size[None,i,:,None]+shuf_size[None,i,None,:])*np.sqrt(2)/2 > 0).reshape([n_samples_over, (n_objects*2)**2])[:,triu_idx].all(1)
-        while not valid.any():    
+        while not valid.any():
 
             if i == n_samples-1:
                 rad = np.random.rand(n_samples_over, n_objects) * (0.5 - shuf_size[i:i+1,:n_objects]*np.sqrt(2)) + shuf_size[i:i+1,:n_objects]*np.sqrt(2)/2
@@ -4121,7 +4119,7 @@ def task_size_sym_2(condition='xyc'):
     angles = np.stack(angles_, 0)
 
     size = np.concatenate([np.ones([n_samples, 1])*0.03, size], 1)
-    xy = np.concatenate([xy0, xy], 1) 
+    xy = np.concatenate([xy0, xy], 1)
 
     s0 = Shape()
 
@@ -4130,10 +4128,10 @@ def task_size_sym_2(condition='xyc'):
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects), replace=False)
-            
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -4151,19 +4149,19 @@ def task_size_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
@@ -4182,7 +4180,7 @@ def task_size_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
 
     if 'c' in condition:
@@ -4191,7 +4189,7 @@ def task_size_sym_2(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects*2+1, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 
@@ -4204,11 +4202,11 @@ def task_size_sym_2(condition='xyc'):
 
 # Each image contain 2 similarly shaped objects.
 def task_shape_shape(condition='xyscid'):
-        
+
     n_samples = 4
 
     n_objects = 2
-    
+
     # image and object parameters
 
     max_size = 0.8/2
@@ -4261,18 +4259,18 @@ def task_shape_shape(condition='xyscid'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
 # shape + color
 
-# Each image contains 2 objects. The association between shapes and colors is fixed across images. 
+# Each image contains 2 objects. The association between shapes and colors is fixed across images.
 def task_shape_color(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_size = 0.9/2
     min_size = max_size/2
 
@@ -4301,13 +4299,13 @@ def task_shape_color(condition='xyscid_hsv'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, 2])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, 2) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, 2])
- 
+
     color = np.stack([h,s,v], 2)
 
     s1, s2 = Shape(), Shape()
@@ -4325,26 +4323,26 @@ def task_shape_color(condition='xyscid_hsv'):
 
     return xy, size, shape, color
 
-# In each image, objects with the same shapes have the same color. 
+# In each image, objects with the same shapes have the same color.
 def task_shape_color_2(condition='xyidc'):
-    
+
     n_samples = 4
-    
+
     n_groups = np.random.randint(2, 4)
-    
+
     n_objects_samples = [np.random.randint(2, 5, size=n_groups) for i in range(n_samples)]
     n_objects = np.array([n.sum() for n in n_objects_samples])
 
     n_objects_max = n_objects.max()
     color_idx = [cat_lists([[j]*n_objects_samples[i][j] for j in range(n_groups)])  for i in range(n_samples)]
-    
+
     # make sure shuffling creates an odd one out
     # np.random.shuffle(color_idx[-1])
     color_idx[-1] = np.roll(color_idx[-1], 1)
 
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size*2/3
-    
+
     if 's' in condition:
         size = np.random.rand(n_samples, n_objects_max) * (max_size[:,None]-min_size[:,None]) + min_size[:,None]
     else:
@@ -4355,7 +4353,7 @@ def task_shape_color_2(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1, :n_objects[i]], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -4385,7 +4383,7 @@ def task_shape_color_2(condition='xyidc'):
         else:
             s = np.random.rand() * 0.4 + 0.6
             s = s * np.ones([n_samples, n_groups])
-            
+
         if 'v' in condition:
             v = (np.random.rand(n_samples, n_groups) * 0.5 + 0.5)
         else:
@@ -4397,13 +4395,13 @@ def task_shape_color_2(condition='xyidc'):
 
     return xy, size, shape, color
 
-# In each image, objects with the same shapes have different colors. 
+# In each image, objects with the same shapes have different colors.
 def task_shape_color_3(condition='xyidc'):
 
     n_samples = 4
-    
+
     n_groups = np.random.randint(2, 4)
-    
+
     n_objects_samples = [np.random.randint(2, 4, size=n_groups) for i in range(n_samples)]
     n_objects = np.array([n.sum() for n in n_objects_samples])
 
@@ -4419,7 +4417,7 @@ def task_shape_color_3(condition='xyidc'):
 
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size*2/3
-    
+
     if 's' in condition:
         size = np.random.rand(n_samples, n_objects_max) * (max_size[:,None]-min_size[:,None]) + min_size[:,None]
     else:
@@ -4430,7 +4428,7 @@ def task_shape_color_3(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -4460,7 +4458,7 @@ def task_shape_color_3(condition='xyidc'):
         else:
             s = np.random.rand() * 0.4 + 0.6
             s = s * np.ones([n_samples, n_objects.max()])
-            
+
         if 'v' in condition:
             v = (np.random.rand(n_samples, n_objects.max()) * 0.5 + 0.5)
         else:
@@ -4475,13 +4473,13 @@ def task_shape_color_3(condition='xyidc'):
 #################################################################################
 # shape + rot
 
-# Each image contains 2 objects that have similar shapes and a third differently shaped object. The similarly shaped objects are randomly rotated. The shapes are the same across images. 
+# Each image contains 2 objects that have similar shapes and a third differently shaped object. The similarly shaped objects are randomly rotated. The shapes are the same across images.
 def task_shape_rot_1(condition='xyc'):
 
     n_samples = 4
 
     n_objects = 3
-    
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -4508,14 +4506,14 @@ def task_shape_rot_1(condition='xyc'):
         s1_.rotate(angles[i,0])
         s2.rotate(angles[i,1])
         s3_.rotate(angles[i,2])
-            
+
         shape.append([s1_, s2, s3_])
 
     xy = []
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1]*np.sqrt(2), n_sample_min=1)
         xy.append(xy_[0])
-        
+
 
     if 'c' in condition:
         color = sample_random_colors(n_samples)
@@ -4523,19 +4521,19 @@ def task_shape_rot_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
 # shape + flip
 
-# Each image contains 2 objects that have similar shapes and a third differently shaped object. The similarly shaped objects are randomly flipped. The shapes are the same across images. 
+# Each image contains 2 objects that have similar shapes and a third differently shaped object. The similarly shaped objects are randomly flipped. The shapes are the same across images.
 def task_shape_flip_1(condition='xycid'):
 
     n_samples = 4
 
     n_objects = 3
-    
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -4562,16 +4560,16 @@ def task_shape_flip_1(condition='xycid'):
         # s1_.rotate(angles[i,0])
         s2.flip()
         s2.rotate(angles[i,1])
-        
+
         # s3_.rotate(angles[i,2])
-            
+
         shape.append([s1_, s2, s3_])
 
     xy = []
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1]*np.sqrt(2), n_sample_min=1)
         xy.append(xy_[0])
-        
+
 
     if 'c' in condition:
         color = sample_random_colors(n_samples)
@@ -4579,7 +4577,7 @@ def task_shape_flip_1(condition='xycid'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -4587,22 +4585,22 @@ def task_shape_flip_1(condition='xycid'):
 
 # Each image contains 2 objects, A and B, whose shapes don't change across images. In each image, A is inside B.
 def task_shape_inside(condition='c'):
-    
+
     n_samples = 4
-    
+
     max_size = 0.5
     min_size = max_size/2
 
-    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size 
+    size_a = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size_b = np.random.rand(n_samples) * (size_a/2.5 - size_a/4) + size_a/4
 
     done = False
-    max_attempts = 10 
-    
+    max_attempts = 10
+
     range_1 = 1 - size_a[:,None]
     starting_1 = size_a[:,None]/2
 
-    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1 
+    xy1 = np.random.rand(n_samples,2) * range_1 + starting_1
 
     s1 = Shape(gap_max=0.06, hole_radius=0.2)
     s2 = Shape(gap_max=0.06, hole_radius=0.2)
@@ -4614,19 +4612,19 @@ def task_shape_inside(condition='c'):
         s2.randomize()
         samples = []
         for i in range(n_samples-1):
-            
+
             samples_i = sample_position_inside_1(s1, s2, size_b[i]/size_a[i])
             samples.append(samples_i)
-    
+
         samples_i = sample_position_inside_1(s2, s1, size_b[-1]/size_a[-1])
         samples.append(samples_i)
-            
+
         if all([len(s)>0 for s in samples]):
             done = True
-    
+
         if done:
             break
-    
+
     if not done:
         return np.zeros([100,100])
 
@@ -4638,7 +4636,7 @@ def task_shape_inside(condition='c'):
     shape = shapes
     xy2 = [s[0] for s in samples]
     xy2 = np.array(xy2)*size_a[:,None] + xy1
-    
+
     xy = np.stack([xy1, xy2], axis=1)
     size = np.stack([size_a, size_b], axis=1)
 
@@ -4653,7 +4651,7 @@ def task_shape_inside(condition='c'):
 
 # Each image contains several objects. In each image, if an object is inside another object, they share the same shape.
 def task_shape_inside_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = np.random.randint(2,4)
     n_objects_in = np.random.randint(1, n_objects, size=n_samples)
@@ -4693,12 +4691,12 @@ def task_shape_inside_1(condition='xyscid_hsv'):
         # xy_ = []
         xy_in_ = []
         for j in range(n_objects_in[i]):
-            
+
             if i == n_samples-1:
-        
+
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
                 s2 = Shape(gap_max=0.06, hole_radius=0.2)
-                
+
                 # done = False
                 # for _ in range(max_attempts):
                 #     samples = sample_position_inside_many(s1, [s2], [size_in[i,j]/size[i,j]])
@@ -4711,15 +4709,15 @@ def task_shape_inside_1(condition='xyscid_hsv'):
                 # if done:
                 #     xy_ = samples[0,0]
                 #     xy_in_.append(xy_ * size[i,j] + xy[i,j])
-            
+
                 xy_in_.append(xy[i,j])
-            
+
                 shape_.append(s1)
                 shape_in.append(s2)
-        
+
             else:
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
-            
+
                 # done = False
                 # for _ in range(max_attempts):
                 #     samples = sample_position_inside_many(s1, [s1], [size_in[i,j]/size[i,j]])
@@ -4728,16 +4726,16 @@ def task_shape_inside_1(condition='xyscid_hsv'):
                 #         break
                 #     else:
                 #         s1.randomize()
-                
+
                 # if done:
                 #     xy_ = samples[0,0]
                 #     xy_in_.append(xy_ * size[i,j] + xy[i,j])
-            
+
                 xy_in_.append(xy[i,j])
-        
+
                 shape_.append(s1)
                 shape_in.append(s1.clone())
-        
+
         shape_ += [Shape() for j in range(n_objects_in[i], n_objects)]
 
         shape.append(shape_ + shape_in)
@@ -4745,7 +4743,7 @@ def task_shape_inside_1(condition='xyscid_hsv'):
 
     size = np.concatenate([size, size_in], 1)
     xy = [np.concatenate([xy[i], xy_in[i]], 0) for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -4753,7 +4751,7 @@ def task_shape_inside_1(condition='xyscid_hsv'):
 
 # Each image contains 3 objects among which 2 have the same shape and 2 are in contact. The objects with similar shapes are in contact in all images.
 def task_shape_contact_2(condition=''):
-        
+
     n_samples = 4
     # n_objects = 3
     n_objects = 3 * np.ones(n_samples).astype(int)
@@ -4793,17 +4791,17 @@ def task_shape_contact_2(condition=''):
     xy = []
 
     for i in range(n_samples):
-        
+
         # s1 = Shape()
         # s2 = Shape()
         # s3 = Shape()
 
-        # dir_ = dirs[i] 
+        # dir_ = dirs[i]
         # if n_obj_connected[i] == n_objects[i]:
         #     positions, clump_size = sample_contact_many(shape[i][:10], size[i])
         #     xy0 = np.random.rand(2) * (1-clump_size) + clump_size/2
         #     xy_ = positions + xy0[None,:]
-        
+
         # elif n_obj_connected[i] > 0:
         positions, clump_size = sample_contact_many(shape[i][:n_obj_connected[i]], size[i,:n_obj_connected[i]])
 
@@ -4815,7 +4813,7 @@ def task_shape_contact_2(condition=''):
         size_ = np.ones([n_free_objs, 2])
         size_[0] = clump_size
         size_[1:] = size_[1:] * size[i, n_obj_connected[i]:n_objects[i], None]
-        
+
         n_samples_over = 100
         xy_ = np.random.rand(n_samples_over, n_free_objs, 2) * (1 - size_[None,:,:]) + size_[None,:,:]/2
         valid = (np.abs(xy_[:,:,None,:] - xy_[:,None,:,:]) - (size_[None,:,None,:] + size_[None,None,:,:])/2 > 0).any(3).reshape([n_samples_over, n_free_objs**2])[:, triu_idx].all(1)
@@ -4830,7 +4828,7 @@ def task_shape_contact_2(condition=''):
         #     n_samples_over = 100
         #     triu_idx = np.triu_indices(n_objects[i], k=1)
         #     triu_idx = triu_idx[0]*n_objects[i] + triu_idx[1]
-            
+
         #     xy_ = np.random.rand(n_samples_over, n_objects[i], 2) * (1 - size[i:i+1,:n_objects[i],None]) + size[i:i+1,:n_objects[i],None]/2
         #     valid = (np.abs(xy_[:,:,None,:] - xy_[:,None,:,:]) - (size[i:i+1,:n_objects[i],None,None] + size[i:i+1,None,:n_objects[i],None])/2 > 0).any(3).reshape([n_samples_over, n_objects[i]**2])[:, triu_idx].all(1)
         #     while not valid.any():
@@ -4838,7 +4836,7 @@ def task_shape_contact_2(condition=''):
         #         valid = (np.abs(xy_[:,:,None,:] - xy_[:,None,:,:]) - (size[i:i+1,:n_objects[i],None,None] + size[i:i+1,None,:n_objects[i],None])/2 > 0).any(3).reshape([n_samples_over, n_objects[i]**2])[:, triu_idx].all(1)
         #     xy_ = xy_[valid][0]
 
-        xy.append(xy_)    
+        xy.append(xy_)
 
     if 'c' in condition:
         color = sample_random_colors(n_samples)
@@ -4846,7 +4844,7 @@ def task_shape_contact_2(condition=''):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects[i], 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 3 objects among which 2 have the same shape and 2 are in contact. The objects with similar shapes are in contact in all images. The objects have different sizes and colors.
@@ -4858,10 +4856,10 @@ task_shape_contact_4 = lambda: task_shape_contact_2('c')
 def task_shape_contact_5(condition=''):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.choice([3,4], replace=False)
 
     n_objects = np.random.randint(n_groups+1, n_groups*2)
@@ -4873,9 +4871,9 @@ def task_shape_contact_5(condition=''):
     # n_objects = n_objects_samples.sum()
     n_objects_samples = []
     for i in range(n_samples):
-        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))    
+        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))
     # n_objects_samples.append(sample_int_sum_n(n_groups_odd, n_objects, min_v=1))
-    
+
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
 
@@ -4904,7 +4902,7 @@ def task_shape_contact_5(condition=''):
         n_g = n_groups
         xy_ = []
         n = 0
-        positions_ = [] 
+        positions_ = []
         clump_size_ = []
 
         shape_ = []
@@ -4935,18 +4933,18 @@ def task_shape_contact_5(condition=''):
 
 
         for j in range(n_g):
-        
+
             # positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
             positions, clump_size = sample_contact_many(shape_[j], size[i, n:n + n_obj_s[j]])
             n = n + n_obj_s[j]
-            
+
             positions_.append(positions)
             clump_size_.append(clump_size)
-        
+
         clump_size = np.stack(clump_size_, 0)*1.1
         xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
         xy0 = xy0[0]
-        
+
         for j in range(n_g):
             xy_.append(positions_[j] + xy0[j:j+1,:])
 
@@ -4963,10 +4961,10 @@ def task_shape_contact_5(condition=''):
 def task_shape_count_1(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.randint(2, 4)
 
     n_objects_samples = np.random.randint(2, 4, size=n_groups)
@@ -4977,11 +4975,11 @@ def task_shape_count_1(condition='xyidc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1)
 
     shape_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    shape_idx = np.array(cat_lists(shape_idx)) 
+    shape_idx = np.array(cat_lists(shape_idx))
     shape_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    shape_idx_odd = np.array(cat_lists(shape_idx_odd)) 
-    
-    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty 
+    shape_idx_odd = np.array(cat_lists(shape_idx_odd))
+
+    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty
 
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
@@ -5013,7 +5011,7 @@ def task_shape_count_1(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -5029,10 +5027,10 @@ def task_shape_count_1(condition='xyidc'):
 def task_shape_count_2(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.choice([2,3,4], replace=False, size=2)
 
     n_objects = np.random.randint(n_groups.max(), n_groups.max()*2)
@@ -5044,13 +5042,13 @@ def task_shape_count_2(condition='xyidc'):
     # n_objects = n_objects_samples.sum()
     n_objects_samples = []
     for i in range(n_samples):
-        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))    
+        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))
     n_objects_samples.append(sample_int_sum_n(n_groups_odd, n_objects, min_v=1))
 
     shape_idx = [cat_lists([[j]*n_objects_samples[i][j] for j in range(n_groups)]) for i in range(n_samples-1)]
     shape_idx += [cat_lists([[j]*n_objects_samples[-1][j] for j in range(n_groups_odd)])]
-    # shape_idx = cat_lists(shape_idx) 
-    
+    # shape_idx = cat_lists(shape_idx)
+
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
 
@@ -5079,7 +5077,7 @@ def task_shape_count_2(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -5103,15 +5101,15 @@ task_rot_rot_1 = lambda: task_shape_shape(condition='xyscidr')
 
 # Each image contain 2 similarly shaped objects, the difference between rotation of the 2 objects is the same in all images.
 def task_rot_rot_3(condition='xysc'):
-        
+
     n_samples = 4
 
     n_objects = 2
-    
+
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.4
     min_size = max_size/2
 
@@ -5122,7 +5120,7 @@ def task_rot_rot_3(condition='xysc'):
     angle_diff_odd = np.mod(angle_diff + angle_diff_diff * np.random.choice([-1,1]), np.pi)
     angle_diffs = np.ones(n_samples) * angle_diff
     angle_diffs[-1] = angle_diff_odd
-    
+
     angle = np.random.rand(n_samples) * 2 * np.pi
     angle = np.stack([angle, angle + angle_diffs], 1)
 
@@ -5146,7 +5144,7 @@ def task_rot_rot_3(condition='xysc'):
         size = size * np.ones(n_samples, 2)
 
     if 'xy' in condition:
-            
+
         # if 'x' in condition:
         #     x = np.random.rand(n_samples) * (1-size) + size/2
         # else:
@@ -5175,7 +5173,7 @@ def task_rot_rot_3(condition='xysc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -5187,7 +5185,7 @@ def task_rot_flip_1(condition='xyc'):
     n_samples = 4
 
     n_objects = 4
-    
+
     max_size = 0.9/3
     min_size = max_size/2
 
@@ -5216,25 +5214,25 @@ def task_rot_flip_1(condition='xyc'):
             if l == 0:
                 s3.flip()
                 s4.flip()
-                
-                s2.rotate(angles[i,0])        
+
+                s2.rotate(angles[i,0])
                 s4.rotate(angles[i,1])
-            
+
             elif l == 1:
                 s3.flip()
                 # s4.flip()
 
-                s2.rotate(angles[i,0])        
+                s2.rotate(angles[i,0])
                 s4.rotate(angles[i,0])
 
         else:
 
             s3.flip()
             s4.flip()
-            
+
             s2.rotate(angles[i,0])
             s4.rotate(angles[i,0])
-                
+
         shape.append([s1, s2, s3, s4])
 
     # xy = []
@@ -5242,7 +5240,7 @@ def task_rot_flip_1(condition='xyc'):
     #     xy_ = sample_positions(size[i:i+1]*np.sqrt(2), n_sample_min=1)
     #     xy.append(xy_[0])
 
-    xy = np.array([[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]])        
+    xy = np.array([[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]])
     xy = np.stack([xy]*n_samples, 0)
 
     if 'c' in condition:
@@ -5251,22 +5249,22 @@ def task_rot_flip_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
 # rotation + color
 
-# In each image objects with the same shapes have the same color. All objects are randomly rotated. 
+# In each image objects with the same shapes have the same color. All objects are randomly rotated.
 def task_rot_color(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.randint(2, 4)
-    
+
     n_objects_samples = [np.random.randint(2, 4, size=n_groups) for i in range(n_samples)]
     n_objects = np.array([n.sum() for n in n_objects_samples])
 
@@ -5276,7 +5274,7 @@ def task_rot_color(condition='xyidc'):
 
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size*2/3
-    
+
     if 's' in condition:
         size = np.random.rand(n_samples, n_objects.max()) * (max_size-min_size) + min_size
     else:
@@ -5289,7 +5287,7 @@ def task_rot_color(condition='xyidc'):
         # xy_ = sample_positions(size[i:i+1] * np.sqrt(2), n_sample_min=1)
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -5322,7 +5320,7 @@ def task_rot_color(condition='xyidc'):
         else:
             s = np.random.rand() * 0.4 + 0.6
             s = s * np.ones([n_samples, n_groups])
-            
+
         if 'v' in condition:
             v = (np.random.rand(n_samples, n_groups) * 0.5 + 0.5)
         else:
@@ -5339,10 +5337,10 @@ def task_rot_color(condition='xyidc'):
 
 # Each image contains 2 pairs of objects. In each pair, one of the objects is inside the other. One of the pairs is a rotation of the other pair.
 def task_rot_inside_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 2
-    
+
     max_attempts = 10
 
     max_size = 0.9/n_objects
@@ -5358,7 +5356,7 @@ def task_rot_inside_1(condition='xyscid_hsv'):
     size = np.concatenate([size, size_in], 1)
 
     if 'xy' in condition:
-            
+
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size[:,:2]*np.sqrt(2))
         co2 = np.random.rand(n_samples, 2) * (1-size[:,:2]*np.sqrt(2)) + size[:,:2]*np.sqrt(2)/2
         xy = [co1, co2]# if np.random.randint(2)==0 else [co2, co1]
@@ -5366,7 +5364,7 @@ def task_rot_inside_1(condition='xyscid_hsv'):
 
         perm = np.random.randint(2, size=n_samples)
         xy[perm==0] = xy[perm==0, :, ::-1]
-       
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -5401,7 +5399,7 @@ def task_rot_inside_1(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s1, s3, size_in[i,0]/size[i,0])
             if len(samples)>0:
                 done1 = True
-            
+
             if done1:
                 break
             else:
@@ -5419,7 +5417,7 @@ def task_rot_inside_1(condition='xyscid_hsv'):
 
             s2 = s1.clone()
             s4 = s3.clone()
-            
+
             if i == n_samples-1:
                 odd_cond = np.random.choice([0,1])
                 if odd_cond == 0:
@@ -5433,12 +5431,12 @@ def task_rot_inside_1(condition='xyscid_hsv'):
                 s4.rotate(angles[i])
 
         shape.append([s1, s2, s3, s4])
-    
+
     xy_in = np.stack(xy_in, 0).reshape([n_samples, 2, 2])
     xy = np.concatenate([xy, xy_in], 1)
 
     return xy, size, shape, color
-    
+
 # In each image, if an object contains on object, they share the same shape. The objects are randomly rotated.
 def task_rot_inside_2(condition='xyscid_hsv'):
     n_samples = 4
@@ -5471,10 +5469,10 @@ def task_rot_inside_2(condition='xyscid_hsv'):
     shape = []
     xy_in = []
     # size_in = []
-        
-    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
-    angles = np.random.choice([0,1/4,2/4,3/4], size=n_samples * n_objects).reshape([n_samples, n_objects]) * 2 * np.pi 
-    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
+
+    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
+    angles = np.random.choice([0,1/4,2/4,3/4], size=n_samples * n_objects).reshape([n_samples, n_objects]) * 2 * np.pi
+    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
 
     size_in = np.random.rand(n_samples, n_objects) * (size/2 - size/3) + size/3
 
@@ -5484,12 +5482,12 @@ def task_rot_inside_2(condition='xyscid_hsv'):
         # xy_ = []
         xy_in_ = []
         for j in range(n_objects_in[i]):
-            
+
             if i == n_samples-1:
-        
+
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
                 s2 = Shape(gap_max=0.06, hole_radius=0.2)
-                
+
                 # done = False
                 # for _ in range(max_attempts):
                 #     samples = sample_position_inside_many(s1, [s2], [size_in[i,j]/size[i,j]])
@@ -5502,12 +5500,12 @@ def task_rot_inside_2(condition='xyscid_hsv'):
                 # if done:
                 #     xy_ = samples[0,0]
                 #     xy_in_.append(xy_ * size[i,j] + xy[i,j])
-            
+
                 xy_in_.append(xy[i,j])
-            
+
                 shape_.append(s1)
                 shape_in.append(s2)
-        
+
             else:
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
                 sr = s1.clone()
@@ -5520,16 +5518,16 @@ def task_rot_inside_2(condition='xyscid_hsv'):
                 #         break
                 #     else:
                 #         s1.randomize()
-                
+
                 # if done:
                 #     xy_ = samples[0,0]
                 #     xy_in_.append(xy_ * size[i,j] + xy[i,j])
-            
+
                 xy_in_.append(xy[i,j])
-                
+
                 shape_.append(s1)
                 shape_in.append(sr)
-        
+
         shape_ += [Shape() for j in range(n_objects_in[i], n_objects)]
 
         shape.append(shape_ + shape_in)
@@ -5537,7 +5535,7 @@ def task_rot_inside_2(condition='xyscid_hsv'):
 
     size = np.concatenate([size, size_in], 1)
     xy = [np.concatenate([xy[i], xy_in[i]], 0) for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -5556,10 +5554,10 @@ task_rot_contact_2 = lambda: task_shape_contact_5('r')
 def task_rot_count_1(condition='xyc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_objects = np.random.randint(4, 7)
 
     n_groups = np.random.randint(2, min(n_objects//2+1, 4))
@@ -5573,11 +5571,11 @@ def task_rot_count_1(condition='xyc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1)
 
     shape_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    shape_idx = np.array(cat_lists(shape_idx)) 
+    shape_idx = np.array(cat_lists(shape_idx))
     shape_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    shape_idx_odd = np.array(cat_lists(shape_idx_odd)) 
-    
-    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty 
+    shape_idx_odd = np.array(cat_lists(shape_idx_odd))
+
+    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty
 
     max_size = 0.9/(np.sqrt(n_objects)*1.5)
     min_size = max_size*2/3
@@ -5609,7 +5607,7 @@ def task_rot_count_1(condition='xyc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     # if 'id' in condition:
     #     shape = []
     #     for i in range(n_samples):
@@ -5618,9 +5616,9 @@ def task_rot_count_1(condition='xyc'):
     # else:
     #     s = Shape()
     #     shape = [[s.clone() for i in range(n_objects)] for _ in range(n_samples)]
-    
-    angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
-    
+
+    angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
+
     for i in range(n_samples):
         for j in range(n_objects):
             shape[i][j].rotate(angles[i,j])
@@ -5649,16 +5647,16 @@ task_flip_flip_1 = lambda: task_shape_shape(condition='xyscidf')
 #################################################################################
 # flip + color
 
-# In each image objects with the same shapes have the same color. All objects are randomly flipped. 
+# In each image objects with the same shapes have the same color. All objects are randomly flipped.
 def task_flip_color_1(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.randint(2, 4)
-    
+
     n_objects_samples = [np.random.randint(2, 4, size=n_groups) for i in range(n_samples)]
     n_objects = np.array([n.sum() for n in n_objects_samples])
 
@@ -5670,7 +5668,7 @@ def task_flip_color_1(condition='xyidc'):
 
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size*2/3
-    
+
     if 's' in condition:
         size = np.random.rand(n_samples, n_objects.max()) * (max_size-min_size) + min_size
     else:
@@ -5683,7 +5681,7 @@ def task_flip_color_1(condition='xyidc'):
         # xy_ = sample_positions(size[i:i+1] * np.sqrt(2), n_sample_min=1)
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -5718,7 +5716,7 @@ def task_flip_color_1(condition='xyidc'):
         else:
             s = np.random.rand() * 0.4 + 0.6
             s = s * np.ones([n_samples, n_groups])
-            
+
         if 'v' in condition:
             v = (np.random.rand(n_samples, n_groups) * 0.5 + 0.5)
         else:
@@ -5736,10 +5734,10 @@ def task_flip_color_1(condition='xyidc'):
 
 # Each image contains 2 pairs of objects. In each pair, one of the objects is inside the other. One of the pairs is a flip of the other pair.
 def task_flip_inside_1(condition='xyscid_hsv'):
-    
+
     n_samples = 4
     n_objects = 2
-    
+
     max_attempts = 10
 
     max_size = 0.9/n_objects
@@ -5758,7 +5756,7 @@ def task_flip_inside_1(condition='xyscid_hsv'):
     size = np.concatenate([size, size_in], 1)
 
     if 'xy' in condition:
-            
+
         co1 = sample_over_range_t(n_samples, np.array([0,1]), size[:,:2]*np.sqrt(2))
         co2 = np.random.rand(n_samples, 2) * (1-size[:,:2]*np.sqrt(2)) + size[:,:2]*np.sqrt(2)/2
         xy = [co1, co2]# if np.random.randint(2)==0 else [co2, co1]
@@ -5766,7 +5764,7 @@ def task_flip_inside_1(condition='xyscid_hsv'):
 
         perm = np.random.randint(2, size=n_samples)
         xy[perm==0] = xy[perm==0, :, ::-1]
-       
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -5801,7 +5799,7 @@ def task_flip_inside_1(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s1, s3, size_in[i,0]/size[i,0])
             if len(samples)>0:
                 done1 = True
-            
+
             if done1:
                 break
             else:
@@ -5811,7 +5809,7 @@ def task_flip_inside_1(condition='xyscid_hsv'):
         if done1:
             s2 = s1.clone()
             s4 = s3.clone()
-            
+
             if i == n_samples-1:
                 xy_ = samples[0]
                 xy_in.append(xy_ * size[i,0] + xy[i,0])
@@ -5822,7 +5820,7 @@ def task_flip_inside_1(condition='xyscid_hsv'):
                     rot_matrix = np.array([np.cos(angles[i]), -np.sin(angles[i]), np.sin(angles[i]), np.cos(angles[i])])
 
                     xy_r = (np.concatenate([xy_,xy_], 0) * rot_matrix).reshape(2,2).sum(-1)
-                    
+
                     xy_in.append(xy_r * size[i,1] + xy[i,1])
 
                     s2.rotate(angles[i])
@@ -5832,28 +5830,28 @@ def task_flip_inside_1(condition='xyscid_hsv'):
                     xy_r = np.copy(xy_)
                     # xy_r[0] = 1-xy_r[0]
                     xy_r[0] = - xy_r[0]
-                    
+
                     xy_in.append(xy_r * size[i,1] + xy[i,1])
 
                     s4.rotate(angles[i])
-                    s2.flip() 
+                    s2.flip()
                     # s4.flip()
 
-                    
+
             else:
                 xy_ = samples[0]
                 xy_in.append(xy_ * size[i,0] + xy[i,0])
 
                 xy_r = np.copy(xy_)
                 xy_r[0] = -xy_r[0]
-                
+
                 xy_in.append(xy_r * size[i,1] + xy[i,1])
 
-                s2.flip() 
+                s2.flip()
                 s4.flip()
-                
+
         shape.append([s1, s2, s3, s4])
-    
+
     xy_in = np.stack(xy_in, 0).reshape([n_samples, 2, 2])
     xy = np.concatenate([xy, xy_in], 1)
 
@@ -5891,10 +5889,10 @@ def task_flip_inside_2(condition='xyscid_hsv'):
     shape = []
     xy_in = []
     # size_in = []
-        
-    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
-    # angles = np.random.choice([0,1/4,2/4,3/4], size=n_samples * n_objects).reshape([n_samples, n_objects]) * 2 * np.pi 
-    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
+
+    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
+    # angles = np.random.choice([0,1/4,2/4,3/4], size=n_samples * n_objects).reshape([n_samples, n_objects]) * 2 * np.pi
+    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
 
     angles = np.random.rand(n_samples, n_objects) * np.pi/3 - np.pi/6
 
@@ -5906,29 +5904,29 @@ def task_flip_inside_2(condition='xyscid_hsv'):
         # xy_ = []
         xy_in_ = []
         for j in range(n_objects_in[i]):
-            
+
             if i == n_samples-1:
-        
+
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
                 sr = s1.clone()
                 sr.rotate(angles[i,j])
                 # s2 = Shape(gap_max=0.06, hole_radius=0.2)
-                
+
                 xy_in_.append(xy[i,j])
-            
+
                 shape_.append(s1)
                 shape_in.append(sr)
-        
+
             else:
                 s1 = Shape(gap_max=0.06, hole_radius=0.2)
                 sf = s1.clone()
                 sf.flip()
-                
+
                 xy_in_.append(xy[i,j])
-                
+
                 shape_.append(s1)
                 shape_in.append(sf)
-        
+
         shape_ += [Shape() for j in range(n_objects_in[i], n_objects)]
 
         shape.append(shape_ + shape_in)
@@ -5936,7 +5934,7 @@ def task_flip_inside_2(condition='xyscid_hsv'):
 
     size = np.concatenate([size, size_in], 1)
     xy = [np.concatenate([xy[i], xy_in[i]], 0) for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -5955,10 +5953,10 @@ task_flip_contact_2 = lambda: task_shape_contact_5('f')
 def task_flip_count_1(condition='xyc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_objects = np.random.randint(4, 7)
 
     n_groups = np.random.randint(2, min(n_objects//2+1, 4))
@@ -5972,11 +5970,11 @@ def task_flip_count_1(condition='xyc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1)
 
     shape_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    shape_idx = np.array(cat_lists(shape_idx)) 
+    shape_idx = np.array(cat_lists(shape_idx))
     shape_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    shape_idx_odd = np.array(cat_lists(shape_idx_odd)) 
-    
-    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty 
+    shape_idx_odd = np.array(cat_lists(shape_idx_odd))
+
+    # TODO make sure the intersection of shape_idx and shape_idx_odd is empty
 
     max_size = 0.9/(np.sqrt(n_objects)*1.5)
     min_size = max_size*2/3
@@ -6008,7 +6006,7 @@ def task_flip_count_1(condition='xyc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     # if 'id' in condition:
     #     shape = []
     #     for i in range(n_samples):
@@ -6017,10 +6015,10 @@ def task_flip_count_1(condition='xyc'):
     # else:
     #     s = Shape()
     #     shape = [[s.clone() for i in range(n_objects)] for _ in range(n_samples)]
-    
-    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi 
-    flips = np.random.randint(2, size=[n_samples, n_objects]) 
-    
+
+    # angles = np.random.rand(n_samples, n_objects) * 2 * np.pi
+    flips = np.random.randint(2, size=[n_samples, n_objects])
+
     for i in range(n_samples):
         for j in range(n_objects):
             if flips[i,j] == 0:
@@ -6046,11 +6044,11 @@ def task_flip_count_1(condition='xyc'):
 
 # Each image contains 2 objects with similar color hues.
 def task_color_color_1(condition='xyscid_hsv', variable='h'):
-        
+
     n_samples = 4
 
     n_objects = 2
-    
+
     # image and object parameters
 
     max_size = 0.8/2
@@ -6071,13 +6069,13 @@ def task_color_color_1(condition='xyscid_hsv', variable='h'):
         s = (np.random.rand(n_samples)[:,None] * 0.5 + 0.2) * np.ones([n_samples, 2])
         min_diff = 0.15
         s[-1, 1] = (s[-1, 1] + (np.random.rand() * (1-min_diff*2) + min_diff + 0.2) * np.random.choice([-1,1]))%1
-        
+
     elif 's' in condition:
         s = (np.random.rand(n_samples, 2) * 0.5 + 0.2) * np.ones([n_samples, 2])
     else:
         s = np.random.rand() * 0.5 + 0.2
         s = s * np.ones([n_samples, 2])
-        
+
     if variable == 'v':
         v = (np.random.rand(n_samples)[:,None] * 0.5 + 0.5) * np.ones([n_samples, 2])
         min_diff = 0.15
@@ -6088,7 +6086,7 @@ def task_color_color_1(condition='xyscid_hsv', variable='h'):
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, 2])
- 
+
 
     color = np.stack([h,s,v], 2)
 
@@ -6116,7 +6114,7 @@ def task_color_color_1(condition='xyscid_hsv', variable='h'):
         size = size * np.ones(n_samples, 2)
 
     if 'xy' in condition:
-            
+
         # if 'x' in condition:
         #     x = np.random.rand(n_samples) * (1-size) + size/2
         # else:
@@ -6138,7 +6136,7 @@ def task_color_color_1(condition='xyscid_hsv', variable='h'):
         # for i in range(n_samples):
         #     if perm[i]==1:
         #         xy[i] = xy[i, :, ::-1]
-                
+
     else:
         x = np.ones(n_samples, 2) * 0.25
         x[:,1] = 1 - x[:,1]
@@ -6149,9 +6147,9 @@ def task_color_color_1(condition='xyscid_hsv', variable='h'):
 
 # All objects in an image have the same hue.
 def task_color_color_2(condition='nxyscid_hsv', variable='h'):
-        
+
     n_samples = 4
-    
+
     # image and object parameters
 
     if 'n' in condition:
@@ -6159,7 +6157,7 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
     else:
         n_objects = np.random.randint(3, 7)
         n_objects = np.ones(n_samples).astype(int) * n_objects
-    
+
     n_objects_max = n_objects.max()
 
     if variable == 'h':
@@ -6179,13 +6177,13 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
         n_objects_odd = np.random.randint(1, n_objects[-1])
         min_diff = 0.15
         s[-1, :n_objects_odd] = (s[-1, :n_objects_odd] + (np.random.rand(n_objects_odd) * (0.7-min_diff*2) + min_diff + 0.3) * np.random.choice([-1,1], size=n_objects_odd))%1
-        
+
     elif 's' in condition:
         s = (np.random.rand(n_samples, n_objects_max) * 0.7 + 0.3) * np.ones([n_samples, n_objects_max])
     else:
         s = np.random.rand() * 0.7 + 0.3
         s = s * np.ones([n_samples, n_objects_max])
-        
+
     if variable == 'v':
         v = (np.random.rand(n_samples)[:,None] * 0.5 + 0.5) * np.ones([n_samples, n_objects_max])
         n_objects_odd = np.random.randint(1, n_objects[-1])
@@ -6197,7 +6195,7 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
     else:
         v = np.random.rand() * 0.3 + 0.7
         v = v * np.ones([n_samples, n_objects_max])
- 
+
 
     color = np.stack([h,s,v], 2)
 
@@ -6226,7 +6224,7 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
     # else:
     #     size = np.random.rand() * (max_size-min_size) + min_size
     #     size = size * np.ones(n_samples, n_objects_max)
-    
+
     if 's' in condition:
         max_size = 0.9/n_objects
         min_size = max_size/3
@@ -6238,19 +6236,19 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
 
         size = np.random.rand() * (max_size-min_size) + min_size
         size = size * np.ones([n_samples, n_objects_max])
-    
-    if 'xy' in condition:        
+
+    if 'xy' in condition:
         xy = []
         for i in range(n_samples):
             xy_ = sample_positions(size[i:i+1, :n_objects[i]], n_sample_min=1)
             xy.append(xy_[0])
-        
+
     else:
         xy = sample_positions(size.max(0)[None,:], n_sample_min=n_samples)
         # xy_ = []
         # for i in range(n_samples):
         #     xy_.append(xy[i,:n_objects[i]])
-        # xy = 
+        # xy =
 
     xy = [xy[i][:n_objects[i]] for i in range(n_samples)]
     size = [size[i][:n_objects[i]] for i in range(n_samples)]
@@ -6265,10 +6263,10 @@ def task_color_color_2(condition='nxyscid_hsv', variable='h'):
 
 # Each image contains 2 objects, A and B, whose colors don't change across images. In each image, A is inside B.
 def task_color_inside_1(condition='xyscid_hsv'):
-        
+
     n_samples = 4
     n_objects = 1
-    
+
     max_attempts = 10
 
     max_size = 0.7/n_objects
@@ -6282,10 +6280,10 @@ def task_color_inside_1(condition='xyscid_hsv'):
 
     if 'xy' in condition:
         xy = np.random.rand(n_samples, 2) * (1 - size[:, None]) + size[:, None]/2
-       
+
     else:
         xy = np.random.rand(2) * (1 - size[:, None]) + size[:, None]/2
-        xy = np.ones([n_samples, 2]) * xy[None,:] 
+        xy = np.ones([n_samples, 2]) * xy[None,:]
 
     h1 = np.random.rand()
     min_diff = 0.15
@@ -6298,13 +6296,13 @@ def task_color_inside_1(condition='xyscid_hsv'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, 2])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, 2) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, 2])
- 
+
     color = np.stack([h,s,v], 2)
 
 
@@ -6324,7 +6322,7 @@ def task_color_inside_1(condition='xyscid_hsv'):
             samples = sample_position_inside_1(s1, s2, size[i,1]/size[i,0])
             if len(samples)>0:
                 done = True
-            
+
             if done:
                 break
             else:
@@ -6334,9 +6332,9 @@ def task_color_inside_1(condition='xyscid_hsv'):
         if done:
             xy_ = samples[0]
             xy_in.append(xy_ * size[i,0] + xy[i])
-    
+
         shape.append([s1, s2])
-    
+
     xy_in = np.array(xy_in)
     xy = np.stack([xy, xy_in], 1)
 
@@ -6344,7 +6342,7 @@ def task_color_inside_1(condition='xyscid_hsv'):
 
 # Each image contains several objects. In each image, if an object is inside another object, they share the same color.
 def task_color_inside_2(condition='xyscid_hsv'):
-    
+
     n_samples = 4
     n_objects = np.random.randint(2,7)
     n_objects_in = np.random.randint(1, n_objects, size=n_samples)
@@ -6369,7 +6367,7 @@ def task_color_inside_2(condition='xyscid_hsv'):
     # h2 = (h1 + (np.random.rand() * (1-min_diff*2) + min_diff) * np.random.choice([-1,1]))%1
     # h = np.array([h1, h2])[None,:] * np.ones([n_samples, 2])
     # h[-1] = h[-1,::-1]
-    
+
     if 'h' in condition:
         h = np.random.rand(n_samples+1, n_objects)
     else:
@@ -6381,13 +6379,13 @@ def task_color_inside_2(condition='xyscid_hsv'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples+1, n_objects])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples+1, n_objects) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples+1, n_objects])
-    
+
     # might create some incorrect examples
     color = np.stack([h,s,v], 2)
     color = np.concatenate([color]*2, 1)
@@ -6405,7 +6403,7 @@ def task_color_inside_2(condition='xyscid_hsv'):
         # xy_ = []
         xy_in_ = []
         for j in range(n_objects_in[i]):
-        
+
             s1 = Shape(gap_max=0.06, hole_radius=0.2)
             s2 = Shape(gap_max=0.06, hole_radius=0.2)
             done = False
@@ -6421,17 +6419,17 @@ def task_color_inside_2(condition='xyscid_hsv'):
             if done:
                 xy_ = samples[0]
                 xy_in_.append(xy_ * size[i,j] + xy[i,j])
-        
+
             shape_.append(s1)
             shape_in.append(s2)
-    
+
         shape_ += [Shape() for i in range(n_objects_in[i], n_objects)]
         shape.append(shape_ + shape_in)
         xy_in.append(np.array(xy_in_))
 
     size = np.concatenate([size, size_in], 1)
     xy = [np.concatenate([xy[i], xy_in[i]], 0) for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -6439,10 +6437,10 @@ def task_color_inside_2(condition='xyscid_hsv'):
 
 # The images contain 4 objects A,B,C and D. The contact and color configurations are constant across images. For example, a contact configuration is A being in contact with B and C being in contact with D. A color configuration is A and B having the same color which is different from the colors of C and D.
 def task_color_contact(condition='xys'):
-        
+
     n_samples = 4
     n_objects = 4
-    
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -6453,7 +6451,7 @@ def task_color_contact(condition='xys'):
     # a!b c!d a=d 3
     # a!c c!d d!b 4 smaller-bigger small-big
 
-    perm = np.array([    
+    perm = np.array([
         [0,0,0,0],
         [0,0,1,1],
         [0,1,0,1],
@@ -6464,7 +6462,7 @@ def task_color_contact(condition='xys'):
 
     all_conditions = [0,1,2,3,4,5]
     cond_reg, cond_odd = np.random.choice(all_conditions, replace=False, size=2)
-    
+
     n_unique_colors = [1,2,2,3,3,4]
     n_uniques_colors_reg = n_unique_colors[cond_reg]
     n_uniques_colors_odd = n_unique_colors[cond_odd]
@@ -6501,15 +6499,15 @@ def task_color_contact(condition='xys'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, n_objects])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, n_objects) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, n_objects])
-    
+
     color = np.stack([h,s,v], 2)
-    
+
 
     if 's' in condition:
         size = np.random.rand(n_samples, n_objects) * (max_size-min_size) + min_size
@@ -6544,7 +6542,7 @@ def task_color_contact(condition='xys'):
 
     xy = []
     for i in range(n_samples):
-            
+
         s1 = shape[i][0]
         s2 = shape[i][1]
         s3 = shape[i][2]
@@ -6574,10 +6572,10 @@ def task_color_contact(condition='xys'):
 def task_color_count_1(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.randint(2, 5)
 
     n_objects_samples = np.random.randint(2, 4, size=n_groups)
@@ -6588,18 +6586,18 @@ def task_color_count_1(condition='xyidc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1)
 
     color_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    color_idx = np.array(cat_lists(color_idx)) 
+    color_idx = np.array(cat_lists(color_idx))
     color_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    color_idx_odd = np.array(cat_lists(color_idx_odd)) 
-    
-    
+    color_idx_odd = np.array(cat_lists(color_idx_odd))
+
+
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
-    
+
     min_diff = 0.15
 
     h_u = sample_over_range_t(n_samples, np.array([0,1]), np.ones([n_samples, n_groups])*min_diff)
-    
+
     # if 'h' in condition:
     #     h = np.random.rand(n_samples, n_groups)
     # else:
@@ -6611,7 +6609,7 @@ def task_color_count_1(condition='xyidc'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, n_groups])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, n_groups) * 0.5 + 0.5)
     else:
@@ -6644,17 +6642,17 @@ def task_color_count_1(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     return xy, size, shape, color
 
 # Each image contains sets of objects. Within each set, objects have the same color. The number of sets is constant across images.
 def task_color_count_2(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.choice([2,3,4], replace=False, size=2)
 
     n_objects = np.random.randint(n_groups.max(), n_groups.max()*2)
@@ -6666,13 +6664,13 @@ def task_color_count_2(condition='xyidc'):
     # n_objects = n_objects_samples.sum()
     n_objects_samples = []
     for i in range(n_samples-1):
-        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))    
+        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))
     n_objects_samples.append(sample_int_sum_n(n_groups_odd, n_objects, min_v=1))
 
     color_idx = [cat_lists([[j]*n_objects_samples[i][j] for j in range(n_groups)]) for i in range(n_samples-1)]
     color_idx += [cat_lists([[j]*n_objects_samples[-1][j] for j in range(n_groups_odd)])]
-    # shape_idx = cat_lists(shape_idx) 
-    
+    # shape_idx = cat_lists(shape_idx)
+
     max_size = 0.9/n_objects
     min_size = max_size/2
 
@@ -6680,7 +6678,7 @@ def task_color_count_2(condition='xyidc'):
 
     h_u = sample_over_range_t(n_samples-1, np.array([0,1]), np.ones([n_samples-1, n_groups])*min_diff)
     h_u_odd = sample_over_range_t(1, np.array([0,1]), np.ones([1, n_groups_odd])*min_diff)
-    
+
     # if 'h' in condition:
     #     h = np.random.rand(n_samples, n_objects)
     # else:
@@ -6692,7 +6690,7 @@ def task_color_count_2(condition='xyidc'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, max(n_groups, n_groups_odd)])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, max(n_groups, n_groups_odd)) * 0.5 + 0.5)
     else:
@@ -6716,7 +6714,7 @@ def task_color_count_2(condition='xyidc'):
     for i in range(n_samples):
         xy_ = sample_positions(size[i:i+1], n_sample_min=1)
         xy.append(xy_[0])
-        
+
     if 'id' in condition:
         shape = [[Shape() for j in range(n_objects)] for i in range(n_samples)]
 
@@ -6740,12 +6738,12 @@ def task_color_count_2(condition='xyidc'):
 
 # Each image contains 3 objects. In all images, 1 object contains the 2 other objects.
 def task_inside_inside_1(condition='c'):
-       
+
     n_samples = 4
 
-    max_attempts = 10 
+    max_attempts = 10
 
-    # xy1 = np.random.rand(n_samples,2) * range_1 + starting_1 
+    # xy1 = np.random.rand(n_samples,2) * range_1 + starting_1
 
     xy = []
     shapes = []
@@ -6753,7 +6751,7 @@ def task_inside_inside_1(condition='c'):
     conditions_r = [1,2]
     conditions_o = [3,4,5,6]
     sampled_conditions = np.random.choice(conditions_r, size=n_samples)
-    sampled_conditions[-1] = np.random.choice(conditions_o) 
+    sampled_conditions[-1] = np.random.choice(conditions_o)
 
 
     for i in range(n_samples):
@@ -6766,17 +6764,17 @@ def task_inside_inside_1(condition='c'):
         # (-)
         # 1- a, b(c)
         # 2- a(b),c
-        # 3- a(c),b  
-        # 4- a,b,c  
-                
+        # 3- a(c),b
+        # 4- a,b,c
+
         for _ in range(max_attempts):
-            
+
             # a(b(c))
             if sampled_conditions[i] == 1:
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
@@ -6793,7 +6791,7 @@ def task_inside_inside_1(condition='c'):
                 while len(samples_b)==0:
                     sa.randomize()
                     samples_b = sample_position_inside_many(sa, [sb], [size_b/size_a])
-                
+
                 done = True
 
                 xy_b = samples_b[0,0]
@@ -6814,14 +6812,14 @@ def task_inside_inside_1(condition='c'):
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
                 sa = Shape(gap_max=0.07, hole_radius=0.2)
                 sb = Shape(gap_max=0.05)
                 sc = Shape(gap_max=0.05)
-                
+
 
 
                 samples_bc = sample_position_inside_many(sa, [sb, sc], [size_b/size_a, size_c/size_a])
@@ -6830,7 +6828,7 @@ def task_inside_inside_1(condition='c'):
                     sb.randomize()
                     sc.randomize()
                     samples_bc = sample_position_inside_many(sa, [sb, sc], [size_b/size_a, size_c/size_a])
-                
+
                 done = True
 
                 xy_b = samples_bc[0,0]
@@ -6853,7 +6851,7 @@ def task_inside_inside_1(condition='c'):
                 #     xy_a = np.random.rand(2) * range_1 + starting_1
                 #     xy_b = xy_b * size_a + xy_a
                 #     xy_c = xy_c * size_a + xy_a
-                
+
                 # else:
                 #     xy_a = np.random.rand(2) * range_1 + starting_1
                 #     xy_b = xy_a
@@ -6864,14 +6862,14 @@ def task_inside_inside_1(condition='c'):
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
                 sa = Shape(gap_max=0.07, hole_radius=0.2)
                 sb = Shape(gap_max=0.07, hole_radius=0.2)
                 sc = Shape(gap_max=0.05)
-                
+
                 # ca = sa.get_contour()
                 # cb = sb.get_contour()
 
@@ -6883,7 +6881,7 @@ def task_inside_inside_1(condition='c'):
                     sb.randomize()
                     sc.randomize()
                     samples_c = sample_position_inside_many(sb, [sc], [size_c/size_b])
-                
+
                 done = True
 
                 xy_c = samples_c[0,0]
@@ -6911,7 +6909,7 @@ def task_inside_inside_1(condition='c'):
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
@@ -6929,7 +6927,7 @@ def task_inside_inside_1(condition='c'):
                     sa.randomize()
                     sb.randomize()
                     samples_b = sample_position_inside_many(sa, [sb], [size_b/size_a])
-                
+
                 done = True
 
                 xy_b = samples_b[0,0]
@@ -6961,14 +6959,14 @@ def task_inside_inside_1(condition='c'):
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
                 sa = Shape(gap_max=0.07, hole_radius=0.2)
                 sb = Shape(gap_max=0.07, hole_radius=0.2)
                 sc = Shape(gap_max=0.05)
-                
+
                 # ca = sa.get_contour()
                 # cb = sb.get_contour()
                 # bbs_ab = np.stack([ca.max(0) - ca.min(0), cb.max(0) - cb.min(0)], 0)
@@ -6979,7 +6977,7 @@ def task_inside_inside_1(condition='c'):
                     sa.randomize()
                     sc.randomize()
                     samples_c = sample_position_inside_many(sa, [sc], [size_c/size_a])
-                
+
                 done = True
 
                 xy_c = samples_c[0,0]
@@ -7007,7 +7005,7 @@ def task_inside_inside_1(condition='c'):
                 max_size = 0.7
                 min_size = max_size/2
 
-                size_a = np.random.rand() * (max_size - min_size) + min_size 
+                size_a = np.random.rand() * (max_size - min_size) + min_size
                 size_b = np.random.rand() * (size_a/2.5 - size_a/4) + size_a/4
                 size_c = np.random.rand() * (size_b/2.5 - size_b/4) + size_b/4
 
@@ -7021,24 +7019,24 @@ def task_inside_inside_1(condition='c'):
 
                 # bbs = np.stack([ca.max(0) - ca.min(0), cb.max(0) - cb.min(0), cc.max(0) - cc.min(0)], 0)
                 # bbs = bbs * np.array([size_a, size_b, size_c])[:,None]
-                
+
                 size = np.array([size_a, size_b, size_c])
-                
+
                 range_abc = 1 - size
                 starting_abc = size/2
 
                 triu_idx = np.triu_indices(3, k=1)[0]*3 + np.triu_indices(3, k=1)[1]
 
-                xy_abc = np.random.rand(100, 3, 2) * range_abc[None,:,None] + starting_abc[None,:,None]                
+                xy_abc = np.random.rand(100, 3, 2) * range_abc[None,:,None] + starting_abc[None,:,None]
                 dists = np.abs(xy_abc[:,:,None,:] - xy_abc[:,None,:,:]) - (size[None,:,None,None] + size[None,None,:,None])/2
                 no_overlap = dists.any(3).reshape(100, 3*3)[:, triu_idx].all(1)
 
                 while not no_overlap.any():
-                    
-                    xy_abc = np.random.rand(100, 3, 2) * range_abc[None,:,None] + starting_abc[None,:,None]                
+
+                    xy_abc = np.random.rand(100, 3, 2) * range_abc[None,:,None] + starting_abc[None,:,None]
                     dists = np.abs(xy_abc[:,:,None,:] - xy_abc[:,None,:,:]) - (size[None,:,None,None] + size[None,None,:,None])/2
                     no_overlap = dists.any(3).reshape(100, 3*3)[:, triu_idx].all(1)
-                
+
                 done = True
 
                 # if len(no_overlap)>0:
@@ -7048,7 +7046,7 @@ def task_inside_inside_1(condition='c'):
 
                 xy_abc = xy_abc[no_overlap]
                 xy_a, xy_b, xy_c = xy_abc[0, 0], xy_abc[0, 1], xy_abc[0, 2]
-                
+
                 # xy_ab = np.random.rand(3, 2) * range_abc[None,:,None] + starting_abc[None,:,None]
                 # def stop_cond(xy, sizes):
                 #     dists = np.abs(xy[:,:,None,:] - xy[:,None,:,:])
@@ -7065,13 +7063,13 @@ def task_inside_inside_1(condition='c'):
         xy.append(np.array([xy_a, xy_b, xy_c]))
         sizes.append([size_a, size_b, size_c])
         shapes.append([sa, sb, sc])
-        
+
         if not done:
             return np.zeros([256,256])
 
     xy = np.stack(xy, axis=0)
     size = np.stack(sizes, axis=0)
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([3, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -7087,7 +7085,7 @@ def task_inside_inside_2(condition='c'):
 
     n_samples = 4
 
-    max_attempts = 10 
+    max_attempts = 10
 
     xy = []
     shapes = []
@@ -7103,14 +7101,14 @@ def task_inside_inside_2(condition='c'):
         done = False
 
         for _ in range(max_attempts):
-            
+
             # a(b(c))
             if n_objects_out[i] == 1:
                 max_size = 0.6
                 min_size = max_size/2
 
-                size = np.random.rand() * (max_size - min_size) + min_size 
-                size_in = np.random.rand() * (size/n_objects_in[i]/1.5 - size/n_objects_in[i]/3) + size/n_objects_in[i]/3 
+                size = np.random.rand() * (max_size - min_size) + min_size
+                size_in = np.random.rand() * (size/n_objects_in[i]/1.5 - size/n_objects_in[i]/3) + size/n_objects_in[i]/3
 
                 sa = Shape(gap_max=0.07, hole_radius=0.2)
 
@@ -7127,14 +7125,14 @@ def task_inside_inside_2(condition='c'):
 
                 if len(samples_in)>0:
                     done = True
-                    
+
                     xy_in = samples_in[0]
                     xy_in = xy_in * size + xy_out[None,:]
-                
+
                 else:
-                    
+
                     xy_in = xy_out[None,:]*np.ones([n_objects_in[i],1])
-                
+
                 if done:
 
                     xy.append(np.concatenate([xy_out[None,:], xy_in],0))
@@ -7150,8 +7148,8 @@ def task_inside_inside_2(condition='c'):
                 max_size = 0.5
                 min_size = max_size/2
 
-                size = np.random.rand() * (max_size - min_size) + min_size 
-                size_in = np.random.rand() * (size/n_objects_in[i]/1.5 - size/n_objects_in[i]/3) + size/n_objects_in[i]/3 
+                size = np.random.rand() * (max_size - min_size) + min_size
+                size_in = np.random.rand() * (size/n_objects_in[i]/1.5 - size/n_objects_in[i]/3) + size/n_objects_in[i]/3
 
                 sa = Shape(gap_max=0.03, hole_radius=0.2)
 
@@ -7159,7 +7157,7 @@ def task_inside_inside_2(condition='c'):
                 for _ in range(n_objects_in[i]+n_objects_out[i]-1):
                     s_in = Shape(gap_max=0.01)
                     shapes_in.append(s_in)
-                
+
                 shapes_out = shapes_in[n_objects_in[i]:]
                 shapes_in = shapes_in[:n_objects_in[i]]
 
@@ -7174,7 +7172,7 @@ def task_inside_inside_2(condition='c'):
                 dists = np.abs(xy_out_samples[:,:,None,:] - xy_out_samples[:,None,:,:]) - (size_[None,:,None,None] + size_[None,None,:,None])/2 > 0
                 triu_idx = np.triu_indices(n_objects_out[i], k=1)[0]*n_objects_out[i] + np.triu_indices(n_objects_out[i], k=1)[1]
                 no_overlap = dists.any(3).reshape(200, n_objects_out[i]*n_objects_out[i])[:, triu_idx].all(1)
-                
+
                 if no_overlap.sum(0)>0:
                     xy_out = xy_out_samples[no_overlap][0]
                 else:
@@ -7182,13 +7180,13 @@ def task_inside_inside_2(condition='c'):
 
                 if len(samples_in)>0:
                     done = True
-                    
+
                     xy_in = samples_in[0]
                     xy_in = xy_in * size + xy_out[0]
-                
+
                 else:
                     xy_in = xy_in * size + xy_out[0]
-    
+
                 if done:
                     xy.append(np.concatenate([xy_out, xy_in], 0))
                     sizes.append(np.array([size]+[size_in]*(n_objects_in[i]+n_objects_out[i]-1)))
@@ -7220,15 +7218,15 @@ def task_inside_inside_2(condition='c'):
 def task_inside_count_1(condition='c'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_objects_inside = np.random.randint(low=1, high=4)
     n_objects_inside = np.ones(n_samples) * n_objects_inside
-    n_objects_inside[-1] = n_objects_inside[-1] + np.random.choice([-1,1]) 
+    n_objects_inside[-1] = n_objects_inside[-1] + np.random.choice([-1,1])
     n_objects_inside = n_objects_inside.astype(int)
-    n_objects_samples = n_objects_inside + np.random.randint(low=1, high=5, size=n_samples)    
+    n_objects_samples = n_objects_inside + np.random.randint(low=1, high=5, size=n_samples)
     n_objects_samples[n_objects_samples>5] = 5
     n_objects_samples = n_objects_samples.astype(int)
 
@@ -7236,11 +7234,11 @@ def task_inside_count_1(condition='c'):
     # min_size_obj = 0.2
     min_btw_size = 0.3
 
-    
+
     all_xy = []
     all_size = []
     all_shape = []
-    
+
     for i in range(n_samples):
         # xy_i = xy[i,:n_objects_samples[i]]
         xy_ = []
@@ -7254,15 +7252,15 @@ def task_inside_count_1(condition='c'):
         min_btw_size = min_size_obj
 
         triu_idx = np.triu_indices(n_objects, k=1)
-        triu_idx = triu_idx[0]*n_objects + triu_idx[1]        
-        
+        triu_idx = triu_idx[0]*n_objects + triu_idx[1]
+
         for _ in range(max_attempts):
-            xy = np.random.rand(n_samples_over, n_objects, 2) * (1-min_size_obj) + min_size_obj/2 
+            xy = np.random.rand(n_samples_over, n_objects, 2) * (1-min_size_obj) + min_size_obj/2
             no_overlap = (np.abs(xy[:,:,None,:] - xy[:,None,:,:]) - min_btw_size>0).any(3).reshape([-1, n_objects*n_objects])[:,triu_idx].all(1)
             if no_overlap.sum()>0:
                 done = True
                 break
-            
+
         if not done:
             print('')
 
@@ -7279,15 +7277,15 @@ def task_inside_count_1(condition='c'):
         # max_size = np.stack([xy, 1-xy],2).min(2).min(2)
         min_size = max_size/2
 
-        size = np.random.rand(n_objects) * (max_size - min_size) + min_size 
+        size = np.random.rand(n_objects) * (max_size - min_size) + min_size
         size_in = np.random.rand(n_objects) * (size/2.5 - size/4) + size/4
 
         object_in = np.arange(n_objects) < n_objects_inside[i]
 
         for j in range(n_objects_samples[i]):
             if object_in[j]:
-                    
-                done = False                
+
+                done = False
                 s1 = Shape(gap_max=0.08, hole_radius=0.2)
                 s2 = Shape(gap_max=0.01)
                 for _ in range(max_attempts):
@@ -7295,7 +7293,7 @@ def task_inside_count_1(condition='c'):
                     samples = sample_position_inside_1(s1, s2, size_in[j]/size[j])
                     if len(samples)>0:
                         done = True
-                    
+
                     if done:
                         break
                     else:
@@ -7308,11 +7306,11 @@ def task_inside_count_1(condition='c'):
                     xy_.append(xy[j])
                     shape_.append(s1)
                     size_.append(size[j])
-                    
+
                     xy_.append(xy_in * size[j] + xy[j])
                     shape_.append(s2)
                     size_.append(size_in[j])
-            
+
             else:
                 if np.random.randint(2) == 0:
                     s1 = Shape(gap_max=0.01)
@@ -7320,7 +7318,7 @@ def task_inside_count_1(condition='c'):
                 else:
                     s1 = Shape(gap_max=0.08, hole_radius=0.2)
                     size_.append(size_in[j])
-                                
+
                 xy_.append(xy[j])
                 shape_.append(s1)
 
@@ -7346,15 +7344,15 @@ def task_inside_count_1(condition='c'):
 
 # The images contain 4 objects A,B,C and D, 2 of which contain an object. The insideness and contact configurations are constant across images. For example, a contact configuration is A being in contact with B and C being in contact with D. An insideness configuration is A and B containing an object and C and D containing no objects.
 def task_inside_contact(condition='xys'):
-    
+
     max_attempts = 10
 
     n_samples = 4
     n_objects = 4
-    
+
     max_size = 0.9/np.sqrt(n_objects*2)
     min_size = max_size/2
-    
+
     cond = np.random.randint(2)
     # a()-c() d-f
     # a()-c   d()-f
@@ -7366,7 +7364,7 @@ def task_inside_contact(condition='xys'):
     else:
         size = np.random.rand() * (max_size-min_size) + min_size
         size = size * np.ones([n_samples, n_objects])
-    
+
     # if 'r' in condition:
     #     angle = np.random.rand(n_samples, n_objects) * 2 * np.pi
     #     for i in range(n_samples-1):
@@ -7378,7 +7376,7 @@ def task_inside_contact(condition='xys'):
     #         for j in range(n_objects):
     #             if np.random.randint(2) == 0:
     #                 shape[i][j].flip()
-    
+
     size_in = np.random.rand(n_samples, 2) * (size[:,:2]/2.5 - size[:,:2]/4) + size[:,:2]/4
     shape = []
     xy_in = []
@@ -7388,7 +7386,7 @@ def task_inside_contact(condition='xys'):
         # xy_ = []
         xy_in_ = []
         for j in range(2):
-        
+
             s1 = Shape(gap_max=0.06, hole_radius=0.2)
             s2 = Shape(gap_max=0.06, hole_radius=0.2)
             done = False
@@ -7405,10 +7403,10 @@ def task_inside_contact(condition='xys'):
             if done:
                 xy_in_.append(samples[0])
                 # xy_in_.append(xy_ * size[i,j] + xy[i,j])
-        
+
             shape_out.append(s1)
             shape_in.append(s2)
-        
+
         shape.append(shape_out + [Shape(), Shape()] + shape_in)
         xy_in.append(xy_in_)
 
@@ -7420,15 +7418,15 @@ def task_inside_contact(condition='xys'):
             idx1, idx2, idx3, idx4 = 0, 1, 2, 3
         else:
             idx1, idx2, idx3, idx4 = 0, 2, 1, 3
-        
+
         s1 = shape[i][idx1]
         s2 = shape[i][idx2]
         s3 = shape[i][idx3]
         s4 = shape[i][idx4]
-    
+
         positions1, clump_size1 = sample_contact_many([s1, s2], np.array([size[i,idx1], size[i,idx2]]))
         positions2, clump_size2 = sample_contact_many([s3, s4], np.array([size[i,idx3], size[i,idx4]]))
-        
+
         c_size = np.stack([clump_size1, clump_size2], 0)
         co1 = sample_over_range_t(1, np.array([0,1]), c_size[None,:,0])
         co2 = np.random.rand(1, 2) * (1-c_size[None,:,1]) + c_size[None,:,1]/2
@@ -7451,7 +7449,7 @@ def task_inside_contact(condition='xys'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects+2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 #################################################################################
@@ -7463,7 +7461,7 @@ def task_inside_sym_mir(condition='xyc'):
     n_samples = 4
 
     n_objects = np.random.randint(2,5)
-    
+
     n_objects_in = np.random.randint(1,n_objects)
 
     # odd: distance not correlated to size, no sym for n_objects
@@ -7471,10 +7469,10 @@ def task_inside_sym_mir(condition='xyc'):
     odd_condition = -1
 
     # odd_condition = 0
-    
+
     max_size = 0.9/n_objects
     min_size = max_size*2/3
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
 
     size_in = np.random.rand(n_samples, n_objects_in) * (size[:,:n_objects_in]/2.5 - size[:,:n_objects_in]/4) + size[:,:n_objects_in]/4
@@ -7488,13 +7486,13 @@ def task_inside_sym_mir(condition='xyc'):
 
     x_range = (0.5 - (size.max(1) + size.min(1))/2*margin_r)
     x_starting = size.min(1)/2*margin_r
-    
+
     x1 = (size - size.min(1)[:,None]) / (size.max(1) - size.min(1))[:,None] * x_range[:,None] + x_starting[:,None]
     x1 = 0.5 - x1
 
     if odd_condition == 0:
         x1[-1] = np.random.rand(n_objects) * (0.5 - size[-1]) + size[-1]/2
-        
+
     x2 = 1 - x1
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size)
@@ -7528,15 +7526,15 @@ def task_inside_sym_mir(condition='xyc'):
         xy_in_f = []
         # if odd_condition in [1,2] and i==n_samples-1:
         #     odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-        
+
         for j in range(n_objects):
 
-            
+
             if j<n_objects_in:
 
                 if 'id' in condition:
                     s = Shape(gap_max=0.06, hole_radius=0.2)
-    
+
                 so = s.clone()
                 si = Shape()
 
@@ -7571,7 +7569,7 @@ def task_inside_sym_mir(condition='xyc'):
                     xy__[0] = 1 - xy__[0]
 
                     xy_in_f.append(xy__)
-                
+
                 else:
 
                     xy_in_f.append(xy_in_[-1] - xy[i,j] + xy[i,j+n_objects])
@@ -7591,7 +7589,7 @@ def task_inside_sym_mir(condition='xyc'):
 
                 s1 = s.clone()
                 s2 = s.clone()
-                
+
                 if i == n_samples-1:
                     s2.flip()
                 else:
@@ -7607,7 +7605,7 @@ def task_inside_sym_mir(condition='xyc'):
 
                 shape_out.append(s1)
                 shape_out_f.append(s2)
-        
+
         shape.append(shape_out + shape_out_f + shape_in + shape_in_f)
         xy_in.append(xy_in_ + xy_in_f)
 
@@ -7632,7 +7630,7 @@ def task_inside_sym_mir(condition='xyc'):
 
 # In each image, there is one group of connected objects.
 def task_contact_contact_1(condition='xysid'):
-        
+
     n_samples = 4
     # n_objects = 3
     n_objects = np.random.randint(3, 7, size=n_samples)
@@ -7655,12 +7653,12 @@ def task_contact_contact_1(condition='xysid'):
 
     if 'id' not in condition:
         s = Shape()
-    
+
     shape = []
     xy = []
 
     for i in range(n_samples):
-        
+
         if 'id' in condition:
             shapes_ = [Shape() for i in range(n_objects[i])]
         else:
@@ -7670,12 +7668,12 @@ def task_contact_contact_1(condition='xysid'):
         # s2 = Shape()
         # s3 = Shape()
 
-        # dir_ = dirs[i] 
+        # dir_ = dirs[i]
         if n_obj_connected[i] == n_objects[i]:
             positions, clump_size = sample_contact_many(shapes_, size[i])
             xy0 = np.random.rand(2) * (1-clump_size) + clump_size/2
             xy_ = positions + xy0[None,:]
-        
+
         elif n_obj_connected[i] > 0:
             positions, clump_size = sample_contact_many(shapes_[:n_obj_connected[i]], size[i,:n_obj_connected[i]])
 
@@ -7687,7 +7685,7 @@ def task_contact_contact_1(condition='xysid'):
             size_ = np.ones([n_free_objs, 2])
             size_[0] = clump_size
             size_[1:] = size_[1:] * size[i, n_obj_connected[i]:n_objects[i], None]
-            
+
             n_samples_over = 100
             xy_ = np.random.rand(n_samples_over, n_free_objs, 2) * (1 - size_[None,:,:]) + size_[None,:,:]/2
             valid = (np.abs(xy_[:,:,None,:] - xy_[:,None,:,:]) - (size_[None,:,None,:] + size_[None,None,:,:])/2 > 0).any(3).reshape([n_samples_over, n_free_objs**2])[:, triu_idx].all(1)
@@ -7702,7 +7700,7 @@ def task_contact_contact_1(condition='xysid'):
             n_samples_over = 100
             triu_idx = np.triu_indices(n_objects[i], k=1)
             triu_idx = triu_idx[0]*n_objects[i] + triu_idx[1]
-            
+
             xy_ = np.random.rand(n_samples_over, n_objects[i], 2) * (1 - size[i:i+1,:n_objects[i],None]) + size[i:i+1,:n_objects[i],None]/2
             valid = (np.abs(xy_[:,:,None,:] - xy_[:,None,:,:]) - (size[i:i+1,:n_objects[i],None,None] + size[i:i+1,None,:n_objects[i],None])/2 > 0).any(3).reshape([n_samples_over, n_objects[i]**2])[:, triu_idx].all(1)
             while not valid.any():
@@ -7711,7 +7709,7 @@ def task_contact_contact_1(condition='xysid'):
             xy_ = xy_[valid][0]
 
         xy.append(xy_)
-        shape.append(shapes_)    
+        shape.append(shapes_)
 
     size = [size[i,:n_objects[i]] for i in range(n_samples)]
 
@@ -7721,14 +7719,14 @@ def task_contact_contact_1(condition='xysid'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects[i], 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # In each image, each object is in contact with another object.
 def task_contact_contact_2(condition=''):
-        
+
     n_samples = 4
-    
+
     n_groups = np.random.randint(2, 5)
 
     n_objects_samples = np.random.randint(2, 4, size=n_groups)
@@ -7749,16 +7747,16 @@ def task_contact_contact_2(condition=''):
 
     contact_idx_ = []
     for j in range(n_samples):
-            
+
         contact_idx = [[i]*n_objects_samples[j][i] for i in range(n_groups)]
-        contact_idx = np.array(cat_lists(contact_idx)) 
+        contact_idx = np.array(cat_lists(contact_idx))
         contact_idx_.append(contact_idx)
 
     contact_idx = contact_idx_
 
     max_size = 0.9/np.sqrt(np.array(n_objects)*4)
     min_size = max_size/2
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([max(n_objects), 3]) * color[i:i+1] for i in range(n_samples)]
@@ -7787,15 +7785,15 @@ def task_contact_contact_2(condition=''):
         xy_ = []
         if i == n_samples-1:
             n = 1
-            positions_ = [] 
+            positions_ = []
             clump_size_ = []
             for j in range(1, n_groups):
                 positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
                 n = n + n_obj_s[j]
-                
+
                 positions_.append(positions)
                 clump_size_.append(clump_size)
-            
+
             clump_size_ = [np.array([size[i,0], size[i,0]])]+clump_size_
 
             clump_size = np.stack(clump_size_, 0)*1.1
@@ -7807,15 +7805,15 @@ def task_contact_contact_2(condition=''):
 
         else:
             n = 0
-            positions_ = [] 
+            positions_ = []
             clump_size_ = []
             for j in range(n_groups):
                 positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
                 n = n + n_obj_s[j]
-                
+
                 positions_.append(positions)
                 clump_size_.append(clump_size)
-            
+
             if i == n_samples-1:
                 clump_size = [np.array([size[i,0], size[i,0]])]+clump_size
 
@@ -7836,10 +7834,10 @@ def task_contact_contact_2(condition=''):
 def task_contact_count_1(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.randint(2, 5)
 
     n_objects_samples = np.random.randint(2, 4, size=n_groups)
@@ -7850,13 +7848,13 @@ def task_contact_count_1(condition='xyidc'):
         n_objects_samples_odd = sample_int_sum_n(n_groups, n_objects, min_v=1)
 
     contact_idx = [[i]*n_objects_samples[i] for i in range(n_groups)]
-    contact_idx = np.array(cat_lists(contact_idx)) 
+    contact_idx = np.array(cat_lists(contact_idx))
     contact_idx_odd = [[i]*n_objects_samples_odd[i] for i in range(n_groups)]
-    contact_idx_odd = np.array(cat_lists(contact_idx_odd)) 
-    
+    contact_idx_odd = np.array(cat_lists(contact_idx_odd))
+
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
-    
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects, 3]) * color[i:i+1] for i in range(n_samples)]
@@ -7885,15 +7883,15 @@ def task_contact_count_1(condition='xyidc'):
         n_obj_s = n_objects_samples_odd if i == n_samples-1 else n_objects_samples
         xy_ = []
         n = 0
-        positions_ = [] 
+        positions_ = []
         clump_size_ = []
         for j in range(n_groups):
             positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
             n = n + n_obj_s[j]
-            
+
             positions_.append(positions)
             clump_size_.append(clump_size)
-        
+
         clump_size = np.stack(clump_size_, 0)*1.1
         xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
         xy0 = xy0[0]
@@ -7908,10 +7906,10 @@ def task_contact_count_1(condition='xyidc'):
 def task_contact_count_2(condition='xyidc'):
 
     max_attempts = 20
-    
+
     n_samples = 4
     n_samples_over = 100
-    
+
     n_groups = np.random.choice([2,3,4], replace=False, size=2)
 
     n_objects = np.random.randint(n_groups.max(), n_groups.max()*2)
@@ -7923,9 +7921,9 @@ def task_contact_count_2(condition='xyidc'):
     # n_objects = n_objects_samples.sum()
     n_objects_samples = []
     for i in range(n_samples-1):
-        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))    
+        n_objects_samples.append(sample_int_sum_n(n_groups, n_objects, min_v=1))
     n_objects_samples.append(sample_int_sum_n(n_groups_odd, n_objects, min_v=1))
-    
+
     max_size = 0.9/np.sqrt(n_objects*4)
     min_size = max_size/2
 
@@ -7934,7 +7932,7 @@ def task_contact_count_2(condition='xyidc'):
     else:
         size = np.random.rand() * (max_size-min_size) + min_size
         size = size * np.ones([n_samples, n_objects])
-        
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -7960,19 +7958,19 @@ def task_contact_count_2(condition='xyidc'):
         n_g = n_groups_odd if i == n_samples-1 else n_groups
         xy_ = []
         n = 0
-        positions_ = [] 
+        positions_ = []
         clump_size_ = []
         for j in range(n_g):
             positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
             n = n + n_obj_s[j]
-            
+
             positions_.append(positions)
             clump_size_.append(clump_size)
-        
+
         clump_size = np.stack(clump_size_, 0)*1.1
         xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
         xy0 = xy0[0]
-        
+
         for j in range(n_g):
             xy_.append(positions_[j] + xy0[j:j+1,:])
 
@@ -7994,13 +7992,13 @@ def task_count_count(condition='xyscid', condition_arr='xysid'):
     n_samples = 4
     n_objects = np.random.choice(np.arange(1, 5), size=[n_samples], replace=False)*2
     n_objects[-1] = n_objects[-1] + 1
-    
+
     max_n_objs = n_objects.max()
-    
+
     # image and object parameters
     internal_frame = 0.8
     pad = (1-internal_frame)/2
-    
+
     max_size = 0.8/max_n_objs
     min_size = max_size/2
 
@@ -8025,13 +8023,13 @@ def task_count_count(condition='xyscid', condition_arr='xysid'):
         s_idx = np.arange(max_n_objs*n_samples).reshape([n_samples, max_n_objs])
 
     unique_s_idx = np.unique(s_idx)
-    
+
     unique_sizes = np.random.rand(len(unique_s_idx)) * (max_size - min_size) + min_size
     sizes = unique_sizes[s_idx.flatten().astype(int)].reshape(s_idx.shape)
 
     if 'x' in condition and 'y' in condition:
         # x = np.random.rand(n_samples)
-        
+
         xy = np.random.rand(n_samples, max_n_objs, 2) * internal_frame
         def stop_cond(xy, sizes):
             dists = np.abs(xy[:,:,None,:] - xy[:,None,:,:])
@@ -8043,7 +8041,7 @@ def task_count_count(condition='xyscid', condition_arr='xysid'):
             xy = np.random.rand(n_samples, max_n_objs, 2) * internal_frame
 
     else:
-            
+
         xy = np.random.rand(max_n_objs,2) * internal_frame
         def stop_cond(xy, sizes):
             dists = np.abs(xy[None,:,None,:] - xy[None,None,:,:])
@@ -8055,13 +8053,13 @@ def task_count_count(condition='xyscid', condition_arr='xysid'):
             xy = np.random.rand(max_n_objs,2) * internal_frame
 
         xy = np.stack([xy]*n_samples, 0)
-    
+
     unique_id = np.unique(id_idx)
     all_shapes = []
     for i in range(len(unique_id)):
         shape = Shape()
         all_shapes.append(shape)
-            
+
     if 'c' in condition:
         color = sample_random_colors(n_samples)
         color = [np.ones([n_objects[i], 3]) * color[i:i+1] for i in range(n_samples)]
@@ -8086,10 +8084,10 @@ def task_count_count(condition='xyscid', condition_arr='xysid'):
 
 # The images contain 2 objects in a mirror symmetry.
 def task_sym_mir(condition='xyc'):
-    
+
     # mir sym:
     # (x0,y0), r, a
-    # o_1 = (0, a - pi/2) 
+    # o_1 = (0, a - pi/2)
     # pos_1 = r * (cos(a1),sin(a1)) + (x0,y0)
     # o_2 = (1, a + pi/2)
     # pos_2 = r * (cos(a2),sin(a2)) + (x0,y0)
@@ -8104,30 +8102,30 @@ def task_sym_mir(condition='xyc'):
 
     max_size = 0.4
     min_size = max_size/4
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size = np.stack([size]*n_objects, axis=1)
-    
+
     if odd_condition == 1:
         idx = np.random.randint(2)
         size[-1,idx] = size[-1,idx] * (np.random.rand()* (2/3 - 1/3) + 1/3)
 
-    a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi 
+    a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi
     r = np.random.rand(n_samples) * (0.4-size.max(1)) + size.max(1)/2
 
     # a1, a2 = a - np.pi/2, a + np.pi/2
 
     range_ = 1 - size[:,0:1] - 2 * np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
     starting_ = size[:,0:1]/2 + np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
-    
+
     xy0 = np.random.rand(n_samples, n_objects) * range_ + starting_
 
     xy = xy0[:,None,:] + np.stack([r * np.cos(a), r * np.sin(a), r * np.cos(a + np.pi), r * np.sin(a + np.pi)], 1).reshape([n_samples, 2, 2])
 
     if odd_condition == 3:
         xy[-1] = sample_positions(size[-1:])
-    
-    
+
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -8138,12 +8136,12 @@ def task_sym_mir(condition='xyc'):
 
             if odd_condition == 4 and i == n_samples-1:
                 a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-            
+
             s1.rotate(a_)
 
             if not (odd_condition == 2 and i == n_samples-1):
                 s2.flip()
-            
+
             s2.rotate(a_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8154,7 +8152,7 @@ def task_sym_mir(condition='xyc'):
                     s2 = s_
 
             shape.append([s1, s2])
-            
+
     else:
         shape = []
         s = Shape()
@@ -8163,15 +8161,15 @@ def task_sym_mir(condition='xyc'):
             s2 = s.clone()
 
             a_ = a[i]
-            
+
             if odd_condition == 4 and i == n_samples-1:
                 a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
 
             s1.rotate(a_)
-            
+
             if not (odd_condition == 2 and i == n_samples-1):
                 s2.flip()
-            
+
             s2.rotate(a_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8189,12 +8187,12 @@ def task_sym_mir(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # The images contain 2 objects in a rotational symmetry around a center indicated by a third small object.
 def task_sym_rot(condition='xyc'):
-    
+
     # rot sym:
     # r
     # o_1 = (0, a1)
@@ -8213,11 +8211,11 @@ def task_sym_rot(condition='xyc'):
 
     max_size = 0.4
     min_size = max_size/4
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
     # size = np.stack([np.ones(n_samples)*0.05]+[size]*2, axis=1)
     size = np.stack([size]*2, axis=1)
-    
+
     ################ can be random
     # a1 = (np.random.rand(n_samples)) * np.pi
     # a2 = (np.random.rand(n_samples) * 2/3 + 1/3) * np.pi +  a1
@@ -8226,25 +8224,25 @@ def task_sym_rot(condition='xyc'):
     # a2 = np.random.choice([1/2, 1]) * np.pi +  a1
     a2 = np.pi/2 +  a1
 
-    
+
     # r = np.random.rand(n_samples) * (0.4-size.max(1)) + size.max(1)/2
     # 2*np.sin(a/2)*r > min_size
-    wh = (np.max([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0) - np.min([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0), 
+    wh = (np.max([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0) - np.min([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0),
         np.max([np.zeros(n_samples), np.sin(a1), np.sin(a2)], 0) - np.min([np.zeros(n_samples), np.sin(a1), np.sin(a2)], 0))
     # max(wh) * r + max_size < 0.8
     max_r = (1 - size[:,0] * np.sqrt(2)) / np.max(wh, 0)
     min_r = (size[:,0] * np.sqrt(2))/(2*np.sin((a2-a1)/2))
     r = np.random.rand(n_samples) * (max_r - min_r) + min_r
-    
-    # max_size = np.min([max_size*np.ones(n_samples), r], 0) 
-    
+
+    # max_size = np.min([max_size*np.ones(n_samples), r], 0)
+
 
     if odd_condition == 1:
         idx = np.random.randint(2)
         size[-1,idx] = size[-1,idx] * (np.random.rand()* (2/3 - 1/3) + 1/3)
 
     # xy0 * 3 - (x1+x2)
-    # x0, x1, x2 
+    # x0, x1, x2
     # y0, y1, y2
 
     # x = np.stack([0, r*np.cos(a1), r*np.cos(a2)], 1)
@@ -8252,7 +8250,7 @@ def task_sym_rot(condition='xyc'):
     max_x_pos = np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0)
     max_y_pos = np.max([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0)
 
-    wh = (  np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0) - 
+    wh = (  np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0) -
             np.min([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0),
             np.max([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0) -
             np.min([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0))
@@ -8260,7 +8258,7 @@ def task_sym_rot(condition='xyc'):
     wh = np.stack(wh, 1)
     range_ = 1 - wh
     starting_ = wh/2
-    
+
     xy0 = np.random.rand(n_samples, 2) * range_ + starting_
 
     xy0[:,0] = xy0[:,0] + wh[:,0]/2 - max_x_pos
@@ -8269,18 +8267,18 @@ def task_sym_rot(condition='xyc'):
 
     xy = xy0[:,None,:] + r[:,None,None] * np.stack([np.cos(a1),np.sin(a1),np.cos(a2),np.sin(a2)], 1).reshape([n_samples, 2, 2])
 
-    xy = np.concatenate([np.ones([n_samples,1,2])*xy0[:,None,:], xy], 1) 
+    xy = np.concatenate([np.ones([n_samples,1,2])*xy0[:,None,:], xy], 1)
     size = np.concatenate([np.ones([n_samples,1])*0.05, size], 1)
 
     if odd_condition == 2:
         xy[-1] = sample_positions(size[-1:])
-    
-    
+
+
 
     if 'id' in condition:
         shape = []
         s0 = Shape()
-        
+
         for i in range(n_samples):
             s = Shape()
             s1 = s.clone()
@@ -8291,8 +8289,8 @@ def task_sym_rot(condition='xyc'):
             if odd_condition == 3 and i == n_samples-1:
                 a1_ = a1_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
                 a2_ = a2_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-            
-            s1.rotate(a1_)            
+
+            s1.rotate(a1_)
             s2.rotate(a2_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8303,16 +8301,16 @@ def task_sym_rot(condition='xyc'):
                     s2 = s_
 
             shape.append([s0.clone(), s1, s2])
-            
+
     else:
         shape = []
         s0 = Shape()
-        
+
         s = Shape()
         for i in range(n_samples):
             a1_ = a1[i]
             a2_ = a2[i]
-            
+
             if odd_condition == 3 and i == n_samples-1:
                 if np.random.rand() > 0.5:
                     a1_ = a1_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
@@ -8322,7 +8320,7 @@ def task_sym_rot(condition='xyc'):
             s1 = s.clone()
             s2 = s.clone()
 
-            s1.rotate(a1_)            
+            s1.rotate(a1_)
             s2.rotate(a2_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8340,7 +8338,7 @@ def task_sym_rot(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains objects in a mirror symmetry with respect to the same axis. The distance to the axis is correlated with the size for each object.
@@ -8348,7 +8346,7 @@ def task_size_sym_1(condition='xyc'):
 
     # mir sym:
     # (x0,y0), r, a
-    # o_1 = (0, a - pi/2) 
+    # o_1 = (0, a - pi/2)
     # pos_1 = r * (cos(a1),sin(a1)) + (x0,y0)
     # o_2 = (1, a + pi/2)
     # pos_2 = r * (cos(a2),sin(a2)) + (x0,y0)
@@ -8357,14 +8355,14 @@ def task_size_sym_1(condition='xyc'):
     n_samples = 4
 
     n_objects = 5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     odd_condition = np.random.randint(2)
     # odd_condition = 0
-    
+
     max_size = 0.25
     min_size = max_size/5
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     non_valid = size.sum(1) > 0.9
     if non_valid.any():
@@ -8374,13 +8372,13 @@ def task_size_sym_1(condition='xyc'):
 
     x_range = (0.5 - (size.max(1) + size.min(1))/2*margin_r)
     x_starting = size.min(1)/2*margin_r
-    
+
     x1 = (size - size.min(1)[:,None]) / (size.max(1) - size.min(1))[:,None] * x_range[:,None] + x_starting[:,None]
     x1 = 0.5 - x1
 
     if odd_condition == 0:
         x1[-1] = np.random.rand(n_objects) * (0.5 - size[-1]) + size[-1]/2
-        
+
     x2 = 1 - x1
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size)
@@ -8394,16 +8392,16 @@ def task_size_sym_1(condition='xyc'):
     # choose x based on size
     # choose y st there's no overlap
 
-    
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -8413,12 +8411,12 @@ def task_size_sym_1(condition='xyc'):
 
                 # if odd_condition == 4 and i == n_samples-1:
                 #     a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-                
+
                 # s1.rotate(a_)
 
                 if not (odd_condition == 2 and i == n_samples-1 and j in odd_samples):
                     s2.flip()
-                
+
                 # s2.rotate(a_)
 
                 if odd_condition == 1 and i == n_samples-1 and j in odd_samples:
@@ -8430,34 +8428,34 @@ def task_size_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
                 s2 = s.clone()
 
                 # a_ = a[i]
-                
+
                 # if odd_condition == 4 and i == n_samples-1:
                 #     a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
 
                 # s1.rotate(a_)
-                
+
                 if not (odd_condition == 2 and i == n_samples-1 and j in odd_samples):
                     s2.flip()
-                
+
                 # s2.rotate(a_)
 
                 if odd_condition == 1 and i == n_samples-1 and j in odd_samples:
@@ -8469,7 +8467,7 @@ def task_size_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
 
     if 'c' in condition:
@@ -8478,7 +8476,7 @@ def task_size_sym_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects*2, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains objects in a rotational symmetry with respect to the center of the image. The distance to the center is correlated with the size for each object.
@@ -8489,21 +8487,21 @@ def task_size_sym_2(condition='xyc'):
     n_objects = 3
 
     xy0 = np.ones([n_samples, 1, 2]) * 0.5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     odd_condition = np.random.randint(2)
     # odd_condition = 0
-    
+
     max_size = 0.20
     min_size = max_size/5
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     size = np.concatenate([size]*2, 1)
     size_margin = 0.02
     size = (size-size.min(1)[:,None])/(size.max(1)-size.min(1))[:,None] * (max_size - min_size - size_margin*2) + min_size + size_margin
     # rad = np.random.rand(n_samples, n_objects) * (0.5 - size[:,:n_objects]*np.sqrt(2)) + size[:,:n_objects]*np.sqrt(2)/2
     # rad = np.concatenate([rad]*2, 1)
-    
+
     # non_valid = np.pi - (size[:,:n_objects]*np.sqrt(2)/rad[:,:n_objects]).sum(1) < 0
     # if non_valid.any():
     #     size[non_valid] = size[non_valid] / (size[non_valid,:n_objects]*np.sqrt(2)/rad[non_valid,:n_objects]).sum(1) * np.pi * 0.9
@@ -8514,7 +8512,7 @@ def task_size_sym_2(condition='xyc'):
     shuffle_perm, unshuffle_perm = zip(*[sample_shuffle_unshuffle_indices(n_objects*2) for _ in range(n_samples)])
     shuffle_perm, unshuffle_perm = np.stack(shuffle_perm, 0), np.stack(unshuffle_perm, 0)
 
-    
+
     n_samples_over = 100
 
     angles_ = []
@@ -8542,7 +8540,7 @@ def task_size_sym_2(condition='xyc'):
         # shuffle_t(angles, unshuffle_perm)
         xy = xy0[0:1,:,:] + rad[:,:,None] * np.stack([np.cos(angles), np.sin(angles)], 2)[:,:,:]
         valid = (np.linalg.norm(xy[:,:,None,:] - xy[:,None,:,:], axis=-1) - (shuf_size[None,i,:,None]+shuf_size[None,i,None,:])*np.sqrt(2)/2 > 0).reshape([n_samples_over, (n_objects*2)**2])[:,triu_idx].all(1)
-        while not valid.any():    
+        while not valid.any():
 
             if i == n_samples-1:
                 rad = np.random.rand(n_samples_over, n_objects) * (0.5 - shuf_size[i:i+1,:n_objects]*np.sqrt(2)) + shuf_size[i:i+1,:n_objects]*np.sqrt(2)/2
@@ -8564,7 +8562,7 @@ def task_size_sym_2(condition='xyc'):
     angles = np.stack(angles_, 0)
 
     size = np.concatenate([np.ones([n_samples, 1])*0.03, size], 1)
-    xy = np.concatenate([xy0, xy], 1) 
+    xy = np.concatenate([xy0, xy], 1)
 
     s0 = Shape()
 
@@ -8573,10 +8571,10 @@ def task_size_sym_2(condition='xyc'):
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects), replace=False)
-            
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -8594,19 +8592,19 @@ def task_size_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
@@ -8625,7 +8623,7 @@ def task_size_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
 
     if 'c' in condition:
@@ -8634,15 +8632,15 @@ def task_size_sym_2(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects*2+1, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 2 objects that have a mirror symmetry. The axis of symmetry is the same in all images.
 def task_sym_sym_1(condition='xyc'):
-    
+
     # mir sym:
     # (x0,y0), r, a
-    # o_1 = (0, a - pi/2) 
+    # o_1 = (0, a - pi/2)
     # pos_1 = r * (cos(a1),sin(a1)) + (x0,y0)
     # o_2 = (1, a + pi/2)
     # pos_2 = r * (cos(a2),sin(a2)) + (x0,y0)
@@ -8658,18 +8656,18 @@ def task_sym_sym_1(condition='xyc'):
 
     max_size = 0.4
     min_size = max_size/4
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
     size = np.stack([size]*2, axis=1)
-    
+
     if odd_condition == 1:
         idx = np.random.randint(2)
         size[-1,idx] = size[-1,idx] * (np.random.rand()* (2/3 - 1/3) + 1/3)
 
-    # a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi 
-    a = (np.random.rand() * 1 - 1/2) * np.pi 
+    # a = (np.random.rand(n_samples) * 1 - 1/2) * np.pi
+    a = (np.random.rand() * 1 - 1/2) * np.pi
     a = np.ones(n_samples) * a
-    
+
     if odd_condition == 5:
 
         a_odd = (np.random.rand(100) * 1 - 1/2) * np.pi
@@ -8684,15 +8682,15 @@ def task_sym_sym_1(condition='xyc'):
 
     range_ = 1 - size[:,0:1] - 2 * np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
     starting_ = size[:,0:1]/2 + np.abs(np.stack([r * np.cos(a), r * np.sin(a)], 1))
-    
+
     xy0 = np.random.rand(n_samples, 2) * range_ + starting_
 
     xy = xy0[:,None,:] + np.stack([r * np.cos(a), r * np.sin(a), r * np.cos(a + np.pi), r * np.sin(a + np.pi)], 1).reshape([n_samples, 2, 2])
 
     if odd_condition == 3:
         xy[-1] = sample_positions(size[-1:])
-    
-    
+
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
@@ -8703,12 +8701,12 @@ def task_sym_sym_1(condition='xyc'):
 
             if odd_condition == 4 and i == n_samples-1:
                 a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-            
+
             s1.rotate(a_)
 
             if not (odd_condition == 2 and i == n_samples-1):
                 s2.flip()
-            
+
             s2.rotate(a_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8719,7 +8717,7 @@ def task_sym_sym_1(condition='xyc'):
                     s2 = s_
 
             shape.append([s1, s2])
-            
+
     else:
         shape = []
         s = Shape()
@@ -8728,15 +8726,15 @@ def task_sym_sym_1(condition='xyc'):
             s2 = s.clone()
 
             a_ = a[i]
-            
+
             if odd_condition == 4 and i == n_samples-1:
                 a_ = a_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
 
             s1.rotate(a_)
-            
+
             if not (odd_condition == 2 and i == n_samples-1):
                 s2.flip()
-            
+
             s2.rotate(a_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8754,12 +8752,12 @@ def task_sym_sym_1(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 # Each image contains 2 objects that have a rotational symmetry. The angle of symmetry is the same in all images.
 def task_sym_sym_2(condition='xyc'):
-    
+
     # rot sym:
     # r
     # o_1 = (0, a1)
@@ -8779,21 +8777,21 @@ def task_sym_sym_2(condition='xyc'):
 
     max_size = 0.4
     min_size = max_size/4
-    
+
     size = np.random.rand(n_samples) * (max_size - min_size) + min_size
     # size = np.stack([np.ones(n_samples)*0.05]+[size]*2, axis=1)
     size = np.stack([size]*2, axis=1)
-    
+
     a1 = (np.random.rand(n_samples) * 1 - 1/2) * np.pi
 
     min_diff = 1/4
 
     if odd_condition == 4:
         # diff = (np.random.rand() * 2/3 + 1/3)
-        
+
         # odd_diff = (np.random.rand(100) * 2/3 + 1/3)
         # odd_diff = odd_diff[np.abs(odd_diff-diff[0]) >  np.pi/3][0]
-        
+
 
         diffs = sample_over_range(np.array([min_diff/2, 1+min_diff/2]), np.ones(2)*min_diff) * np.pi
 
@@ -8801,7 +8799,7 @@ def task_sym_sym_2(condition='xyc'):
             diffs = diffs[::-1]
 
         diff = np.ones(n_samples) * diffs[0]
-        
+
         diff[-1] = diffs[1]
 
     else:
@@ -8812,22 +8810,22 @@ def task_sym_sym_2(condition='xyc'):
 
     # r = np.random.rand(n_samples) * (0.4-size.max(1)) + size.max(1)/2
     # 2*np.sin(a/2)*r > min_size
-    wh = (np.max([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0) - np.min([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0), 
+    wh = (np.max([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0) - np.min([np.zeros(n_samples), np.cos(a1), np.cos(a2)], 0),
         np.max([np.zeros(n_samples), np.sin(a1), np.sin(a2)], 0) - np.min([np.zeros(n_samples), np.sin(a1), np.sin(a2)], 0))
     # max(wh) * r + max_size < 0.8
     max_r = (1 - size[:,0] * np.sqrt(2)) / np.max(wh, 0)
     min_r = (size[:,0] * np.sqrt(2))/(2*np.sin((a2-a1)/2))
     r = np.random.rand(n_samples) * (max_r - min_r) + min_r
-    
-    # max_size = np.min([max_size*np.ones(n_samples), r], 0) 
-    
+
+    # max_size = np.min([max_size*np.ones(n_samples), r], 0)
+
 
     if odd_condition == 1:
         idx = np.random.randint(2)
         size[-1,idx] = size[-1,idx] * (np.random.rand()* (2/3 - 1/3) + 1/3)
 
     # xy0 * 3 - (x1+x2)
-    # x0, x1, x2 
+    # x0, x1, x2
     # y0, y1, y2
 
     # x = np.stack([0, r*np.cos(a1), r*np.cos(a2)], 1)
@@ -8835,7 +8833,7 @@ def task_sym_sym_2(condition='xyc'):
     max_x_pos = np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0)
     max_y_pos = np.max([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0)
 
-    wh = (  np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0) - 
+    wh = (  np.max([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0) -
             np.min([np.zeros(n_samples), r*np.cos(a1) + np.sqrt(2) * size[:,0]/2, r*np.cos(a1) - np.sqrt(2) * size[:,0]/2, r*np.cos(a2) + np.sqrt(2) * size[:,1]/2, r*np.cos(a2) - np.sqrt(2) * size[:,1]/2], 0),
             np.max([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0) -
             np.min([np.zeros(n_samples), r*np.sin(a1) + np.sqrt(2) * size[:,0]/2, r*np.sin(a1) - np.sqrt(2) * size[:,0]/2, r*np.sin(a2) + np.sqrt(2) * size[:,1]/2, r*np.sin(a2) - np.sqrt(2) * size[:,1]/2], 0))
@@ -8843,7 +8841,7 @@ def task_sym_sym_2(condition='xyc'):
     wh = np.stack(wh, 1)
     range_ = 1 - wh
     starting_ = wh/2
-    
+
     xy0 = np.random.rand(n_samples, 2) * range_ + starting_
 
     xy0[:,0] = xy0[:,0] + wh[:,0]/2 - max_x_pos
@@ -8852,18 +8850,18 @@ def task_sym_sym_2(condition='xyc'):
 
     xy = xy0[:,None,:] + r[:,None,None] * np.stack([np.cos(a1),np.sin(a1),np.cos(a2),np.sin(a2)], 1).reshape([n_samples, 2, 2])
 
-    xy = np.concatenate([np.ones([n_samples,1,2])*xy0[:,None,:], xy], 1) 
+    xy = np.concatenate([np.ones([n_samples,1,2])*xy0[:,None,:], xy], 1)
     size = np.concatenate([np.ones([n_samples,1])*0.05, size], 1)
 
     if odd_condition == 2:
         xy[-1] = sample_positions(size[-1:])
-    
-    
+
+
 
     if 'id' in condition:
         shape = []
         s0 = Shape()
-        
+
         for i in range(n_samples):
             s = Shape()
             s1 = s.clone()
@@ -8874,8 +8872,8 @@ def task_sym_sym_2(condition='xyc'):
             if odd_condition == 3 and i == n_samples-1:
                 a1_ = a1_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
                 a2_ = a2_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
-            
-            s1.rotate(a1_)            
+
+            s1.rotate(a1_)
             s2.rotate(a2_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8886,16 +8884,16 @@ def task_sym_sym_2(condition='xyc'):
                     s2 = s_
 
             shape.append([s0.clone(), s1, s2])
-            
+
     else:
         shape = []
         s0 = Shape()
-        
+
         s = Shape()
         for i in range(n_samples):
             a1_ = a1[i]
             a2_ = a2[i]
-            
+
             if odd_condition == 3 and i == n_samples-1:
                 if np.random.rand() > 0.5:
                     a1_ = a1_ + np.random.choice([-1,1]) * (np.random.rand()* (1-1/2)+1/2)*np.pi
@@ -8905,7 +8903,7 @@ def task_sym_sym_2(condition='xyc'):
             s1 = s.clone()
             s2 = s.clone()
 
-            s1.rotate(a1_)            
+            s1.rotate(a1_)
             s2.rotate(a2_)
 
             if odd_condition == 0 and i == n_samples-1:
@@ -8923,7 +8921,7 @@ def task_sym_sym_2(condition='xyc'):
     else:
         color = sample_random_colors(1)
         color = [np.ones([n_objects, 3]) * color for i in range(n_samples)]
-    
+
     return xy, size, shape, color
 
 def task_inside_sym_1(condition='xyc'):
@@ -8931,7 +8929,7 @@ def task_inside_sym_1(condition='xyc'):
     n_samples = 4
 
     n_objects = np.random.randint(2,5)
-    
+
     n_objects_in = np.random.randint(1,n_objects)
 
     # odd: distance not correlated to size, no sym for n_objects
@@ -8939,10 +8937,10 @@ def task_inside_sym_1(condition='xyc'):
     odd_condition = -1
 
     # odd_condition = 0
-    
+
     max_size = 0.9/n_objects
     min_size = max_size*2/3
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
 
     size_in = np.random.rand(n_samples, n_objects_in) * (size[:,:n_objects_in]/2.5 - size[:,:n_objects_in]/4) + size[:,:n_objects_in]/4
@@ -8956,13 +8954,13 @@ def task_inside_sym_1(condition='xyc'):
 
     x_range = (0.5 - (size.max(1) + size.min(1))/2*margin_r)
     x_starting = size.min(1)/2*margin_r
-    
+
     x1 = (size - size.min(1)[:,None]) / (size.max(1) - size.min(1))[:,None] * x_range[:,None] + x_starting[:,None]
     x1 = 0.5 - x1
 
     if odd_condition == 0:
         x1[-1] = np.random.rand(n_objects) * (0.5 - size[-1]) + size[-1]/2
-        
+
     x2 = 1 - x1
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size)
@@ -8996,15 +8994,15 @@ def task_inside_sym_1(condition='xyc'):
         xy_in_f = []
         # if odd_condition in [1,2] and i==n_samples-1:
         #     odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-        
+
         for j in range(n_objects):
 
-            
+
             if j<n_objects_in:
 
                 if 'id' in condition:
                     s = Shape(gap_max=0.06, hole_radius=0.2)
-    
+
                 so = s.clone()
                 si = Shape()
 
@@ -9039,7 +9037,7 @@ def task_inside_sym_1(condition='xyc'):
                     xy__[0] = 1 - xy__[0]
 
                     xy_in_f.append(xy__)
-                
+
                 else:
 
                     xy_in_f.append(xy_in_[-1] - xy[i,j] + xy[i,j+n_objects])
@@ -9059,7 +9057,7 @@ def task_inside_sym_1(condition='xyc'):
 
                 s1 = s.clone()
                 s2 = s.clone()
-                
+
                 if i == n_samples-1:
                     s2.flip()
                 else:
@@ -9075,7 +9073,7 @@ def task_inside_sym_1(condition='xyc'):
 
                 shape_out.append(s1)
                 shape_out_f.append(s2)
-        
+
         shape.append(shape_out + shape_out_f + shape_in + shape_in_f)
         xy_in.append(xy_in_ + xy_in_f)
 
@@ -9099,14 +9097,14 @@ def task_color_sym_1(condition='xyc'):
     n_objects = np.random.randint(2, 5)
 
     xy0 = np.ones([n_samples, 1, 2]) * 0.5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     odd_condition = np.random.randint(2)
     # odd_condition = 0
-    
+
     max_size = 0.5/n_objects
     min_size = max_size/3
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     size = np.concatenate([size]*2, 1)
     size_margin = 0.02
@@ -9115,7 +9113,7 @@ def task_color_sym_1(condition='xyc'):
     # np.stack(np.random.permutation(n_objects*2)
     shuffle_perm, unshuffle_perm = zip(*[sample_shuffle_unshuffle_indices(n_objects*2) for _ in range(n_samples)])
     shuffle_perm, unshuffle_perm = np.stack(shuffle_perm, 0), np.stack(unshuffle_perm, 0)
-    
+
     n_samples_over = 100
 
     angles_ = []
@@ -9145,7 +9143,7 @@ def task_color_sym_1(condition='xyc'):
         # shuffle_t(angles, unshuffle_perm)
         xy = xy0[0:1,:,:] + rad[:,:,None] * np.stack([np.cos(angles), np.sin(angles)], 2)[:,:,:]
         valid = (np.linalg.norm(xy[:,:,None,:] - xy[:,None,:,:], axis=-1) - (shuf_size[None,:,:,None]+shuf_size[None,:,None,:])*np.sqrt(2)/2 > 0).reshape([n_samples_over, (n_objects*2)**2])[:,triu_idx].all(1)
-        while not valid.any():    
+        while not valid.any():
 
             size_ = np.random.rand(1, n_objects) * (max_size - min_size) + min_size
             size_ = np.concatenate([size_]*2, 1)
@@ -9162,7 +9160,7 @@ def task_color_sym_1(condition='xyc'):
 
             xy = xy0[0:1,:,:] + rad[i:i+1,:,None] * np.stack([np.cos(angles), np.sin(angles)], 2)[:,:,:]
             valid = (np.linalg.norm(xy[:,:,None,:] - xy[:,None,:,:], axis=-1) - (shuf_size[None,:,:,None]+shuf_size[None,:,None,:])*np.sqrt(2)/2 > 0).reshape([n_samples_over, (n_objects*2)**2])[:,triu_idx].all(1)
-    
+
         angles = angles[valid][0]
         xy = xy[valid][0]
         rad = rad[valid][0]
@@ -9170,15 +9168,15 @@ def task_color_sym_1(condition='xyc'):
         rad_.append(rad)
         angles_.append(angles)
         size.append(size_)
-    
+
     size = np.concatenate(size, 0)
-    
+
     rad = np.stack(rad_, 0)
     xy = np.stack(xy_, 0)
     angles = np.stack(angles_, 0)
 
     size = np.concatenate([np.ones([n_samples, 1])*0.03, size], 1)
-    xy = np.concatenate([xy0, xy], 1) 
+    xy = np.concatenate([xy0, xy], 1)
 
     s0 = Shape()
 
@@ -9187,7 +9185,7 @@ def task_color_sym_1(condition='xyc'):
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-                        
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -9198,16 +9196,16 @@ def task_color_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
@@ -9218,7 +9216,7 @@ def task_color_sym_1(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append([s0.clone()] + n_objs + n_objs_f)
 
 
@@ -9231,17 +9229,17 @@ def task_color_sym_1(condition='xyc'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, n_objects])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, n_objects) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, n_objects])
- 
+
     color = np.stack([h_u,s,v], 2)
-    
+
     color = np.concatenate([color[:,0:1]*0, color, color], 1)
-    
+
     # odd condition
     h_ = color[-1,1,0]
     color[-1,1,0] = color[-1,2,0]
@@ -9255,16 +9253,16 @@ def task_color_sym_2(condition='xyc'):
     n_samples = 4
 
     n_objects = 5
-    
+
     # odd: distance not correlated to size, no sym for n_objects
     # odd_condition = np.random.randint(2)
     odd_condition = -1
 
     # odd_condition = 0
-    
+
     max_size = 0.25
     min_size = max_size/5
-    
+
     size = np.random.rand(n_samples, n_objects) * (max_size - min_size) + min_size
     non_valid = size.sum(1) > 0.9
     if non_valid.any():
@@ -9274,13 +9272,13 @@ def task_color_sym_2(condition='xyc'):
 
     x_range = (0.5 - (size.max(1) + size.min(1))/2*margin_r)
     x_starting = size.min(1)/2*margin_r
-    
+
     x1 = (size - size.min(1)[:,None]) / (size.max(1) - size.min(1))[:,None] * x_range[:,None] + x_starting[:,None]
     x1 = 0.5 - x1
 
     if odd_condition == 0:
         x1[-1] = np.random.rand(n_objects) * (0.5 - size[-1]) + size[-1]/2
-        
+
     x2 = 1 - x1
 
     y = sample_over_range_t(n_samples, np.array([0,1]), size)
@@ -9290,16 +9288,16 @@ def task_color_sym_2(condition='xyc'):
     x = np.concatenate([x1,x2], 1)
     y = np.concatenate([y,y], 1)
     xy = np.stack([x,y], 2)
-    
+
     if 'id' in condition:
         shape = []
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
                 s = Shape()
                 s1 = s.clone()
@@ -9318,24 +9316,24 @@ def task_color_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
-            
+
     else:
         shape = []
         s = Shape()
         for i in range(n_samples):
             n_objs = []
             n_objs_f = []
-            
+
             if odd_condition in [1,2] and i==n_samples-1:
                 odd_samples = np.random.choice(n_objects, size=np.random.randint(1,n_objects-1), replace=False)
-            
+
             for j in range(n_objects):
 
                 s1 = s.clone()
                 s2 = s.clone()
-                
+
                 if not (odd_condition == 2 and i == n_samples-1 and j in odd_samples):
                     s2.flip()
 
@@ -9348,7 +9346,7 @@ def task_color_sym_2(condition='xyc'):
 
                 n_objs.append(s1)
                 n_objs_f.append(s2)
-            
+
             shape.append(n_objs + n_objs_f)
 
 
@@ -9363,17 +9361,17 @@ def task_color_sym_2(condition='xyc'):
     else:
         s = np.random.rand() * 0.4 + 0.6
         s = s * np.ones([n_samples, n_objects])
-        
+
     if 'v' in condition:
         v = (np.random.rand(n_samples, n_objects) * 0.5 + 0.5)
     else:
         v = np.random.rand() * 0.5 + 0.5
         v = v * np.ones([n_samples, n_objects])
- 
+
     color = np.stack([h_u,s,v], 2)
 
     color = np.concatenate([color, color], 1)
-    
+
     # odd condition
     h_ = color[-1,1,0]
     color[-1,1,0] = color[-1,2,0]

@@ -123,7 +123,7 @@ TASKS_IDX={
 }
 
 
-def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/', image_size=128, seed=0, train_size=10000, val_size=500,  test_size=1000, test_gen_size=1000):
+def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/', image_size=128, seed=0, train_size=10000, val_size=500,  test_size=1000, test_gen_size=1000, fn_args="None"):
     # data_path = '/home/aimen/projects/cvrt_git/algs_images/'
     # data_path = '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
 
@@ -147,7 +147,10 @@ def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cif
     np.random.seed(seed)
     split = 'train'
     for i in range(n_train_samples_0, n_train_samples_1):
-        xy, size, shape, color = task_fn()
+        if fn_args != "None":
+            xy, size, shape, color = task_fn(fn_args)
+        else:
+            xy, size, shape, color = task_fn()
         # if not isinstance(shape, list):
         #     print('l')
         images = render_ooo(xy, size, shape, color, image_size=image_size)
@@ -159,7 +162,10 @@ def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cif
     np.random.seed(seed+1)
     split = 'val'
     for i in range(n_val_samples_0, n_val_samples_1):
-        images = render_ooo(*task_fn(), image_size=image_size)
+        if fn_args != "None":
+            images = render_ooo(*task_fn(fn_args), image_size=image_size)
+        else:
+            images = render_ooo(*task_fn(), image_size=image_size)
         save_path = os.path.join(task_path, split, '{:05d}.png'.format(i))
         img = Image.fromarray(images).convert('RGB')
         img.save(save_path)
@@ -167,7 +173,10 @@ def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cif
     np.random.seed(seed+2)
     split = 'test'
     for i in range(n_test_samples_0, n_test_samples_1):
-        images = render_ooo(*task_fn(), image_size=image_size)
+        if fn_args != "None":
+            images = render_ooo(*task_fn(fn_args), image_size=image_size)
+        else:
+            images = render_ooo(*task_fn(), image_size=image_size)
         save_path = os.path.join(task_path, split, '{:05d}.png'.format(i))
         img = Image.fromarray(images).convert('RGB')
         img.save(save_path)
@@ -193,6 +202,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_size', type=int, default=1000, help='the number of test set samples')
     parser.add_argument('--test_gen_size', type=int, default=1000, help='the number of generalization test set samples')
     parser.add_argument('--image_size', type=int, default=128, help='image height and width in pixels')
+    parser.add_argument('--task_args', type=str, default="None", help='Task specific arguments that control variation - only use for individual task datasets')
 
     ## for debugging
     ## python generate_dataset.py --data_dir ../CVR_dataset --task_idx a --train_size 4 --val_size 4 --test_size 4 --test_gen_size 4 --image_size 128
@@ -207,10 +217,11 @@ if __name__ == '__main__':
         for i in range(0, 103):
             tn, tfn, _ = TASKS[i]
             _, tfn_g, _ = TASKS_GEN[i]
-            generate_dataset(tn, tfn, tfn_g, args.data_dir, args.image_size, args.seed, args.train_size, args.val_size, args.test_size, args.test_gen_size)
+            generate_dataset(tn, tfn, tfn_g, args.data_dir, args.image_size, args.seed, args.train_size, args.val_size, args.test_size, args.test_gen_size, args.task_args)
 
     else:
+        task_idx = int(task_idx)
         tn, tfn, _ = TASKS[task_idx]
         _, tfn_g, _ = TASKS_GEN[task_idx]
-        generate_dataset(tn, tfn, tfn_g, args.data_dir, args.image_size, args.seed, args.train_size, args.val_size, args.test_size, args.test_gen_size)
+        generate_dataset(tn, tfn, tfn_g, args.data_dir, args.image_size, args.seed, args.train_size, args.val_size, args.test_size, args.test_gen_size, args.task_args)
 

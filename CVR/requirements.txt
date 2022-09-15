@@ -1,4 +1,4 @@
-numpy==1.18.1
+numpy
 opencv-python==4.5.5.64
 pandas==1.4.2
 Pillow==9.0.1
@@ -8,5 +8,5 @@ scikit-learn==1.0.2
 scipy==1.8.0
 tensorboard==2.8.0
 timm==0.5.4
-torch==1.8.1+cu101
-torchvision==0.9.1+cu101
+torch==1.8.1
+torchvision==0.9.1cle
