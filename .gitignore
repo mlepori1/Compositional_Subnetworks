@@ -1,0 +1,28 @@
+# vscode options
+.vscode/
+
+# notebook files
+.ipynb_checkpoints/
+
+CVR/lightning_logs
+CVR/lightning_logs/
+cvrt_data/
+# Byte-compiled / optimized / DLL files
+__pycache__
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+
+CVR/plots/
+CVR/dbs/
+
+CVR/logs/
+
+*.pyc
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py

@@ -14,6 +14,7 @@ from models.vits import vit_small as vit_small_moco
 
 from models.scn import SCL
 from models.wren import WReN
+from models.mlpEncoder import L0MLP, MLP
 
 class Base(pl.LightningModule):
 
@@ -27,7 +28,7 @@ class Base(pl.LightningModule):
     def load_backbone_weights(self, checkpoint):
         print("*"*10 + "load ckpt weights ...")
         self.backbone.load_state_dict(torch.load(checkpoint)['model'], strict=False)
-        
+
 
     def freeze_pretrained(self):
         for param in self.backbone.parameters():
@@ -36,28 +37,30 @@ class Base(pl.LightningModule):
 
     def shared_step(self, batch):
 
-        x, task_idx = batch # B, 4, H, W
+        x, task_idx = batch # x = (Batch idx, 4 images per set, RGB, Height, Width)
 
         # creates artificial label
         x_size = x.shape
-        perms = torch.stack([torch.randperm(4, device=self.device) for _ in range(x_size[0])], 0)
-        y = perms.argmax(1)
-        perms = perms + torch.arange(x_size[0], device=self.device)[:,None]*4
+        perms = torch.stack([torch.randperm(4, device=self.device) for _ in range(x_size[0])], 0) # Permute examples within a problem (a grouping of 4 images pertaining to one rule), so the fourth image isn't always the odd on out
+        y = perms.argmax(1) # In the original order, the fourth element was always the odd one out, so here, the argmax corresponds to
+                            # 4 for each problem, corresponding to the out one out
+        perms = perms + torch.arange(x_size[0], device=self.device)[:,None]*4 # Want to get the idx of each image, after flattening out the problems
         perms = perms.flatten()
 
-        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]])[perms].reshape([x_size[0], 4, x_size[2], x_size[3], x_size[4]])
+        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]])[perms].reshape([x_size[0], 4, x_size[2], x_size[3], x_size[4]]) # Permute the images within a problem, while keeping problems grouped together.
+                                                                                                                                      # Out -> Batch (Number of problems), 4 images per problem, RGB, height, width
 
         if self.task_embedding:
-            y_hat = self(x, task_idx)
+            y_hat = self(x, task_idx) # This is the Forward() call for each model
         else:
             y_hat = self(x)
 
         return y_hat, y
 
     def step(self, batch, batch_idx):
-        
+
         y_hat, y = self.shared_step(batch)
-        loss = F.cross_entropy(y_hat, y)
+        loss = F.cross_entropy(y_hat, y) # @ML ToDo This is loss calculation, need to change this to L0 loss for subnetwork learning
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
@@ -80,7 +83,7 @@ class Base(pl.LightningModule):
     def test_step(self, batch, batch_idx):
 
         y_hat, y = self.shared_step(batch)
-        
+
         loss = F.cross_entropy(y_hat, y, reduction='none')
 
         acc = (y == torch.argmax(y_hat, dim=1))*1
@@ -94,16 +97,16 @@ class Base(pl.LightningModule):
         return results
 
     def test_epoch_end(self, outputs):
-        
+
         keys = list(outputs[0].keys())
 
-        results = {k: torch.cat([x[k] for x in outputs]).cpu().numpy() for k in keys} 
+        results = {k: torch.cat([x[k] for x in outputs]).cpu().numpy() for k in keys}
         self.test_results = results
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.wd)
 
-        
+
 
 class CNN(Base):
 
@@ -140,7 +143,7 @@ class CNN(Base):
             self.backbone = models.resnet18(pretrained=use_pretrained, progress=False, num_classes=num_classes)
             num_ftrs = self.backbone.fc.in_features
             self.backbone.fc = nn.Identity()
-            
+
         elif backbone == "resnet50":
             """ Resnet50
             """
@@ -152,12 +155,35 @@ class CNN(Base):
             self.backbone = vit_small_moco(img_size=128, stop_grad_conv1=True)
             self.backbone.head = nn.Identity()
             num_ftrs = self.backbone.embed_dim
-                
+
+        elif backbone == "mlp":
+            self.backbone = MLP()
+            num_ftrs = self.backbone.embed_size
+
+        elif backbone == "L0mlp":
+            pretrained_model = kwargs["Pretrained Model"]
+            train_mask = kwargs["Train Mask"] # If True, then pretrained model is MLP, else it is an L0 MLP with trained mask
+
+            if train_mask:
+                self.backbone = L0MLP(pretrained_model)
+            else:
+                self.backbone = pretrained_model
+
+            for layer in self.backbone.children():
+                if not train_mask:
+                    layer.mask.requires_grad = False
+                layer.weight.requires_grad = False
+                layer.bias.requires_grad = False
+
+            if not train_mask: self.backbone.train(False)
+
+            num_ftrs = self.backbone.embed_size
+
         if task_embedding>0:
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
         else:
             self.task_embedding = None
-        
+
         self.mlp = nn.Sequential(nn.Linear(num_ftrs+task_embedding, mlp_hidden_dim), nn.ReLU(), nn.Linear(mlp_hidden_dim, self.hidden_size))
 
     def init_networks(self):
@@ -165,28 +191,33 @@ class CNN(Base):
         pass
 
     def forward(self, x, task_idx=None):
-        
-        x_size = x.shape
-        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]])
 
-        x = self.backbone(x)
-        
+        x_size = x.shape
+        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 imagesl, rgb, height, width] -> [N*4 images, rgd, height, width]
+
+        x = self.backbone(x) # Get representation for each image
+
         if task_idx is not None:
-            x_task = self.task_embedding(task_idx.repeat_interleave(4))
-            x = torch.cat([x, x_task], 1)
-        
+            x_task = self.task_embedding(task_idx.repeat_interleave(4)) # Repeat_interleave repeats tensor values N times [1, 2].repeat_interleave(2) = [1, 1, 2, 2]
+                                                                        # Because images for a problem are still grouped together, this gives the correct task idx for every image in a problem,
+                                                                        # and thus the right task embedding
+            x = torch.cat([x, x_task], 1) # mlp input is image representation cat task embedding
+
         x = self.mlp(x)
-        x = nn.functional.normalize(x, dim=1)
-        x = x.reshape([-1, 4, self.hidden_size])
-        x = (x[:,:,None,:] * x[:,None,:,:]).sum(3).sum(2)
-        x = -x
+        x = nn.functional.normalize(x, dim=1) # Normalize the resulting MLP vectors
+        x = x.reshape([-1, 4, self.hidden_size]) # Reshape into (# problems, 4 images per problem, mlp size
+        x = (x[:,:,None,:] * x[:,None,:,:]).sum(3).sum(2) # None indexing unsqueezes another dimensions at that index
+            # So you have (# problems, 4 ims per problem, 1, mlp representation) * (# problems, 1, 4 ims per problem, mlp representation)
+            # Calculates the dot product of each mlp vector with every other vector (as well as itself) via broadcasting. Then sums the total
+            # similarity
+        x = -x # The odd one out's total similarity to every other vector should be LOWER than the other vector's, so negate the dot products, making argmax(x) = odd one out because it is the least negative
 
         return x
 
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        
+
         parser.add_argument("--backbone", type=str, default='resnet50')
         parser.add_argument("--wd", type=float, default=1e-4)
         parser.add_argument("--lr", type=float, default=1e-4)
@@ -210,7 +241,7 @@ class SCN(Base):
         mlp_hidden_dim: int = 2048,
         task_embedding: int = 0, #64
         ssl_pretrain: bool = False,
-        # task_embedding: 
+        # task_embedding:
         **kwargs
     ):
         """
@@ -229,7 +260,7 @@ class SCN(Base):
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
         else:
             self.task_embedding = None
-        
+
         self.backbone = SCL(
             image_size=128,
             set_size=5,
@@ -240,12 +271,12 @@ class SCN(Base):
             rel_heads=80,
             rel_net_hidden_dims=[64, 23, 5],
             task_emb_size=task_embedding,
-        )        
+        )
 
 
     def forward(self, x, task_idx=None):
-        
-        
+
+
         x_task = self.task_embedding(task_idx) if task_idx is not None else None
 
         out = self.backbone(x, x_task)
@@ -262,7 +293,7 @@ class SCN(Base):
 
         parser.add_argument("--n_tasks", type=int, default=103)
         parser.add_argument("--task_embedding", type=int, default=0)
-        
+
         return parser
 
 
@@ -304,7 +335,7 @@ class WREN(Base):
         self.backbone = WReN(task_emb_size=task_embedding)
 
     def forward(self, x, task_idx=None):
-        
+
         x_task = self.task_embedding(task_idx) if task_idx is not None else None
 
         out = self.backbone(x, x_task)
@@ -321,7 +352,7 @@ class WREN(Base):
 
         parser.add_argument("--n_tasks", type=int, default=103)
         parser.add_argument("--task_embedding", type=int, default=0)
-        
+
         return parser
 
 
@@ -352,7 +383,7 @@ class SCNHead(Base):
         feature_extract = True
         num_classes = 1
         use_pretrained = False
-        
+
         self.hidden_size = mlp_dim
 
         if backbone == "resnet18":
@@ -361,7 +392,7 @@ class SCNHead(Base):
             self.backbone = models.resnet18(pretrained=use_pretrained, progress=False, num_classes=num_classes)
             num_ftrs = self.backbone.fc.in_features
             self.backbone.fc = nn.Identity()
-            
+
         elif backbone == "resnet50":
             """ Resnet50
             """
@@ -376,7 +407,7 @@ class SCNHead(Base):
         else:
             self.task_embedding = None
             self.task_embedding_size = 0
-        
+
         self.head = SCL(
             image_size=num_ftrs+task_embedding,
             set_size=5,
@@ -387,7 +418,7 @@ class SCNHead(Base):
             rel_heads=mlp_hidden_dim,
             rel_net_hidden_dims=[64, 23, 5],
             task_emb_size=task_embedding,
-        )        
+        )
 
     def load_finetune_weights(self, checkpoint):
         print("*"*10 + "load finetune weights ...")
@@ -398,9 +429,9 @@ class SCNHead(Base):
     def load_backbone_weights(self, checkpoint):
         print("*"*10 + "load ckpt weights ...")
         self.backbone.load_state_dict(torch.load(checkpoint)['model'], strict=False)
-        
+
     def forward(self, x, task_idx=None):
-        
+
         x_task = self.task_embedding(task_idx) if task_idx is not None else None
 
         x_size = x.shape
@@ -424,5 +455,5 @@ class SCNHead(Base):
         parser.add_argument("--task_embedding", type=int, default=0)
 
         # parser.add_argument("--ssl_pretrain", action='store_true')
-        
+
         return parser

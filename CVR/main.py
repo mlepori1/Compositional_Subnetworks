@@ -28,7 +28,7 @@ class MetricsCallback(Callback):
         self.all_keys = []
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        
+
         each_me = {}
         for k,v in trainer.callback_metrics.items():
             each_me[k] = v.item()
@@ -47,7 +47,7 @@ class MetricsCallback(Callback):
             for k in self.all_keys:
                 v = m[k] if k in m else np.nan
                 all_metrics[k].append(v)
-        
+
         return all_metrics
 
 def cli_main():
@@ -72,21 +72,21 @@ def cli_main():
     parser.add_argument('--early_stopping', type=int, default=0, help='0 = no early stopping')
     parser.add_argument('--refresh_rate', type=int, default=10, help='progress bar refresh rate')
     parser.add_argument('--es_patience', type=int, default=40, help='early stopping patience')
-    
-    
+
+
 
     args = parse_args(parser, argv)
 
     if args.seed is not None:
         pl.seed_everything(args.seed)
-    
+
     # trainer args
     parser = pl.Trainer.add_argparse_args(parser)
-    
+
     # model args
-    model_type = vars(modules)[args.model] 
+    model_type = vars(modules)[args.model]
     parser = model_type.add_model_specific_args(parser)
-    
+
     # dataset args
     dataset_type = vars(datasets)[args.dataset]
     parser = dataset_type.add_dataset_specific_args(parser)
@@ -102,10 +102,10 @@ def cli_main():
     fit_kwargs = {}
     # save config
     if args.resume_training:
-        
+
         ckpt = list(filter(lambda x: '.ckpt' in x, os.listdir(args.exp_dir)))[-1]
         ckpt = os.path.join(args.exp_dir, ckpt)
-            
+
         print('resuming from checkpoint', ckpt)
         fit_kwargs['ckpt_path'] = ckpt
 
@@ -125,7 +125,7 @@ def cli_main():
 
         elif args.checkpoint != '':
             ckpt = args.checkpoint
-            
+
             model.load_backbone_weights(ckpt)
 
         os.makedirs(args.exp_dir, exist_ok=True)
@@ -134,10 +134,10 @@ def cli_main():
 
     if args.freeze_pretrained == 1:
         model.freeze_pretrained()
-        
+
     # training
     logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
-    model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True) 
+    model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
     callbacks = [model_checkpoint]
     if args.early_stopping!=0:
         early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=0.99, strict=False) #0.99
@@ -150,13 +150,13 @@ def cli_main():
 
     trainer.fit(model, datamodule, **fit_kwargs)
 
-    # testing    
+    # testing
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
-    
+
     trainer.test(model=best_model, datamodule=datamodule)
     train_result = best_model.test_results
 
-    global_avg, per_task, per_task_avg = process_results(train_result, args.task)    
+    global_avg, per_task, per_task_avg = process_results(train_result, args.task)
 
     metrics = metrics_callback.get_all()
 
@@ -189,10 +189,10 @@ def cli_main():
         '3_lr': args.lr,
         '3_wd': args.wd,
     }
-    
+
     output_dict.update({'2_'+k:v for k,v in global_avg.items()})
     output_dict.update({'5_'+k:v for k,v in per_task_avg.items()})
-    
+
     results_save_path = os.path.join(args.exp_dir, 'results.npy')
     np.save(results_save_path, {'global_avg': global_avg, 'per_task_avg': per_task_avg, 'per_task': per_task, 'metrics': metrics})
 

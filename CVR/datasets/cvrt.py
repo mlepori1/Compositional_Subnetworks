@@ -48,7 +48,7 @@ class CVRTDataModule(DataModuleBase):
             tvt.Normalize((0.9, 0.9, 0.9), (0.1, 0.1, 0.1)),
         ])
         return transforms
-    
+
     @staticmethod
     def add_dataset_specific_args(parent_parser):
 
@@ -174,14 +174,14 @@ TASKS={
     99: "task_pos_flip_1",
     100: "task_pos_flip_2",
     101: "task_flip_contact_1",
-    102: "task_flip_contact_2",    
+    102: "task_flip_contact_2",
 }
 
 
 # Dataset
 
 class CVRT(Dataset):
-    
+
     def __init__(self, base_folder, task, split='train', n_samples=-1, image_size=128, transform=None):
         super().__init__()
 
@@ -194,7 +194,7 @@ class CVRT(Dataset):
             self.tasks = [TASKS[i] for i in range(9, len(TASKS))]
         else:
             self.tasks = [TASKS[int(t)] for t in task.split('-')]
-        
+
         self.split = split
         if n_samples > 0:
             self.n_samples = n_samples
@@ -218,18 +218,22 @@ class CVRT(Dataset):
     def __getitem__(self, idx):
         task_idx = idx // self.n_samples
         sample_idx = idx % self.n_samples
-        
+
         sample_path = os.path.join(self.base_folder, self.tasks[task_idx], self.split, '{:05d}.png'.format(sample_idx))
         sample = Image.open(sample_path)
-        
+
         sample = self.totensor(sample)
+        # What is true height of the image, with padding
         im_size = sample.shape[1]
+        # Padding is uniform around each data point
         pad = im_size - self.image_size
-        
+
+        # this line takes an image of 4 samples with some black padding, reshapes it such that
+        # each image is a seperate element of the batch, permutes the dimensions, and then strips off the padding
         sample = sample.reshape([3, im_size, 4, im_size]).permute([2,0,1,3])[:, :, pad//2:-pad//2, pad//2:-pad//2]
-        
+
         if self.transform is not None:
             sample = self.transform(sample)
-        
+
         return sample, task_idx
 
