@@ -193,7 +193,7 @@ class CVRT(Dataset):
         elif task=='comp':
             self.tasks = [TASKS[i] for i in range(9, len(TASKS))]
         else:
-            self.tasks = [TASKS[int(t)] for t in task.split('-')]
+            self.tasks = [TASKS[int(t)] for t in task.split('-')] # To denote multitask training, seperate task idxs with "-" in function call
 
         self.split = split
         if n_samples > 0:

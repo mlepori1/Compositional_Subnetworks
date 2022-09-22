@@ -75,8 +75,7 @@ def cli_main():
 
 
 
-    args = parse_args(parser, argv)
-
+    args = parse_args(parser, argv) # Here is where variables from the config file override command line args
     if args.seed is not None:
         pl.seed_everything(args.seed)
 

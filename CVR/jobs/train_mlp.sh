@@ -63,7 +63,7 @@ mkdir $path_db
 echo $exp_dir
 
 python main.py \
-    --config $config \ # Just a path where you will save off the relevant command line args
+    --config $config \ # This config can override any of the following args
     --exp_name $exp_name \
     --exp_dir $exp_dir \
     --data_dir $data_dir \
