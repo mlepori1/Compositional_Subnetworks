@@ -14,7 +14,8 @@ from models.vits import vit_small as vit_small_moco
 
 from models.scn import SCL
 from models.wren import WReN
-from models.mlpEncoder import L0MLP, MLP
+#from models.mlpEncoder import L0MLP, MLP
+from models.mlpEncoder import MLP
 
 class Base(pl.LightningModule):
 
@@ -160,24 +161,24 @@ class CNN(Base):
             self.backbone = MLP()
             num_ftrs = self.backbone.embed_size
 
-        elif backbone == "L0mlp":
-            pretrained_model = kwargs["Pretrained Model"]
-            train_mask = kwargs["Train Mask"] # If True, then pretrained model is MLP, else it is an L0 MLP with trained mask
+        # elif backbone == "L0mlp":
+        #     pretrained_model = kwargs["Pretrained Model"]
+        #     train_mask = kwargs["Train Mask"] # If True, then pretrained model is MLP, else it is an L0 MLP with trained mask
 
-            if train_mask:
-                self.backbone = L0MLP(pretrained_model)
-            else:
-                self.backbone = pretrained_model
+        #     if train_mask:
+        #         self.backbone = L0MLP(pretrained_model)
+        #     else:
+        #         self.backbone = pretrained_model
 
-            for layer in self.backbone.children():
-                if not train_mask:
-                    layer.mask.requires_grad = False
-                layer.weight.requires_grad = False
-                layer.bias.requires_grad = False
+        #     for layer in self.backbone.children():
+        #         if not train_mask:
+        #             layer.mask.requires_grad = False
+        #         layer.weight.requires_grad = False
+        #         layer.bias.requires_grad = False
 
-            if not train_mask: self.backbone.train(False)
+            # if not train_mask: self.backbone.train(False)
 
-            num_ftrs = self.backbone.embed_size
+            # num_ftrs = self.backbone.embed_size
 
         if task_embedding>0:
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
