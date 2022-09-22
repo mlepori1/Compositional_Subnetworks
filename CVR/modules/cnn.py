@@ -194,7 +194,7 @@ class CNN(Base):
     def forward(self, x, task_idx=None):
 
         x_size = x.shape
-        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 imagesl, rgb, height, width] -> [N*4 images, rgd, height, width]
+        x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 images, rgb, height, width] -> [N*4 images, rgb, height, width]
 
         x = self.backbone(x) # Get representation for each image
 
