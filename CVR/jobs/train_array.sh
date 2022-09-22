@@ -18,13 +18,19 @@ model_type='ResNet'
 
 
 ## when condition is ind
-n1=0
-n2=102
-task_list=$( seq $n1 $n2 )
+n1=7
+n2=8
+#task_list=$( seq $n1 $n2 )
+task_list = (7 8) # This is just the task ids for contact and insideness
 
-cfg_list=(0 1 2 3 4 5)
+
+# Configuration List: This is used to
+# iterate through configs for all different data sizes
+# 0 - 5 is 20 datapoints - 1000 datapoints
+# 8 just corresponds to the largest dataset, 10k
+# cfg_list=(0 1 2 3 4 5)
 # cfg_list=(7)
-# cfg_list=(8)
+cfg_list=(8)
 
 
 ckpt_dir="<path to checkpoints>"
@@ -131,7 +137,7 @@ elif [ "$model_type" = "ResNet" ]; then
     else
         checkpoint="none"
     fi
-    
+
 ###########################
 elif [ "$model_type" = "SCL" ]; then
 
@@ -173,7 +179,7 @@ elif [ "$model_type" = "SCL" ]; then
     else
         checkpoint="none"
     fi
-    
+
 ###########################
 elif [ "$model_type" = "WREN" ]; then
     model="WREN"
@@ -251,12 +257,50 @@ elif [ "$model_type" = "SCLRN" ]; then
     else
         checkpoint="none"
     fi
-    
+
+###########################
+elif [ "$model_type" = "MLP" ]; then
+    model="CNN"
+    backbone="mlp"
+
+    mlp_hidden_dim=128
+
+    if [ "$condition" = "ind" ]; then
+        # With cfg list = (8), only indexing into the last value of all these arrays
+        n_samples_pt_s=(20 50 100 200 500 1000 2000 5000 10000)
+
+        max_epochs_pt=(800 800 400 200 100 100 100 100 100)
+        check_val_every_n_epoch=(8 8 4 2 1 1 1 1 1)
+        es_patience=(20 20 20 20 20 20 20 20 20)
+        lrs=(0.00015 0.0039 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005)
+        task_embedding=0 # don't need a task idx when you're training 1 task at a timee
+        wd=0.0000
+
+    else
+
+        n_samples_pt_s=(20 50 100 200 500 1000 2000 5000 10000)
+
+        max_epochs_pt=(100 100 100 100 100 100 100 100 100)
+        check_val_every_n_epoch=(1 1 1 1 1 1 1 1 1)
+        es_patience=(30 30 30 30 30 30 30 30 30)
+
+        lrs=(0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005)
+        task_embedding=64
+
+        wd=0.0000
+    fi
+    if [ "$ssl" = "true" ]; then
+        checkpoint="${ckpt_dir}/ssl_checkpoint_resnet50_corrected.pth.tar"
+    elif [ "$condition" = "elem_comp" ]; then
+        checkpoint="<path to experiment dir>" # the experiment where the model is trained in the elem condition
+    else
+        checkpoint="none"
+    fi
+
 ###########################
 fi
-
 echo ${model} ${backbone} ${checkpoint}
-    
+
 ###########################
 ###########################
 ###########################
