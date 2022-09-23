@@ -25,11 +25,11 @@ mlp_hidden_dim: 2048
 task_embedding: 64
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
-task: '7-8' # Denotes multitask training
+task: '8' # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "MLP_MT_Training_Inside_Contact"
-exp_dir: '../Subnetworks_db/mlp/MLP_MT_Training_Inside_Contact'
+exp_name: "MLP_Training_Contact"
+exp_dir: '../Subnetworks_db/mlp/MLP_MT_Training_Contact'
