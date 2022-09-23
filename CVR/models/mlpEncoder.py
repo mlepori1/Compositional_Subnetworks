@@ -25,7 +25,7 @@ import torch.nn as nn
 
 #Linear network to prune after training
 class MLP(nn.Module):
-    def __init__(self, in_dim=128*128, dims=[2048, 2048, 1024, 1024, 1024, 1024]):
+    def __init__(self, in_dim=128*128, dims=[2048, 2048, 1024, 1024, 1024, 1024, 512]):
         super(MLP, self).__init__()
         self.embed_size = dims[-1]
         self.in_dim = in_dim 
@@ -40,7 +40,9 @@ class MLP(nn.Module):
             nn.ReLU(),
             nn.Linear(dims[3], dims[4]),
             nn.ReLU(),
-            nn.Linear(dims[4], dims[5])
+            nn.Linear(dims[4], dims[5]),
+            nn.ReLU(),
+            nn.Linear(dims[5], dims[6])
         )
 
     def forward(self, input):

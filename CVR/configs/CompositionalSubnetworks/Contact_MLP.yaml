@@ -17,7 +17,7 @@ es_patience: 20
 check_val_every_n_epoch: 1
 #arch
 backbone: 'mlp'
-lr: 0.00001
+lr: 0.001
 wd: 0.00
 n_tasks: 1
 mlp_dim: 128
