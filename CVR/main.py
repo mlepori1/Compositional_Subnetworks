@@ -50,6 +50,15 @@ class MetricsCallback(Callback):
 
         return all_metrics
 
+class TemperatureCallback(Callback):
+
+    def __init__(self, total_epochs, final_temp):
+        self.temp_increase = final_temp**(1./total_epochs)
+
+    def on_epoch_end(self, trainer, pl_module):
+        pl_module.temp *= self.temp_increase
+
+
 def cli_main():
 
     argv = sys.argv[1:]
