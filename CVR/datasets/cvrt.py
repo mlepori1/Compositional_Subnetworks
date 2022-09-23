@@ -45,7 +45,6 @@ class CVRTDataModule(DataModuleBase):
 
     def _default_transforms(self):
         transforms = tvt.Compose([
-            tvt.Grayscale(3), # Grayscale, but preserves 3 channels so as not to mess up rest of code
             tvt.Normalize((0.9, 0.9, 0.9), (0.1, 0.1, 0.1)),
         ])
         return transforms
