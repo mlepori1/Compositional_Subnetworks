@@ -19,10 +19,10 @@ check_val_every_n_epoch: 1
 backbone: 'mlp'
 lr: 0.00001
 wd: 0.00
-n_tasks: 2
+n_tasks: 1
 mlp_dim: 128
 mlp_hidden_dim: 2048
-task_embedding: 64
+task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
 task: '8' # Denotes multitask training
