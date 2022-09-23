@@ -25,10 +25,10 @@ import torch.nn as nn
 
 #Linear network to prune after training
 class MLP(nn.Module):
-    def __init__(self, in_dim=128*128*3, dims=[2048, 2048, 1024, 1024, 1024, 1024]):
+    def __init__(self, in_dim=128*128, dims=[2048, 2048, 1024, 1024, 1024, 1024]):
         super(MLP, self).__init__()
         self.embed_size = dims[-1]
-        self.in_dim = in_dim
+        self.in_dim = in_dim 
         self.model = nn.Sequential(
             nn.Linear(in_dim, dims[0]),
             nn.ReLU(),
@@ -44,6 +44,7 @@ class MLP(nn.Module):
         )
 
     def forward(self, input):
+        input = input[:, 0, :, :] # Input is grayscaled, so just grab one dimension
         input = input.reshape(-1, self.in_dim)
         return self.model(input)
 
