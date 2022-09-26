@@ -75,14 +75,14 @@ class Base(pl.LightningModule):
             loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
-            l0_loss = torch.zeros(loss.shape).reshape(-1)
+            l0_loss = torch.zeros(loss.shape)
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
-            "loss": loss,
-            "acc": acc,
-            "L0": l0_loss
+            "loss": loss.reshape(1),
+            "acc": acc.reshape(1),
+            "L0": l0_loss.reshape(1)
         }
 
         return loss, logs
@@ -105,14 +105,14 @@ class Base(pl.LightningModule):
             loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
-            l0_loss = torch.zeros(loss.shape).reshape(-1)
+            l0_loss = torch.zeros(loss.shape)
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
-            "loss": loss,
-            "acc": acc,
-            "L0": l0_loss
+            "loss": loss.reshape(1),
+            "acc": acc.reshape(1),
+            "L0": l0_loss.reshape(1)
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
@@ -121,7 +121,6 @@ class Base(pl.LightningModule):
     def test_epoch_end(self, outputs):
 
         keys = list(outputs[0].keys())
-        print(outputs)
         results = {k: torch.cat([x[k] for x in outputs]).cpu().numpy() for k in keys}
         self.test_results = results
 
