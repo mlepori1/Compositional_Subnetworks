@@ -32,11 +32,11 @@ val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
 exp_name: "L0_MT_Training"
-exp_dir: '../Subnetworks_db/l0/L0_MT_Training',
-pretrained_model_path: '../Subnetworks_db/mlp/MLP_MT_Training/last.ckpt',
-pretrained_model: 'L0mlp',
-train_mask: True,
-l0_init: -0.1,
-l0_lambda: 1E-8,
+exp_dir: '../Subnetworks_db/l0/L0_MT_Training'
+pretrained_model_path: '../Subnetworks_db/mlp/MLP_MT_Training/last.ckpt'
+pretrained_model: 'L0mlp'
+train_mask: True
+l0_init: -0.1
+l0_lambda: 1E-8
 max_temp: 200
 
