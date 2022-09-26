@@ -149,7 +149,7 @@ def cli_main():
     model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
     callbacks = [model_checkpoint]
     if args.early_stopping!=0:
-        early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=0.99, strict=False) #0.99
+        early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
         callbacks.append(early_stopping)
     callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
     metrics_callback = MetricsCallback()

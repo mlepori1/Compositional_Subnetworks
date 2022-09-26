@@ -161,10 +161,10 @@ class L0MLP(nn.Module):
  
 #Linear network to prune after training
 class MLP(nn.Module):
-    def __init__(self, in_dim=128*128*3, dims=[2048, 2048, 1024, 1024, 1024, 1024, 512]):
+    def __init__(self, in_dim=128*128*3, dims=[512, 1024, 1024, 512]):
         super(MLP, self).__init__()
         self.embed_size = dims[-1]
-        self.in_dim = in_dim 
+        self.in_dim = in_dim
         self.model = nn.Sequential(
             nn.Linear(in_dim, dims[0]),
             nn.ReLU(),
@@ -173,13 +173,8 @@ class MLP(nn.Module):
             nn.Linear(dims[1], dims[2]),
             nn.ReLU(),
             nn.Linear(dims[2], dims[3]),
-            nn.ReLU(),
-            nn.Linear(dims[3], dims[4]),
-            nn.ReLU(),
-            nn.Linear(dims[4], dims[5]),
-            nn.ReLU(),
-            nn.Linear(dims[5], dims[6])
         )
+
 
     def forward(self, input):
         input = input.reshape(-1, self.in_dim)
