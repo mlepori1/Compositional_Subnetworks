@@ -1,8 +1,6 @@
 
 import os
 from argparse import ArgumentParser
-from CVR.models.mlpEncoder import L0UnstructuredLinear
-
 
 import pytorch_lightning as pl
 import torch
