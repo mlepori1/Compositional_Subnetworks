@@ -151,6 +151,8 @@ def cli_main():
     if args.early_stopping!=0:
         early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
         callbacks.append(early_stopping)
+    if args.backbone == "L0mlp":
+        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp))
     callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
     metrics_callback = MetricsCallback()
     callbacks.append(metrics_callback)

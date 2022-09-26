@@ -190,14 +190,14 @@ class CNN(Base):
 
         elif backbone == "L0mlp":
             self.isL0 = True
-            pretrained_model_path = kwargs["Pretrained Model Path"] # L0 models are always structured using either a linear model or another l0 model
-            pretrained_model_type = kwargs["Pretrained Model"] # Either MLP or L0 MLP
-            train_mask = kwargs["Train Mask"]
-            l0_init = kwargs["L0 Init"]
-            self.lamb = kwargs["L0 Lambda"]
+            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a linear model or another l0 model
+            pretrained_model_type = kwargs["pretrained_model"] # Either MLP or L0 MLP
+            train_mask = kwargs["train_mask"]
+            l0_init = kwargs["l0_init"]
+            self.lamb = kwargs["l0_lambda"]
 
             pretrained_model = MLP() # Defines the structure of both the L0 and regular MLP
-            if pretrained_model_type == "L0 MLP":
+            if pretrained_model_type == "L0mlp":
                 pretrained_model = L0UnstructuredLinear(pretrained_model)
             pretrained_model = pretrained_model.load_state_dict(torch.load(pretrained_model_path)['model'], strict=False)
 
