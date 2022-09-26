@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+import torch.nn.init as init
+import math
 
 class L0UnstructuredLinear(nn.Module):
     """The hard concrete equivalent of ``nn.Linear``.
@@ -13,8 +15,8 @@ class L0UnstructuredLinear(nn.Module):
         in_features: int,
         out_features: int,
         bias: bool = True,
-        mask_init_value=0.0,
-        temp=1
+        mask_init_value: float = 0.0,
+        temp: float = 1.
     ) -> None:
         """Initialize a L0UstructuredLinear module.
 
@@ -24,7 +26,7 @@ class L0UnstructuredLinear(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.mask_init_value = mask_init_value
-        self.weight = nn.Parameter(torch.zeros(in_features, out_features))  # type: ignore
+        self.weight = nn.Parameter(torch.zeros(out_features, in_features))  # type: ignore
         self.temp = temp
         self.init_mask()
 
@@ -33,20 +35,18 @@ class L0UnstructuredLinear(nn.Module):
         else:
             self.register_parameter("bias", None)  # type: ignore
 
-        self.compiled_weight = None
         self.reset_parameters()
 
     def init_mask(self):
-        self.mask_weight = nn.Parameter(torch.zeros(self.in_features, self.out_features))
+        self.mask_weight = nn.Parameter(torch.zeros(self.out_features, self.in_features))
         nn.init.constant_(self.mask_weight, self.mask_initial_value)
 
     def compute_mask(self):
         scaling = 1. / nn.sigmoid(self.mask_initial_value)
-        if not self.training: mask = (self.mask_weight > 0).float()
+        if not self.training or self.mask_weight.requires_grad == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testingß
         else: mask = F.sigmoid(self.temp * self.mask_weight)
         return scaling * mask      
 
-    #@todo still gotta implement the forward pass, and the from_module, prune, and calc_l0 methods 
     def train(self, train_bool):
         self.training = train_bool
 
@@ -54,8 +54,7 @@ class L0UnstructuredLinear(nn.Module):
     def from_module(
         self,
         module: nn.Linear,
-        init_mean: float = 0.5,
-        init_std: float = 0.01,
+        mask_init_value: float = 0.0,
         keep_weights: bool = True,
     ) -> "L0UnstructedLinear":
         """Construct from a pretrained nn.Linear module.
@@ -63,28 +62,27 @@ class L0UnstructuredLinear(nn.Module):
         with `keep_weights = False`.
         Parameters
         ----------
-        module: nn.Linear
-            A ``nn.Linear`` module.
-        init_mean : float, optional
-            Initialization value for hard concrete parameter,
-            by default 0.5.,
-        init_std: float, optional
-            Used to initialize the hard concrete parameters,
-            by default 0.01.
+        module: nn.Linear, L0UnstructuredLinear
+            A ``nn.Linear`` module, or another L0Unstructured linear model.
+        mask_init_value : float, optional
+            Initialization value for the sigmoid .
         Returns
         -------
         L0UnstructedLinear
-            The input module with a hardconcrete mask introduced.
+            The input module with a CS mask introduced.
         """
         in_features = module.in_features
         out_features = module.out_features
         bias = module.bias is not None
-        new_module = self(in_features, out_features, bias, init_mean, init_std)
+        mask = module.mask_weight is not None
+        new_module = self(in_features, out_features, bias, mask_init_value)
 
         if keep_weights:
-            new_module.weight.data = module.weight.data.transpose(0, 1).clone()
+            new_module.weight.data = module.weight.data.clone()
             if bias:
                 new_module.bias.data = module.bias.data.clone()
+            if mask:
+                new_module.mask_weight.data = module.mask_weight.data.clone()
 
         return new_module
 
@@ -99,15 +97,14 @@ class L0UnstructuredLinear(nn.Module):
 
     def num_prunable_parameters(self) -> int:
         """Get number of prunable parameters"""
-        return self.in_features * self.out_features
+        return self.weight.size()
 
-    def num_parameters(self, train=True) -> torch.Tensor:
-        """Get number of parameters."""
-        if self.training:
-            # Get the expected number of parameters
-            n_active = self.mask.l0_norm()
-        elif self.compiled_weight is not None:
-            n_active = torch.sum(self.compiled_weight.reshape(-1) != 0)
+    def num_parameters(self) -> torch.Tensor:
+        """Get number of active test parameters."""
+        train = self.training
+        self.training = False
+        n_active = torch.sum(self.compute_mask() > 0)
+        self.training = train
         return n_active
 
     def forward(self, data: torch.Tensor, **kwargs) -> torch.Tensor:  # type: ignore
@@ -121,24 +118,10 @@ class L0UnstructuredLinear(nn.Module):
         torch.Tensor
             N-dimensional tensor, with last dimension `out_features`
         """
-        if self.training:
-            # First reset the compiled weights
-            self.compiled_weight = None
-
-            # Sample, and compile dynamically
-            mask = self.mask()
-            compiled_weight = self.weight * mask
-            U = data.matmul(compiled_weight)
-
-        else:
-            if self.compiled_weight is None:
-                mask = self.mask()
-                compiled_weight = self.weight * mask
-                self.compiled_weight = compiled_weight
-
-            U = data.matmul(self.compiled_weight)  # type: ignore
-
-        return U if self.bias is None else U + self.bias
+        self.mask = self.compute_mask()
+        masked_weight = self.weight * self.mask
+        out = F.linear(data, masked_weight, self.bias)
+        return out
 
     def extra_repr(self) -> str:
         s = "in_features={in_features}, out_features={out_features}"
@@ -149,12 +132,14 @@ class L0UnstructuredLinear(nn.Module):
         return "{}({})".format(self.__class__.__name__, self.extra_repr())
 
 class L0MLP(nn.Module):
-    def __init__(self, mlp):
+    def __init__(self, mlp, mask_init_value):
+        # MLP is either a regular MLP (such as the one defined below) 
+        # or another unstructured L0 MLP
         super(L0MLP, self).__init__()
         self.model = nn.Sequential()
         for layer in mlp.children():
             if isinstance(layer, nn.Linear):
-                self.model.append(L0UnstructuredLinear.from_module(layer))
+                self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value))
             else:
                 self.model.append(layer)
 
@@ -163,13 +148,17 @@ class L0MLP(nn.Module):
     def forward(self, input):
         return self.model(input)
 
-    def train(self, train_bool):
-        for layer in self.modules():
-            try:
-                layer.train(train_bool)
-            except:
-                continue
+    def get_temp(self):
+        for layer in self.model.children():
+            if isinstance(layer, L0UnstructuredLinear):
+                return layer.temp
 
+    def set_temp(self, temp):
+        for layer in self.model.children():
+            if isinstance(layer, L0UnstructuredLinear):
+                layer.temp = temp
+                print(layer.temp) # for debug
+ 
 #Linear network to prune after training
 class MLP(nn.Module):
     def __init__(self, in_dim=128*128*3, dims=[2048, 2048, 1024, 1024, 1024, 1024, 512]):

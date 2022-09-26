@@ -56,7 +56,8 @@ class TemperatureCallback(Callback):
         self.temp_increase = final_temp**(1./total_epochs)
 
     def on_epoch_end(self, trainer, pl_module):
-        pl_module.temp *= self.temp_increase
+        temp = pl_module.backbone.get_temp()
+        pl_module.backbone.set_temp(temp * self.temp_increase)
 
 
 def cli_main():

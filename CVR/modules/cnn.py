@@ -1,6 +1,7 @@
 
 import os
 from argparse import ArgumentParser
+from CVR.models.mlpEncoder import L0UnstructuredLinear
 
 
 import pytorch_lightning as pl
@@ -15,7 +16,7 @@ from models.vits import vit_small as vit_small_moco
 from models.scn import SCL
 from models.wren import WReN
 #from models.mlpEncoder import L0MLP, MLP
-from models.mlpEncoder import MLP
+from models.mlpEncoder import MLP, L0MLP
 
 class Base(pl.LightningModule):
 
@@ -58,15 +59,32 @@ class Base(pl.LightningModule):
 
         return y_hat, y
 
+    def l0_loss(self, y_hat, y):
+        error_loss = nn.CrossEntropyLoss(y_hat, y)
+        l0_loss = 0.0
+        masks = []
+        for layer in self.backbone.modules():
+            if layer.mask is not None:
+                masks.append(layer.mask)
+        l0_loss = (torch.sum(m.sum()) for m in masks)
+        return error_loss + self.lamb * l0_loss, l0_loss  
+      
     def step(self, batch, batch_idx):
 
         y_hat, y = self.shared_step(batch)
-        loss = F.cross_entropy(y_hat, y) # @ML ToDo This is loss calculation, need to change this to L0 loss for subnetwork learning
+
+        if self.isL0 == True:
+            loss, l0_loss = self.l0_loss(y_hat, y)
+        else:
+            loss = F.cross_entropy(y_hat, y)
+            l0_loss = None
+
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
             "loss": loss,
             "acc": acc,
+            "L0": l0_loss
         }
 
         return loss, logs
@@ -85,13 +103,18 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        loss = F.cross_entropy(y_hat, y, reduction='none')
+        if self.isL0 == True:
+            loss, l0_loss = self.l0_loss(y_hat, y)
+        else:
+            loss = F.cross_entropy(y_hat, y)
+            l0_loss = None
 
-        acc = (y == torch.argmax(y_hat, dim=1))*1
+        acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
             "loss": loss,
             "acc": acc,
+            "L0": l0_loss
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
@@ -121,6 +144,8 @@ class CNN(Base):
         mlp_hidden_dim: int = 2048,
         task_embedding: int = 0, #64
         ssl_pretrain: bool = False,
+        l0_init:float = 0.,
+        l0_lambda:float = 1E-6,
         **kwargs
     ):
         """
@@ -137,6 +162,8 @@ class CNN(Base):
         num_classes = 1
         use_pretrained = False
         self.hidden_size = mlp_dim
+        self.isL0 = False
+        self.lamb = l0_lambda
 
         if backbone == "resnet18":
             """ Resnet18
@@ -161,24 +188,30 @@ class CNN(Base):
             self.backbone = MLP()
             num_ftrs = self.backbone.embed_size
 
-        # elif backbone == "L0mlp":
-        #     pretrained_model = kwargs["Pretrained Model"]
-        #     train_mask = kwargs["Train Mask"] # If True, then pretrained model is MLP, else it is an L0 MLP with trained mask
+        elif backbone == "L0mlp":
+            self.isL0 = True
+            pretrained_model_path = kwargs["Pretrained Model Path"] # L0 models are always structured using either a linear model or another l0 model
+            pretrained_model_type = kwargs["Pretrained Model"] # Either MLP or L0 MLP
+            train_mask = kwargs["Train Mask"]
+            l0_init = kwargs["L0 Init"]
+            self.lamb = kwargs["L0 Lambda"]
 
-        #     if train_mask:
-        #         self.backbone = L0MLP(pretrained_model)
-        #     else:
-        #         self.backbone = pretrained_model
+            pretrained_model = MLP() # Defines the structure of both the L0 and regular MLP
+            if pretrained_model_type == "L0 MLP":
+                pretrained_model = L0UnstructuredLinear(pretrained_model)
+            pretrained_model = pretrained_model.load_state_dict(torch.load(pretrained_model_path)['model'], strict=False)
 
-        #     for layer in self.backbone.children():
-        #         if not train_mask:
-        #             layer.mask.requires_grad = False
-        #         layer.weight.requires_grad = False
-        #         layer.bias.requires_grad = False
+            self.backbone = L0MLP(pretrained_model, mask_init_value=l0_init)
 
-            # if not train_mask: self.backbone.train(False)
+            for layer in self.backbone.children():
+                if not train_mask: # Only decision is whether to freeze mask
+                    layer.mask_weight.requires_grad = False
+                layer.weight.requires_grad = False
+                layer.bias.requires_grad = False
 
-            # num_ftrs = self.backbone.embed_size
+            if not train_mask: self.backbone.train(False)
+
+            num_ftrs = self.backbone.embed_size
 
         if task_embedding>0:
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
