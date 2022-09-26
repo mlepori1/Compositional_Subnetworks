@@ -121,7 +121,7 @@ class Base(pl.LightningModule):
     def test_epoch_end(self, outputs):
 
         keys = list(outputs[0].keys())
-
+        print(outputs)
         results = {k: torch.cat([x[k] for x in outputs]).cpu().numpy() for k in keys}
         self.test_results = results
 
