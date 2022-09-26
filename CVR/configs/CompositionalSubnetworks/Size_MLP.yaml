@@ -13,23 +13,23 @@ ckpt_period: 1
 seed: 0
 early_stopping: 1
 refresh_rate: 10
-es_patience: 1
+es_patience: 5
 check_val_every_n_epoch: 1
 #arch
 backbone: 'mlp'
 lr: 0.00001
 wd: 0.00
-n_tasks: 2
+n_tasks: 1
 mlp_dim: 128
 mlp_hidden_dim: 2048
-task_embedding: 64
+task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
-task: '2-3' # Denotes multitask training
+task: '2' # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "MLP_MT_Training"
-exp_dir: '../Subnetworks_db/mlp/MLP_MT_Training'
+exp_name: "MLP_Training_Size"
+exp_dir: '../Subnetworks_db/mlp/MLP_Training_Size'
