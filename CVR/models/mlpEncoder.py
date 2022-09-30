@@ -28,7 +28,6 @@ class L0UnstructuredLinear(nn.Module):
         self.mask_init_value = mask_init_value
         self.weight = nn.Parameter(torch.zeros(out_features, in_features))  # type: ignore
         self.temp = temp
-        self.init_mask()
 
         if bias:
             self.bias = nn.Parameter(torch.zeros(out_features))  # type: ignore
@@ -39,13 +38,14 @@ class L0UnstructuredLinear(nn.Module):
 
     def init_mask(self):
         self.mask_weight = nn.Parameter(torch.zeros(self.out_features, self.in_features))
-        nn.init.constant_(self.mask_weight, self.mask_initial_value)
+        nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        scaling = 1. / nn.sigmoid(self.mask_initial_value)
+        init_tensor = self.mask_weight.new_full(size=(1,), fill_value=self.mask_init_value) # Get new tensor on same device 
         if not self.training or self.mask_weight.requires_grad == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testingß
-        else: mask = F.sigmoid(self.temp * self.mask_weight)
-        return scaling * mask      
+        else: 
+            mask = F.sigmoid(self.temp * self.mask_weight)
+        return mask      
 
     def train(self, train_bool):
         self.training = train_bool
@@ -74,7 +74,10 @@ class L0UnstructuredLinear(nn.Module):
         in_features = module.in_features
         out_features = module.out_features
         bias = module.bias is not None
-        mask = module.mask_weight is not None
+        if hasattr(module, "mask_weight"):
+            mask = module.mask_weight
+        else:
+            mask = None
         new_module = self(in_features, out_features, bias, mask_init_value)
 
         if keep_weights:
@@ -88,7 +91,7 @@ class L0UnstructuredLinear(nn.Module):
 
     def reset_parameters(self):
         """Reset network parameters."""
-        self.mask.reset_parameters() # Keep mask reset
+        self.init_mask() # Keep mask reset
         init.kaiming_uniform_(self.weight, a=math.sqrt(5)) # Update Linear reset to match torch 1.12 https://pytorch.org/docs/stable/_modules/torch/nn/modules/linear.html#Linear
         if self.bias is not None:
             fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
@@ -136,16 +139,18 @@ class L0MLP(nn.Module):
         # MLP is either a regular MLP (such as the one defined below) 
         # or another unstructured L0 MLP
         super(L0MLP, self).__init__()
-        self.model = nn.Sequential()
-        for layer in mlp.children():
+        self.model = []
+        for layer in mlp.model.children():
             if isinstance(layer, nn.Linear):
                 self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value))
             else:
                 self.model.append(layer)
-
-        self.embed_size = list(self.model.children())[-1].out_features # last layer is an L0 layer
-
+        self.embed_size = self.model[-1].out_features # last layer is an L0 layer
+        self.in_dim = self.model[0].in_features
+        self.model = nn.Sequential(*self.model)
+    
     def forward(self, input):
+        input = input.reshape(-1, self.in_dim)
         return self.model(input)
 
     def get_temp(self):
@@ -161,7 +166,7 @@ class L0MLP(nn.Module):
  
 #Linear network to prune after training
 class MLP(nn.Module):
-    def __init__(self, in_dim=128*128*3, dims=[512, 1024, 1024, 512]):
+    def __init__(self, in_dim=128*128*3, dims=[512, 256, 128]):
         super(MLP, self).__init__()
         self.embed_size = dims[-1]
         self.in_dim = in_dim
@@ -171,8 +176,6 @@ class MLP(nn.Module):
             nn.Linear(dims[0], dims[1]),
             nn.ReLU(),
             nn.Linear(dims[1], dims[2]),
-            nn.ReLU(),
-            nn.Linear(dims[2], dims[3]),
         )
 
 

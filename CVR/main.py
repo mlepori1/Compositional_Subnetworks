@@ -3,7 +3,7 @@ import sys
 # import yaml sys
 import argparse
 import copy
-
+import torch
 import numpy as np
 import pandas as pd
 
@@ -163,6 +163,8 @@ def cli_main():
 
     # testing
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
+
+    torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
 
     trainer.test(model=best_model, datamodule=datamodule)
     train_result = best_model.test_results

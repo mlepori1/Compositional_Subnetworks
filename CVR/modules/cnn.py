@@ -58,14 +58,16 @@ class Base(pl.LightningModule):
         return y_hat, y
 
     def l0_loss(self, y_hat, y):
-        error_loss = nn.CrossEntropyLoss(y_hat, y)
+        error_loss = F.cross_entropy(y_hat, y)
         l0_loss = 0.0
         masks = []
-        for layer in self.backbone.modules():
-            if layer.mask is not None:
+        for layer in self.backbone.model:
+            if hasattr(layer, "mask"):
                 masks.append(layer.mask)
-        l0_loss = (torch.sum(m.sum()) for m in masks)
-        return error_loss + self.lamb * l0_loss, l0_loss  
+        l0_loss = sum(m.sum() for m in masks)
+        print(l0_loss * self.lamb)
+        print(error_loss)
+        return (error_loss + (self.lamb * l0_loss), l0_loss)  
       
     def step(self, batch, batch_idx):
 
@@ -141,8 +143,6 @@ class CNN(Base):
         mlp_hidden_dim: int = 2048,
         task_embedding: int = 0, #64
         ssl_pretrain: bool = False,
-        l0_init:float = 0.,
-        l0_lambda:float = 1E-6,
         **kwargs
     ):
         """
@@ -160,7 +160,6 @@ class CNN(Base):
         use_pretrained = False
         self.hidden_size = mlp_dim
         self.isL0 = False
-        self.lamb = l0_lambda
 
         if backbone == "resnet18":
             """ Resnet18
@@ -195,16 +194,16 @@ class CNN(Base):
 
             pretrained_model = MLP() # Defines the structure of both the L0 and regular MLP
             if pretrained_model_type == "L0mlp":
-                pretrained_model = L0UnstructuredLinear(pretrained_model)
-            pretrained_model = pretrained_model.load_state_dict(torch.load(pretrained_model_path)['model'], strict=False)
-
+                pretrained_model = L0MLP(pretrained_model, mask_init_value=l0_init)
+            pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
             self.backbone = L0MLP(pretrained_model, mask_init_value=l0_init)
 
-            for layer in self.backbone.children():
-                if not train_mask: # Only decision is whether to freeze mask
-                    layer.mask_weight.requires_grad = False
-                layer.weight.requires_grad = False
-                layer.bias.requires_grad = False
+            for layer in self.backbone.model:
+                if hasattr(layer, "weight"): # For linear and l0linear layers
+                    if not train_mask: # Only decision is whether to freeze mask
+                        layer.mask_weight.requires_grad = False
+                    layer.weight.requires_grad = False
+                    layer.bias.requires_grad = False
 
             if not train_mask: self.backbone.train(False)
 
@@ -215,7 +214,10 @@ class CNN(Base):
         else:
             self.task_embedding = None
 
-        self.mlp = nn.Sequential(nn.Linear(num_ftrs+task_embedding, mlp_hidden_dim), nn.ReLU(), nn.Linear(mlp_hidden_dim, self.hidden_size))
+        if mlp_hidden_dim == 0:
+            self.mlp = nn.Linear(num_ftrs + task_embedding, self.hidden_size)
+        else:
+            self.mlp = nn.Sequential(nn.Linear(num_ftrs+task_embedding, mlp_hidden_dim), nn.ReLU(), nn.Linear(mlp_hidden_dim, self.hidden_size))
 
     def init_networks(self):
         # define encoder, decoder, fc_mu and fc_var
