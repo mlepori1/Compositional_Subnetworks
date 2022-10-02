@@ -21,8 +21,8 @@ lr: 0.00001
 wd: 0.00
 n_tasks: 2
 mlp_dim: 128
-mlp_hidden_dim: 2048
-task_embedding: 64
+mlp_hidden_dim: 128
+task_embedding: 32
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
 task: '2-3' # Denotes multitask training

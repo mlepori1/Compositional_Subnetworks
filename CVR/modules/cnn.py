@@ -65,8 +65,8 @@ class Base(pl.LightningModule):
             if hasattr(layer, "mask"):
                 masks.append(layer.mask)
         l0_loss = sum(m.sum() for m in masks)
-        print(l0_loss * self.lamb)
-        print(error_loss)
+        print(f'L0: {l0_loss}')
+        print(f'Error: {error_loss}')
         return (error_loss + (self.lamb * l0_loss), l0_loss)  
       
     def step(self, batch, batch_idx):

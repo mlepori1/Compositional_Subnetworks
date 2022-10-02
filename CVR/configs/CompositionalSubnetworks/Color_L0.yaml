@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 30
+max_epochs: 90
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -17,11 +17,11 @@ es_patience: 5
 check_val_every_n_epoch: 1
 #arch
 backbone: 'L0mlp'
-lr: 0.0001
+lr: 0.001
 wd: 0.00
 n_tasks: 1
 mlp_dim: 128
-mlp_hidden_dim: 0
+mlp_hidden_dim: 128
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_visreason/cvrt_data/'
@@ -31,12 +31,12 @@ train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "L0_Size_Training"
-exp_dir: '../Subnetworks_db/l0/L0_Size_Training'
+exp_name: "L0_Color_Training"
+exp_dir: '../Subnetworks_db/l0/L0_Color_Training'
 pretrained_model_path: '../Subnetworks_db/mlp/MLP_MT_Training/backbone.pt'
 pretrained_model: 'mlp'
 train_mask: True
 l0_init: 0.0
 l0_lambda: .00000001
-max_temp: 20
+max_temp: 200
 
