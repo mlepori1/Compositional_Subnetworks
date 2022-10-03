@@ -201,6 +201,7 @@ class CNN(Base):
             for layer in self.backbone.model:
                 if hasattr(layer, "weight"): # For linear and l0linear layers
                     if not train_mask: # Only decision is whether to freeze mask
+                        self.isL0 = False
                         layer.mask_weight.requires_grad = False
                     layer.weight.requires_grad = False
                     layer.bias.requires_grad = False
