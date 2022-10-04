@@ -104,7 +104,7 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.isL0 == True:
+        if self.use_L0 == True:
             loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
@@ -165,7 +165,7 @@ class CNN(Base):
         if backbone == "resnet18":
             """ Resnet18
             """
-            self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=10)
+            self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
         elif backbone == "L0resnet18":
@@ -178,7 +178,7 @@ class CNN(Base):
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_model = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=10) # Defines the structure of L0 Resnet
+            pretrained_model = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
 
             # Load up the available resnet weights
             pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
