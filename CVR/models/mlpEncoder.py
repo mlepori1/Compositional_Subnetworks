@@ -41,7 +41,6 @@ class L0UnstructuredLinear(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        init_tensor = self.mask_weight.new_full(size=(1,), fill_value=self.mask_init_value) # Get new tensor on same device 
         if not self.training or self.mask_weight.requires_grad == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testingß
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
