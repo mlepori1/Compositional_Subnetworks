@@ -170,9 +170,14 @@ class ResNet(nn.Module):
         self.avgpool = nn.AvgPool2d(8)
         self.embed_dim=embed_dim
         self.mask_modules = [m for m in self.modules() if type(m) == L0Conv2d]
+        self.temp = 1.
+
+    def get_temp(self):
+        return self.temp
 
     def set_temp(self, temp):
-        for layer in self.model.modules():
+        self.temp = temp
+        for layer in self.modules():
             if type(layer) == L0Conv2d:
                 layer.temp = temp
                 print(layer.temp) # for debug

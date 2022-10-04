@@ -58,7 +58,7 @@ class TemperatureCallback(Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         temp = pl_module.backbone.get_temp()
         pl_module.backbone.set_temp(temp * self.temp_increase)
-
+        print(pl_module.backbone.temp)
 
 def cli_main():
 
@@ -151,7 +151,7 @@ def cli_main():
     if args.early_stopping!=0:
         early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
         callbacks.append(early_stopping)
-    if args.backbone == "L0mlp":
+    if args.backbone == "L0mlp" or args.backbone == "L0resnet18":
         callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp))
     callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
     metrics_callback = MetricsCallback()

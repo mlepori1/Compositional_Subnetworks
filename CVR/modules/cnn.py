@@ -62,7 +62,7 @@ class Base(pl.LightningModule):
         error_loss = F.cross_entropy(y_hat, y)
         l0_loss = 0.0
         masks = []
-        for layer in self.backbone.model:
+        for layer in self.backbone.modules():
             if hasattr(layer, "mask"):
                 masks.append(layer.mask)
         l0_loss = sum(m.sum() for m in masks)
@@ -184,13 +184,14 @@ class CNN(Base):
             pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
             self.backbone = pretrained_model
 
-            for layer in self.backbone.model:
+            for layer in self.backbone.modules():
                 if type(layer) == L0Conv2d: # Just freeze conv layers
                     if not train_mask and layer.l0 == True: # Only decision is whether to freeze mask
                         self.use_L0 = False
                         layer.mask_weight.requires_grad = False
                     layer.weight.requires_grad = False
-                    layer.bias.requires_grad = False
+                    if layer.bias != None: 
+                        layer.bias.requires_grad = False
 
             if not train_mask: self.backbone.train(False)
 
