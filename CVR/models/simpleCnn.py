@@ -1,4 +1,4 @@
-from resnet18 import L0Conv2d
+from .resnet18 import L0Conv2d
 import torch.nn as nn
 import functools
 import torch.nn.functional as F
@@ -14,13 +14,16 @@ class simpleCNN(nn.Module):
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
-        self.conv0 = Conv(3, 16, 3, 1, 1)
-        self.conv1 = Conv(16, 32, 3, 2, 1)
-        self.conv2 = Conv(32, 64, 3, 2, 1)
+        self.conv0 = Conv(3, 16, 9, 1, 1)
+        self.conv1 = Conv(16, 32, 9, 2, 1)
+        self.conv2 = Conv(32, 32, 9, 2, 1)
+        self.conv3 = Conv(32, 16, 9, 2, 1)
 
         self.embed_dim=embed_dim
         self.mask_modules = [m for m in self.modules() if type(m) == L0Conv2d]
         self.temp = 1.
+        self.avgpool = nn.AvgPool2d(8)
+
 
     def get_temp(self):
         return self.temp
@@ -35,6 +38,7 @@ class simpleCNN(nn.Module):
     def forward(self, x):
         x = F.relu(self.conv0(x), inplace=True)
         x = F.relu(self.conv1(x), inplace=True)
-        out = F.relu(self.conv2(x), inplace=True)
+        x = F.relu(self.conv2(x), inplace=True)
+        out = self.avgpool(F.relu(self.conv3(x), inplace=True))
         out = out.view(x.size(0), -1)
         return out

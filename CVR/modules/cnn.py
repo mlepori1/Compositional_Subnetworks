@@ -210,9 +210,9 @@ class CNN(Base):
         if backbone == "simplecnn":
             """ simpleCnn
             """
-            self.backbone = simpleCNN(isL0=False, mask_init_value=1, embed_dim=1024)
+            self.backbone = simpleCNN(isL0=False, mask_init_value=1, embed_dim=2704)
             num_ftrs = self.backbone.embed_dim
-
+            print(num_ftrs)
         elif backbone == "L0simplecnn":
             """ L0 Simple Cnn
             """
@@ -223,7 +223,7 @@ class CNN(Base):
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_model = simpleCNN(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
+            pretrained_model = simpleCNN(isL0=True, mask_init_value=l0_init, embed_dim=2704) # Defines the structure of L0 Resnet
 
             # Load up the available resnet weights
             pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
@@ -297,13 +297,11 @@ class CNN(Base):
         x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 images, rgb, height, width] -> [N*4 images, rgb, height, width]
 
         x = self.backbone(x) # Get representation for each image
-
         if task_idx is not None:
             x_task = self.task_embedding(task_idx.repeat_interleave(4)) # Repeat_interleave repeats tensor values N times [1, 2].repeat_interleave(2) = [1, 1, 2, 2]
                                                                         # Because images for a problem are still grouped together, this gives the correct task idx for every image in a problem,
                                                                         # and thus the right task embedding
             x = torch.cat([x, x_task], 1) # mlp input is image representation cat task embedding
-
         x = self.mlp(x)
         x = nn.functional.normalize(x, dim=1) # Normalize the resulting MLP vectors
         x = x.reshape([-1, 4, self.hidden_size]) # Reshape into (# problems, 4 images per problem, mlp size
