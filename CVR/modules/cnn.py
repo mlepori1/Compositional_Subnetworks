@@ -189,6 +189,8 @@ class CNN(Base):
                     if not train_mask and layer.l0 == True: # Only decision is whether to freeze mask
                         self.use_L0 = False
                         layer.mask_weight.requires_grad = False
+
+                if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
                     layer.weight.requires_grad = False
                     if layer.bias != None: 
                         layer.bias.requires_grad = False

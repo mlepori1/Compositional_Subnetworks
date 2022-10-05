@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 150
+max_epochs: 10
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -17,7 +17,7 @@ es_patience: 20
 check_val_every_n_epoch: 1
 #arch
 backbone: 'L0resnet18'
-lr: 0.0001
+lr: 0.001
 wd: 0.00
 n_tasks: 1
 mlp_dim: 128
@@ -31,11 +31,11 @@ train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "RN18_Contact_Subnetwork"
-exp_dir: '../Subnetworks_db/rn18/RN18_Contact_Subnetwork'
-pretrained_model_path: '../Subnetworks_db/rn18/RN18_MT_Training/backbone.pt'
-pretrained_model: 'resnet18'
-train_mask: True
-l0_init: 0.0
-l0_lambda: .000001 #1E-6 not -8
-max_temp: 300
+exp_name: "RN18_Contact_Test_Contact"
+exp_dir: '../Subnetworks_db/rn18/RN18_Contact_Test_Contact'
+pretrained_model_path: '../Subnetworks_db/rn18/RN18_Contact_Subnetwork/backbone.pt'
+pretrained_model: 'L0resnet18'
+train_mask: False
+l0_init: -0.05
+l0_lambda: .0000001 #1E-7 not -8
+max_temp: 200
