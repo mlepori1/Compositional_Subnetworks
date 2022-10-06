@@ -14,7 +14,7 @@ from models.vits import vit_small as vit_small_moco
 from models.scn import SCL
 from models.wren import WReN
 from models.resnet18 import ResNet, L0Conv2d
-from models.simpleCnn import simpleCNN
+from models.lenet import LeNet
 #from models.mlpEncoder import L0MLP, MLP
 from models.mlpEncoder import MLP, L0MLP
 
@@ -207,23 +207,23 @@ class CNN(Base):
             num_ftrs = self.backbone.fc.in_features
             self.backbone.fc = nn.Identity()
 
-        if backbone == "simplecnn":
-            """ simpleCnn
+        if backbone == "lenet":
+            """ LeNet
             """
-            self.backbone = simpleCNN(isL0=False, mask_init_value=1, embed_dim=2704)
+            self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=2704)
             num_ftrs = self.backbone.embed_dim
-            print(num_ftrs)
-        elif backbone == "L0simplecnn":
-            """ L0 Simple Cnn
+
+        elif backbone == "L0lenet":
+            """ L0 LeNet
             """
             self.use_L0 = True #parameter determines whether L0 Loss used
-            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a Resnet or L0 Resnet model
-            pretrained_model_type = kwargs["pretrained_model"] # Either Resnet or L0 Resnet
+            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a LeNet or L0 LeNet model
+            pretrained_model_type = kwargs["pretrained_model"] # Either LeNet or L0 LeNet
             train_mask = kwargs["train_mask"]
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_model = simpleCNN(isL0=True, mask_init_value=l0_init, embed_dim=2704) # Defines the structure of L0 Resnet
+            pretrained_model = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=2704) # Defines the structure of L0 LeNet
 
             # Load up the available resnet weights
             pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
@@ -297,6 +297,7 @@ class CNN(Base):
         x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 images, rgb, height, width] -> [N*4 images, rgb, height, width]
 
         x = self.backbone(x) # Get representation for each image
+        print(x.shape)
         if task_idx is not None:
             x_task = self.task_embedding(task_idx.repeat_interleave(4)) # Repeat_interleave repeats tensor values N times [1, 2].repeat_interleave(2) = [1, 1, 2, 2]
                                                                         # Because images for a problem are still grouped together, this gives the correct task idx for every image in a problem,

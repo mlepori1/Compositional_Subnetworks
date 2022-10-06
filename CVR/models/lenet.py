@@ -3,9 +3,9 @@ import torch.nn as nn
 import functools
 import torch.nn.functional as F
 
-class simpleCNN(nn.Module):
+class LeNet(nn.Module):
     def __init__(self, isL0=False, mask_init_value=0., embed_dim=10):
-        super(simpleCNN, self).__init__()
+        super(LeNet, self).__init__()
 
         self.isL0 = isL0
 
@@ -14,16 +14,15 @@ class simpleCNN(nn.Module):
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
-        self.conv0 = Conv(3, 16, 9, 1, 1)
-        self.conv1 = Conv(16, 32, 9, 2, 1)
-        self.conv2 = Conv(32, 32, 9, 2, 1)
-        self.conv3 = Conv(32, 16, 9, 2, 1)
+        self.conv0 = Conv(3, 6, 5, padding=0, stride=1)
+        self.conv1 = Conv(6, 16, 5, padding=0, stride=1)
+        self.conv2 = Conv(16, 120, 5, padding=0, stride=1)
+        self.tanh = nn.Tanh()
+        self.avgpool = nn.AvgPool2d(8)
 
         self.embed_dim=embed_dim
         self.mask_modules = [m for m in self.modules() if type(m) == L0Conv2d]
         self.temp = 1.
-        self.avgpool = nn.AvgPool2d(8)
-
 
     def get_temp(self):
         return self.temp
@@ -36,9 +35,14 @@ class simpleCNN(nn.Module):
                 print(layer.temp) # for debug
                 
     def forward(self, x):
-        x = F.relu(self.conv0(x), inplace=True)
-        x = F.relu(self.conv1(x), inplace=True)
-        x = F.relu(self.conv2(x), inplace=True)
-        out = self.avgpool(F.relu(self.conv3(x), inplace=True))
-        out = out.view(x.size(0), -1)
+        x = self.conv1(x)
+        x = self.tanh(x)
+        x = self.avgpool(x)
+        x = self.conv2(x)
+        x = self.tanh(x)
+        x = self.avgpool(x)
+        x = self.conv3(x)
+        x = self.tanh(x)
+        
+        out = x.reshape(x.shape[0], -1)
         return out
