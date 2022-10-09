@@ -1,6 +1,7 @@
 
 import os
 from argparse import ArgumentParser
+from CVR.models.decisionMLP import L0UnstructuredLinear
 
 import pytorch_lightning as pl
 import torch
@@ -16,7 +17,7 @@ from models.wren import WReN
 from models.resnet18 import ResNet, L0Conv2d
 from models.lenet import LeNet
 #from models.mlpEncoder import L0MLP, MLP
-from models.mlpEncoder import MLP, L0MLP
+from models.decisionMLP import MLP, L0MLP, L0UnstructuredLinear
 
 class Base(pl.LightningModule):
 
@@ -160,8 +161,10 @@ class CNN(Base):
         feature_extract = True
         num_classes = 1
         use_pretrained = False
-        self.hidden_size = mlp_dim
-        self.use_L0 = False
+        self.mlp_hidden_dim = mlp_hidden_dim
+        self.mlp_out_dim = mlp_dim
+        self.train_mask = kwargs["train_mask"]
+        self.L0_mlp = kwargs["l0_mlp"]
 
         if backbone == "resnet18":
             """ Resnet18
@@ -169,34 +172,47 @@ class CNN(Base):
             self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
+            if self.L0_mlp: # If training an L0 MLP on top of this, the resnet must be frozen
+                pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a resnet18 backbone
+                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+                self.backbone.train(False)
+
+                for layer in self.backbone.modules():
+                    if type(layer) == nn.Conv2d: 
+                        layer.mask_weight.requires_grad = False
+
+                    if type(layer) == nn.Conv2d or type(layer) == nn.BatchNorm2d:
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+
+
         elif backbone == "L0resnet18":
             """ L0Resnet18
             """
-            self.use_L0 = True #parameter determines whether L0 Loss used
-            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a Resnet or L0 Resnet model
-            pretrained_model_type = kwargs["pretrained_model"] # Either Resnet or L0 Resnet
-            train_mask = kwargs["train_mask"]
+
+            # If training L0 resnet, then loading up weights from a pretrained model
+            pretrained_backbone_path = kwargs["pretrained_backbone_path"] # L0 models are always structured using either a Resnet or L0 Resnet model
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_model = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
+            pretrained_backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
 
             # Load up the available resnet weights
-            pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
-            self.backbone = pretrained_model
+            pretrained_backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            self.backbone = pretrained_backbone
 
             for layer in self.backbone.modules():
-                if type(layer) == L0Conv2d: # Just freeze conv layers
-                    if not train_mask and layer.l0 == True: # Only decision is whether to freeze mask
-                        self.use_L0 = False
+                if type(layer) == L0Conv2d: # freeze conv layers
+                    if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
                         layer.mask_weight.requires_grad = False
 
-                if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
+                if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d: # freeze all weights and biases
                     layer.weight.requires_grad = False
                     if layer.bias != None: 
                         layer.bias.requires_grad = False
 
-            if not train_mask: self.backbone.train(False)
+            if not self.train_mask: self.backbone.train(False)
 
             num_ftrs = self.backbone.embed_dim
 
@@ -213,32 +229,42 @@ class CNN(Base):
             self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=480)
             num_ftrs = self.backbone.embed_dim
 
+            if self.L0_mlp: # If training an L0 MLP on top of this, LeNet is coming from a pretrained model
+                pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a LeNet backbone
+                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+                self.backbone.train(False)
+
+                for layer in self.backbone.modules():
+                    if type(layer) == nn.Conv2d: # Freeze conv layers
+                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                            layer.mask_weight.requires_grad = False
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+
         elif backbone == "L0lenet":
             """ L0 LeNet
             """
-            self.use_L0 = True #parameter determines whether L0 Loss used
-            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a LeNet or L0 LeNet model
-            pretrained_model_type = kwargs["pretrained_model"] # Either LeNet or L0 LeNet
-            train_mask = kwargs["train_mask"]
+            # If training L0 LeNet, then loading up weights from a pretrained model
+            pretrained_backbone_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a LeNet or L0 LeNet model
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_model = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
+            pretrained_backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
 
-            # Load up the available resnet weights
-            pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
-            self.backbone = pretrained_model
+            # Load up the available LeNet weights
+            pretrained_backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            self.backbone = pretrained_backbone
 
             for layer in self.backbone.modules():
                 if type(layer) == L0Conv2d: # Just freeze conv layers
-                    if not train_mask and layer.l0 == True: # Only decision is whether to freeze mask
-                        self.use_L0 = False
+                    if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
                         layer.mask_weight.requires_grad = False
                     layer.weight.requires_grad = False
                     if layer.bias != None: 
                         layer.bias.requires_grad = False
 
-            if not train_mask: self.backbone.train(False)
+            if not self.train_mask: self.backbone.train(False)
 
             num_ftrs = self.backbone.embed_dim
 
@@ -247,45 +273,41 @@ class CNN(Base):
             self.backbone.head = nn.Identity()
             num_ftrs = self.backbone.embed_dim
 
-        elif backbone == "mlp":
-            self.backbone = MLP()
-            num_ftrs = self.backbone.embed_size
-
-        elif backbone == "L0mlp":
-            self.use_L0 = True
-            pretrained_model_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a linear model or another l0 model
-            pretrained_model_type = kwargs["pretrained_model"] # Either MLP or L0 MLP
-            train_mask = kwargs["train_mask"]
-            l0_init = kwargs["l0_init"]
-            self.lamb = kwargs["l0_lambda"]
-
-            pretrained_model = MLP() # Defines the structure of both the L0 and regular MLP
-            if pretrained_model_type == "L0mlp":
-                pretrained_model = L0MLP(pretrained_model, mask_init_value=l0_init)
-            pretrained_model.load_state_dict(torch.load(pretrained_model_path), strict=False)
-            self.backbone = L0MLP(pretrained_model, mask_init_value=l0_init)
-
-            for layer in self.backbone.model:
-                if hasattr(layer, "weight"): # For linear and l0linear layers
-                    if not train_mask: # Only decision is whether to freeze mask
-                        self.use_L0 = False
-                        layer.mask_weight.requires_grad = False
-                    layer.weight.requires_grad = False
-                    layer.bias.requires_grad = False
-
-            if not train_mask: self.backbone.train(False)
-
-            num_ftrs = self.backbone.embed_size
-
         if task_embedding>0:
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
         else:
             self.task_embedding = None
 
-        if mlp_hidden_dim == 0:
-            self.mlp = nn.Linear(num_ftrs + task_embedding, self.hidden_size)
-        else:
-            self.mlp = nn.Sequential(nn.Linear(num_ftrs+task_embedding, mlp_hidden_dim), nn.ReLU(), nn.Linear(mlp_hidden_dim, self.hidden_size))
+        self.mlp = MLP(num_ftrs, self.mlp_hidden_dim, self.mlp_out_dim)
+
+        if self.L0_mlp:
+            if self.train_mask: # Then going from regular mlp to L0 MLP
+                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
+                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
+                self.mlp = L0MLP(self.mlp, kwargs["l0_init"])
+
+                # Freeze weights except for mask weight
+                for layer in self.mlp.model.children():
+                    if isinstance(layer, L0UnstructuredLinear):
+                        layer.bias.requires_grad = False
+                        layer.weight.requires_grad = False
+
+                self.lamb = kwargs["l0_lambda"]
+
+            else: # Then going from L0 MLP to frozen L0 MLP
+                self.mlp = L0MLP(self.mlp, 0)
+                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
+                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
+
+                # Freeze weights including mask
+                for layer in self.mlp.model.children():
+                    if isinstance(layer, L0UnstructuredLinear):
+                        layer.bias.requires_grad = False
+                        layer.weight.requires_grad = False
+                        layer.mask_weight.requires_grad = False
+
+                self.lamb = kwargs["l0_lambda"]
+
 
     def init_networks(self):
         # define encoder, decoder, fc_mu and fc_var

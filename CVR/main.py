@@ -52,13 +52,22 @@ class MetricsCallback(Callback):
 
 class TemperatureCallback(Callback):
 
-    def __init__(self, total_epochs, final_temp):
+    def __init__(self, total_epochs, final_temp, l0_mlp):
+        # L0 MLP determines whether the MLP is getting trained or the backbone
+        if l0_mlp: self.l0_mask = "mlp" 
+        else: self.l0_mask = "backbone"
         self.temp_increase = final_temp**(1./total_epochs)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        temp = pl_module.backbone.get_temp()
-        pl_module.backbone.set_temp(temp * self.temp_increase)
-        print(pl_module.backbone.temp)
+        if self.l0_mask == "backbone":
+            temp = pl_module.backbone.get_temp()
+            pl_module.backbone.set_temp(temp * self.temp_increase)
+            print(pl_module.backbone.temp)
+        elif self.l0_mask == "mlp":
+            temp = pl_module.mlp.get_temp()
+            pl_module.mlp.set_temp(temp * self.temp_increase)
+            print(pl_module.mlp.temp)
+
 
 def cli_main():
 
@@ -151,8 +160,8 @@ def cli_main():
     if args.early_stopping!=0:
         early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
         callbacks.append(early_stopping)
-    if args.backbone == "L0mlp" or args.backbone == "L0resnet18" or args.backbone == "L0lenet":
-        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp))
+    if args.train_mask:
+        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.l0_mlp))
     callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
     metrics_callback = MetricsCallback()
     callbacks.append(metrics_callback)
@@ -165,6 +174,7 @@ def cli_main():
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
     torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
+    torch.save(best_model.mlp.state_dict(), os.path.join(args.exp_dir, 'mlp.pt'))
 
     trainer.test(model=best_model, datamodule=datamodule)
     train_result = best_model.test_results

@@ -33,3 +33,6 @@ n_samples: 10000 # 5000, 1000
 test_set: ''
 exp_name: "LeNet_MT_Training"
 exp_dir: '../Subnetworks_db/lenet/LeNet_MT_Training'
+train_mask: False
+l0_mlp: False
+

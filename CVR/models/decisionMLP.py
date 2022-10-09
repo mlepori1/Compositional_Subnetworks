@@ -149,7 +149,6 @@ class L0MLP(nn.Module):
         self.model = nn.Sequential(*self.model)
     
     def forward(self, input):
-        input = input.reshape(-1, self.in_dim)
         return self.model(input)
 
     def get_temp(self):
@@ -165,21 +164,21 @@ class L0MLP(nn.Module):
  
 #Linear network to prune after training
 class MLP(nn.Module):
-    def __init__(self, in_dim=128*128*3, dims=[512, 512, 512]):
+    def __init__(self, in_dim, hidden_dim, out_dim):
         super(MLP, self).__init__()
-        self.embed_size = dims[-1]
         self.in_dim = in_dim
-        self.model = nn.Sequential(
-            nn.Linear(in_dim, dims[0]),
-            nn.ReLU(),
-            nn.Linear(dims[0], dims[1]),
-            nn.ReLU(),
-            nn.Linear(dims[1], dims[2]),
-        )
-
+        if hidden_dim != 0:
+            self.model = nn.Sequential(
+                nn.Linear(in_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, out_dim)
+            )
+        else:
+            self.model = nn.Sequential(
+                nn.Linear(in_dim, out_dim),
+            )
 
     def forward(self, input):
-        input = input.reshape(-1, self.in_dim)
         return self.model(input)
 
     def train(self, train_bool):
