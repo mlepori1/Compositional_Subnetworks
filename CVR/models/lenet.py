@@ -18,7 +18,8 @@ class LeNet(nn.Module):
         self.conv1 = Conv(6, 16, 5, padding=0, stride=1)
         self.conv2 = Conv(16, 120, 5, padding=0, stride=1)
         self.tanh = nn.Tanh()
-        self.avgpool = nn.AvgPool2d(8)
+        self.avgpool = nn.AvgPool2d(kernel_size=4, stride=4) # original lenet has kernel size of 2 and stride 2, 
+        #but this gives too many parameters at the end
 
         self.embed_dim=embed_dim
         self.mask_modules = [m for m in self.modules() if type(m) == L0Conv2d]
@@ -35,13 +36,13 @@ class LeNet(nn.Module):
                 print(layer.temp) # for debug
                 
     def forward(self, x):
+        x = self.conv0(x)
+        x = self.tanh(x)
+        x = self.avgpool(x)
         x = self.conv1(x)
         x = self.tanh(x)
         x = self.avgpool(x)
         x = self.conv2(x)
-        x = self.tanh(x)
-        x = self.avgpool(x)
-        x = self.conv3(x)
         x = self.tanh(x)
         
         out = x.reshape(x.shape[0], -1)
