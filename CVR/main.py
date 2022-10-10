@@ -66,7 +66,7 @@ class TemperatureCallback(Callback):
         elif self.l0_mask == "mlp":
             temp = pl_module.mlp.get_temp()
             pl_module.mlp.set_temp(temp * self.temp_increase)
-            print(pl_module.mlp.temp)
+            print(pl_module.mlp.get_temp())
 
 
 def cli_main():
@@ -168,14 +168,16 @@ def cli_main():
 
     trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
 
-    trainer.fit(model, datamodule, **fit_kwargs)
+    
+    if args.eval_only == False:
+        trainer.fit(model, datamodule, **fit_kwargs)
 
     # testing
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
     torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
     torch.save(best_model.mlp.state_dict(), os.path.join(args.exp_dir, 'mlp.pt'))
-
+    torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, 'embedding.pt'))
     trainer.test(model=best_model, datamodule=datamodule)
     train_result = best_model.test_results
 
@@ -183,9 +185,12 @@ def cli_main():
 
     metrics = metrics_callback.get_all()
 
-
-    best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
-    best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+    if args.eval_only:
+        best_val_acc = 0.0
+        best_epoch = 0.0
+    else:
+        best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
+        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
 
     # saving results
     logger.log_hyperparams(best_model.hparams, metrics={'hp/'+k : v for k, v in global_avg.items()})

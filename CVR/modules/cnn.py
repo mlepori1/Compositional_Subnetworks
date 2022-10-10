@@ -1,7 +1,6 @@
 
 import os
 from argparse import ArgumentParser
-from CVR.models.decisionMLP import L0UnstructuredLinear
 
 import pytorch_lightning as pl
 import torch
@@ -60,13 +59,18 @@ class Base(pl.LightningModule):
 
         return y_hat, y
 
-    def l0_loss(self, y_hat, y):
+    def l0_loss(self, y_hat, y, mlp_mask):
         error_loss = F.cross_entropy(y_hat, y)
         l0_loss = 0.0
         masks = []
-        for layer in self.backbone.modules():
-            if hasattr(layer, "mask"):
-                masks.append(layer.mask)
+        if mlp_mask:
+            for layer in self.mlp.modules():
+                if hasattr(layer, "mask"):
+                    masks.append(layer.mask)
+        else:
+            for layer in self.backbone.modules():
+                if hasattr(layer, "mask"):
+                    masks.append(layer.mask)
         l0_loss = sum(m.sum() for m in masks)
         print(f'L0: {l0_loss}')
         print(f'Error: {error_loss}')
@@ -76,8 +80,8 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.use_L0 == True:
-            loss, l0_loss = self.l0_loss(y_hat, y)
+        if self.train_mask == True:
+            loss, l0_loss = self.l0_loss(y_hat, y, self.L0_mlp)
         else:
             loss = F.cross_entropy(y_hat, y)
             l0_loss = torch.zeros(loss.shape)
@@ -106,8 +110,8 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.use_L0 == True:
-            loss, l0_loss = self.l0_loss(y_hat, y)
+        if self.train_mask == True:
+            loss, l0_loss = self.l0_loss(y_hat, y, self.L0_mlp)
         else:
             loss = F.cross_entropy(y_hat, y)
             l0_loss = torch.zeros(loss.shape)
@@ -178,10 +182,7 @@ class CNN(Base):
                 self.backbone.train(False)
 
                 for layer in self.backbone.modules():
-                    if type(layer) == nn.Conv2d: 
-                        layer.mask_weight.requires_grad = False
-
-                    if type(layer) == nn.Conv2d or type(layer) == nn.BatchNorm2d:
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
                         layer.weight.requires_grad = False
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
@@ -233,11 +234,8 @@ class CNN(Base):
                 pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a LeNet backbone
                 self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
                 self.backbone.train(False)
-
                 for layer in self.backbone.modules():
-                    if type(layer) == nn.Conv2d: # Freeze conv layers
-                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
-                            layer.mask_weight.requires_grad = False
+                    if type(layer) == L0Conv2d: # Freeze conv layers
                         layer.weight.requires_grad = False
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
@@ -278,9 +276,16 @@ class CNN(Base):
         else:
             self.task_embedding = None
 
-        self.mlp = MLP(num_ftrs, self.mlp_hidden_dim, self.mlp_out_dim)
+        self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim)
 
+        # If you want to attempt to find subnetworks in the decision MLP
         if self.L0_mlp:
+
+            # Load up embeddings
+            pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
+            self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
+            self.task_embedding.weight.requires_grad = False
+
             if self.train_mask: # Then going from regular mlp to L0 MLP
                 pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
                 self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
@@ -326,7 +331,7 @@ class CNN(Base):
             x = torch.cat([x, x_task], 1) # mlp input is image representation cat task embedding
         x = self.mlp(x)
         x = nn.functional.normalize(x, dim=1) # Normalize the resulting MLP vectors
-        x = x.reshape([-1, 4, self.hidden_size]) # Reshape into (# problems, 4 images per problem, mlp size
+        x = x.reshape([-1, 4, self.mlp_out_dim]) # Reshape into (# problems, 4 images per problem, mlp size
         x = (x[:,:,None,:] * x[:,None,:,:]).sum(3).sum(2) # None indexing unsqueezes another dimensions at that index
             # So you have (# problems, 4 ims per problem, 1, mlp representation) * (# problems, 1, 4 ims per problem, mlp representation)
             # Calculates the dot product of each mlp vector with every other vector (as well as itself) via broadcasting. Then sums the total
