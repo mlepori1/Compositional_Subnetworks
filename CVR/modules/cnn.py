@@ -169,6 +169,7 @@ class CNN(Base):
         self.mlp_out_dim = mlp_dim
         self.train_mask = kwargs["train_mask"]
         self.L0_mlp = kwargs["l0_mlp"]
+        self.eval_only = kwargs["eval_only"]
 
         if backbone == "resnet18":
             """ Resnet18
@@ -176,7 +177,13 @@ class CNN(Base):
             self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
-            if self.L0_mlp: # If training an L0 MLP on top of this, the resnet must be frozen
+            # If eval_only, then load up the backbone and test
+            if self.eval_only:
+                pretrained_backbone_path = kwargs["pretrained_backbone_path"]
+                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+
+            # If training an L0 MLP on top, then load up backbone and freeze it
+            if self.L0_mlp:
                 pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a resnet18 backbone
                 self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
                 self.backbone.train(False)
@@ -230,6 +237,11 @@ class CNN(Base):
             self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=480)
             num_ftrs = self.backbone.embed_dim
 
+            # If eval_only, load up backbone and test
+            if kwargs["eval_only"]:
+                pretrained_backbone_path = kwargs["pretrained_backbone_path"]
+                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+
             if self.L0_mlp: # If training an L0 MLP on top of this, LeNet is coming from a pretrained model
                 pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a LeNet backbone
                 self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
@@ -278,13 +290,24 @@ class CNN(Base):
 
         self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim)
 
-        # If you want to attempt to find subnetworks in the decision MLP
-        if self.L0_mlp:
+        # If eval_only without training an L0 MLP, then load up model and test
+        if kwargs["eval_only"] and not self.L0_mlp:
+            if self.task_embedding != None:
+                pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
+                self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
+
+            if self.train_mask: # Then going from regular mlp to L0 MLP
+                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
+                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
+
+        # If using an L0 MLP
+        elif self.L0_mlp:
 
             # Load up embeddings
-            pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
-            self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
-            self.task_embedding.weight.requires_grad = False
+            if self.task_embedding != None:
+                pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
+                self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
+                self.task_embedding.weight.requires_grad = False
 
             if self.train_mask: # Then going from regular mlp to L0 MLP
                 pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
