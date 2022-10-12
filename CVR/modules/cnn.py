@@ -243,10 +243,12 @@ class CNN(Base):
 
             # If the pretrained weights path is not None, then load up pretrained weights!
             if self.pretrained_weights["backbone"] != None:
+                print("Loading LeNet Backbone weights...")
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
             # If not training the weights in the backbone, freeze it
             if self.train_weights["backbone"] == False:
+                print("Freezing LeNet Backbone weights...")
                 self.backbone.train(False)
 
                 for layer in self.backbone.modules():
@@ -266,10 +268,12 @@ class CNN(Base):
             self.backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
 
             if self.pretrained_weights["backbone"] != None:
+                print("Loading L0 LeNet Backbone weights...")
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
             # If you don't want to train the L0 backbone mask, freeze the mask
             if self.train_masks["backbone"] == False:
+                print("Freezing L0 LeNet Mask Weights...")
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d: # freeze conv layers
                         if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
@@ -277,6 +281,7 @@ class CNN(Base):
             
             # If you don't want to train the backbone weights, freeze em
             if self.train_weights["backbone"] == False:
+                print("Freezing L0 LeNet weights...")
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d: # freeze all weights and biases
                         layer.weight.requires_grad = False
@@ -301,31 +306,37 @@ class CNN(Base):
 
         # If there are pretrained embedding weights, load them up
         if self.task_embedding != None and self.pretrained_weights["embedding"]:
+            print("Loading embedding weights...")
             self.task_embedding.load_state_dict(torch.load(self.pretrained_weights["embedding"]), strict=False)
 
-        if not self.train_weights["embedding"]:
+        if not self.train_weights["embedding"] and self.task_embedding != None:
+            print("Freezing embeddding weights...")
             self.task_embedding.weight.requires_grad = False
 
         # Set up MLP
         self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim)
 
         if self.l0_components["mlp"]:
+            print("Constructing L0 MLP...")
             self.mlp = L0MLP(self.mlp, kwargs["l0_init"])
             self.lamb = kwargs["l0_lambda"]
 
 
         if self.pretrained_weights["mlp"]:
+            print("Loading MLP weights...")
             self.mlp.load_state_dict(torch.load(self.pretrained_weights["mlp"]), strict=False)
 
         if not self.train_weights["mlp"]:
             # Freeze weights except for mask weight
+            print("Freezing MLP weights...")
             for layer in self.mlp.model.children():
                 if isinstance(layer, L0UnstructuredLinear) or isinstance(layer, nn.Linear):
                     layer.bias.requires_grad = False
                     layer.weight.requires_grad = False
 
         if not self.train_masks["mlp"]:
-            # Freeze weights except for mask weight
+            # Freeze mask weight
+            print("Freezing MLP mask weights...")
             for layer in self.mlp.model.children():
                 if isinstance(layer, L0UnstructuredLinear):
                     layer.mask_weight.requires_grad = False
