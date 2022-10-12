@@ -33,6 +33,17 @@ n_samples: 10000 # 5000, 1000
 test_set: ''
 exp_name: "LeNet_Comp_Training"
 exp_dir: '../Subnetworks_db/lenet/LeNet_Comp_Training'
-train_mask: False
-l0_mlp: False
-eval_only: False
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": False, "mlp": False}
+train_masks: {"backbone": False, "mlp": False}
+train_weights: {"backbone": True, "mlp": True, "embedding": False}
+pretrained_weights: { 
+  "backbone": False,
+  "mlp": False,
+  "embedding": False
+  } # False for random initialization
+l0_init: 0.0
+l0_lambda: .00000001
+max_temp: 200
+eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable

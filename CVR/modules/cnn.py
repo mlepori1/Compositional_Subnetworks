@@ -59,15 +59,15 @@ class Base(pl.LightningModule):
 
         return y_hat, y
 
-    def l0_loss(self, y_hat, y, mlp_mask):
+    def l0_loss(self, y_hat, y):
         error_loss = F.cross_entropy(y_hat, y)
         l0_loss = 0.0
         masks = []
-        if mlp_mask:
+        if self.train_masks["mlp"]:
             for layer in self.mlp.modules():
                 if hasattr(layer, "mask"):
                     masks.append(layer.mask)
-        else:
+        if self.train_masks["backbone"]:
             for layer in self.backbone.modules():
                 if hasattr(layer, "mask"):
                     masks.append(layer.mask)
@@ -80,8 +80,8 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.train_mask == True:
-            loss, l0_loss = self.l0_loss(y_hat, y, self.L0_mlp)
+        if self.train_masks["backbone"] or self.train_mask["mlp"]:
+            loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
             l0_loss = torch.zeros(loss.shape)
@@ -110,8 +110,8 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.train_mask == True:
-            loss, l0_loss = self.l0_loss(y_hat, y, self.L0_mlp)
+        if self.train_masks["backbone"] or self.train_mask["mlp"]:
+            loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
             l0_loss = torch.zeros(loss.shape)
@@ -167,8 +167,10 @@ class CNN(Base):
         use_pretrained = False
         self.mlp_hidden_dim = mlp_hidden_dim
         self.mlp_out_dim = mlp_dim
-        self.train_mask = kwargs["train_mask"]
-        self.L0_mlp = kwargs["l0_mlp"]
+        self.l0_components = kwargs["l0_components"]
+        self.train_masks = kwargs["train_masks"]
+        self.train_weights = kwargs["train_weights"]
+        self.pretrained_weights = kwargs["pretrained_weights"]
         self.eval_only = kwargs["eval_only"]
 
         if backbone == "resnet18":
@@ -177,15 +179,12 @@ class CNN(Base):
             self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
-            # If eval_only, then load up the backbone and test
-            if self.eval_only:
-                pretrained_backbone_path = kwargs["pretrained_backbone_path"]
-                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            # If the pretrained weights path is not None, then load up pretrained weights!
+            if self.pretrained_weights["backbone"] != None:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
-            # If training an L0 MLP on top, then load up backbone and freeze it
-            if self.L0_mlp:
-                pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a resnet18 backbone
-                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            # If not training the weights in the backbone, freeze it
+            if self.train_weights["backbone"] == False:
                 self.backbone.train(False)
 
                 for layer in self.backbone.modules():
@@ -199,28 +198,33 @@ class CNN(Base):
             """ L0Resnet18
             """
 
-            # If training L0 resnet, then loading up weights from a pretrained model
-            pretrained_backbone_path = kwargs["pretrained_backbone_path"] # L0 models are always structured using either a Resnet or L0 Resnet model
+            # Get L0 parameters
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
+            # Define backbone structure
+            self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
 
-            # Load up the available resnet weights
-            pretrained_backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
-            self.backbone = pretrained_backbone
+            if self.pretrained_weights["backbone"] != None:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
-            for layer in self.backbone.modules():
-                if type(layer) == L0Conv2d: # freeze conv layers
-                    if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
-                        layer.mask_weight.requires_grad = False
-
-                if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d: # freeze all weights and biases
-                    layer.weight.requires_grad = False
-                    if layer.bias != None: 
-                        layer.bias.requires_grad = False
-
-            if not self.train_mask: self.backbone.train(False)
+            # If you don't want to train the L0 backbone mask, freeze the mask
+            if self.train_masks["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d: # freeze conv layers
+                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                            layer.mask_weight.requires_grad = False
+            
+            # If you don't want to train the backbone weights, freeze em
+            if self.train_weights["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d: # freeze all weights and biases
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+            
+            if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
+                self.backbone.train(False)
 
             num_ftrs = self.backbone.embed_dim
 
@@ -237,17 +241,16 @@ class CNN(Base):
             self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=480)
             num_ftrs = self.backbone.embed_dim
 
-            # If eval_only, load up backbone and test
-            if kwargs["eval_only"]:
-                pretrained_backbone_path = kwargs["pretrained_backbone_path"]
-                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            # If the pretrained weights path is not None, then load up pretrained weights!
+            if self.pretrained_weights["backbone"] != None:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
-            if self.L0_mlp: # If training an L0 MLP on top of this, LeNet is coming from a pretrained model
-                pretrained_backbone_path = kwargs["pretrained_backbone_path"] # path to a LeNet backbone
-                self.backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
+            # If not training the weights in the backbone, freeze it
+            if self.train_weights["backbone"] == False:
                 self.backbone.train(False)
+
                 for layer in self.backbone.modules():
-                    if type(layer) == L0Conv2d: # Freeze conv layers
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
                         layer.weight.requires_grad = False
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
@@ -255,26 +258,33 @@ class CNN(Base):
         elif backbone == "L0lenet":
             """ L0 LeNet
             """
-            # If training L0 LeNet, then loading up weights from a pretrained model
-            pretrained_backbone_path = kwargs["pretrained_model_path"] # L0 models are always structured using either a LeNet or L0 LeNet model
+            # Get L0 parameters
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            pretrained_backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
+            # Define backbone structure
+            self.backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
 
-            # Load up the available LeNet weights
-            pretrained_backbone.load_state_dict(torch.load(pretrained_backbone_path), strict=False)
-            self.backbone = pretrained_backbone
+            if self.pretrained_weights["backbone"] != None:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
-            for layer in self.backbone.modules():
-                if type(layer) == L0Conv2d: # Just freeze conv layers
-                    if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
-                        layer.mask_weight.requires_grad = False
-                    layer.weight.requires_grad = False
-                    if layer.bias != None: 
-                        layer.bias.requires_grad = False
-
-            if not self.train_mask: self.backbone.train(False)
+            # If you don't want to train the L0 backbone mask, freeze the mask
+            if self.train_masks["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d: # freeze conv layers
+                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                            layer.mask_weight.requires_grad = False
+            
+            # If you don't want to train the backbone weights, freeze em
+            if self.train_weights["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d: # freeze all weights and biases
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+            
+            if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
+                self.backbone.train(False)
 
             num_ftrs = self.backbone.embed_dim
 
@@ -283,59 +293,42 @@ class CNN(Base):
             self.backbone.head = nn.Identity()
             num_ftrs = self.backbone.embed_dim
 
+        # Set up embeddings
         if task_embedding>0:
             self.task_embedding = nn.Embedding(n_tasks, task_embedding)
         else:
             self.task_embedding = None
 
+        # If there are pretrained embedding weights, load them up
+        if self.task_embedding != None and self.pretrained_weights["embedding"]:
+            self.task_embedding.load_state_dict(torch.load(self.pretrained_weights["embedding"]), strict=False)
+
+        if not self.train_weights["embedding"]:
+            self.task_embedding.weight.requires_grad = False
+
+        # Set up MLP
         self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim)
 
-        # If eval_only without training an L0 MLP, then load up model and test
-        if kwargs["eval_only"] and not self.L0_mlp:
-            if self.task_embedding != None:
-                pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
-                self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
+        if self.l0_components["mlp"]:
+            self.mlp = L0MLP(self.mlp, kwargs["l0_init"])
+            self.lamb = kwargs["l0_lambda"]
 
-            if self.train_mask: # Then going from regular mlp to L0 MLP
-                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
-                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
 
-        # If using an L0 MLP
-        elif self.L0_mlp:
+        if self.pretrained_weights["mlp"]:
+            self.mlp.load_state_dict(torch.load(self.pretrained_weights["mlp"]), strict=False)
 
-            # Load up embeddings
-            if self.task_embedding != None:
-                pretrained_embeddings_path = kwargs["pretrained_embeddings_path"]
-                self.task_embedding.load_state_dict(torch.load(pretrained_embeddings_path), strict=False)
-                self.task_embedding.weight.requires_grad = False
+        if not self.train_weights["mlp"]:
+            # Freeze weights except for mask weight
+            for layer in self.mlp.model.children():
+                if isinstance(layer, L0UnstructuredLinear) or isinstance(layer, nn.Linear):
+                    layer.bias.requires_grad = False
+                    layer.weight.requires_grad = False
 
-            if self.train_mask: # Then going from regular mlp to L0 MLP
-                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
-                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
-                self.mlp = L0MLP(self.mlp, kwargs["l0_init"])
-
-                # Freeze weights except for mask weight
-                for layer in self.mlp.model.children():
-                    if isinstance(layer, L0UnstructuredLinear):
-                        layer.bias.requires_grad = False
-                        layer.weight.requires_grad = False
-
-                self.lamb = kwargs["l0_lambda"]
-
-            else: # Then going from L0 MLP to frozen L0 MLP
-                self.mlp = L0MLP(self.mlp, 0)
-                pretrained_mlp_path = kwargs["pretrained_mlp_path"] 
-                self.mlp.load_state_dict(torch.load(pretrained_mlp_path), strict=False)
-
-                # Freeze weights including mask
-                for layer in self.mlp.model.children():
-                    if isinstance(layer, L0UnstructuredLinear):
-                        layer.bias.requires_grad = False
-                        layer.weight.requires_grad = False
-                        layer.mask_weight.requires_grad = False
-
-                self.lamb = kwargs["l0_lambda"]
-
+        if not self.train_masks["mlp"]:
+            # Freeze weights except for mask weight
+            for layer in self.mlp.model.children():
+                if isinstance(layer, L0UnstructuredLinear):
+                    layer.mask_weight.requires_grad = False
 
     def init_networks(self):
         # define encoder, decoder, fc_mu and fc_var

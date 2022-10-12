@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 120
+max_epochs: 90
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -33,11 +33,18 @@ n_samples: 10000 # 5000, 1000
 test_set: ''
 exp_name: "LeNet_Inside_Subnetwork"
 exp_dir: '../Subnetworks_db/lenet/LeNet_Inside_Subnetwork'
-pretrained_backbone_path: '../Subnetworks_db/lenet/LeNet_Comp_Training/backbone.pt'
-pretrained_mlp_path: '../Subnetworks_db/lenet/LeNet_Comp_Training/mlp.pt'
-train_mask: True
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": False, "mlp": True}
+train_masks: {"backbone": False, "mlp": True}
+train_weights: {"backbone": False, "mlp": False, "embedding": False}
+pretrained_weights: { 
+  "backbone": '../Subnetworks_db/lenet/LeNet_Comp_Training/backbone.pt',
+  "mlp": '../Subnetworks_db/lenet/LeNet_Comp_Training/mlp.pt',
+  "embedding": False
+  } # False for random initialization
 l0_init: -0.1
-l0_lambda: .00000001 #1E-8
-max_temp: 300
-l0_mlp: True
-eval_only: False
+l0_lambda: .00000001
+max_temp: 200
+eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
+

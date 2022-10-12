@@ -52,18 +52,17 @@ class MetricsCallback(Callback):
 
 class TemperatureCallback(Callback):
 
-    def __init__(self, total_epochs, final_temp, l0_mlp):
+    def __init__(self, total_epochs, final_temp, masks):
         # L0 MLP determines whether the MLP is getting trained or the backbone
-        if l0_mlp: self.l0_mask = "mlp" 
-        else: self.l0_mask = "backbone"
+        self.l0_masks = masks
         self.temp_increase = final_temp**(1./total_epochs)
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if self.l0_mask == "backbone":
+        if self.l0_masks["backbone"]:
             temp = pl_module.backbone.get_temp()
             pl_module.backbone.set_temp(temp * self.temp_increase)
             print(pl_module.backbone.temp)
-        elif self.l0_mask == "mlp":
+        elif self.l0_masks["mlp"]:
             temp = pl_module.mlp.get_temp()
             pl_module.mlp.set_temp(temp * self.temp_increase)
             print(pl_module.mlp.get_temp())
@@ -160,8 +159,8 @@ def cli_main():
     if args.early_stopping!=0:
         early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
         callbacks.append(early_stopping)
-    if args.train_mask:
-        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.l0_mlp))
+    if args.train_masks["backbone"] or args.train_masks["mlp"]:
+        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
     callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
     metrics_callback = MetricsCallback()
     callbacks.append(metrics_callback)
