@@ -120,6 +120,7 @@ TASKS_IDX={
     100: "task_pos_flip_2",
     101: "task_flip_contact_1",
     102: "task_flip_contact_2",
+    103: "sn_task_contact_inside"
 }
 
 
@@ -182,12 +183,13 @@ def generate_dataset(task_name, task_fn, task_fn_gen, data_path='/media/data_cif
         img.save(save_path)
 
     np.random.seed(seed+2)
-    split = 'test_gen'
-    for i in range(n_test_samples_0, n_test_samples_1):
-        images = render_ooo(*task_fn_gen(), image_size=image_size)
-        save_path = os.path.join(task_path, split, '{:05d}.png'.format(i))
-        img = Image.fromarray(images).convert('RGB')
-        img.save(save_path)
+    if task_fn_gen != None:
+        split = 'test_gen'
+        for i in range(n_test_samples_0, n_test_samples_1):
+            images = render_ooo(*task_fn_gen(), image_size=image_size)
+            save_path = os.path.join(task_path, split, '{:05d}.png'.format(i))
+            img = Image.fromarray(images).convert('RGB')
+            img.save(save_path)
 
 
 if __name__ == '__main__':
@@ -222,6 +224,7 @@ if __name__ == '__main__':
     else:
         task_idx = int(task_idx)
         tn, tfn, _ = TASKS[task_idx]
-        _, tfn_g, _ = TASKS_GEN[task_idx]
+        #_, tfn_g, _ = TASKS_GEN[task_idx]
+        tfn_g = None
         generate_dataset(tn, tfn, tfn_g, args.data_dir, args.image_size, args.seed, args.train_size, args.val_size, args.test_size, args.test_gen_size, args.task_args)
 

@@ -1,4 +1,5 @@
 from data_generation.tasks import *
+from data_generation.subnetwork_tasks import sn_task_contact_inside
 
 TASKS=[
     # The images contain objects of the same shape.
@@ -207,6 +208,8 @@ TASKS=[
     ['task_flip_contact_1', task_flip_contact_1],
     # In each image, similarly shaped objects are in contact. All objects are randomly flipped.
     ['task_flip_contact_2', task_flip_contact_2],
+    # In each image, one object is inside and in contact with another.
+    ['sn_task_contact_inside', sn_task_contact_inside]
 ]
 
 
