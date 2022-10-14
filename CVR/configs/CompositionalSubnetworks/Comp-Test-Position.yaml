@@ -35,7 +35,7 @@ exp_name: "LeNet_Comp_Test_Position"
 exp_dir: '../Subnetworks_db/lenet/LeNet_Comp_Test_Position'
 
 # Config variables introduced for mask identification
-l0_components: {"backbone": False, "mlp": True}
+l0_components: {"backbone": False, "mlp": False}
 train_masks: {"backbone": False, "mlp": False}
 train_weights: {"backbone": False, "mlp": False, "embedding": False}
 pretrained_weights: { 

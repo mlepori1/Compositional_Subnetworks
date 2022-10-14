@@ -80,7 +80,7 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.train_masks["backbone"] or self.train_mask["mlp"]:
+        if self.train_masks["backbone"] or self.train_masks["mlp"]:
             loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
@@ -110,7 +110,7 @@ class Base(pl.LightningModule):
 
         y_hat, y = self.shared_step(batch)
 
-        if self.train_masks["backbone"] or self.train_mask["mlp"]:
+        if self.train_masks["backbone"] or self.train_masks["mlp"]:
             loss, l0_loss = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
