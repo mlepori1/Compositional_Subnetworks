@@ -180,7 +180,7 @@ class CNN(Base):
             num_ftrs = self.backbone.embed_dim
 
             # If the pretrained weights path is not None, then load up pretrained weights!
-            if self.pretrained_weights["backbone"] != None:
+            if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
             # If not training the weights in the backbone, freeze it
@@ -205,7 +205,7 @@ class CNN(Base):
             # Define backbone structure
             self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
 
-            if self.pretrained_weights["backbone"] != None:
+            if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
             # If you don't want to train the L0 backbone mask, freeze the mask
@@ -242,7 +242,7 @@ class CNN(Base):
             num_ftrs = self.backbone.embed_dim
 
             # If the pretrained weights path is not None, then load up pretrained weights!
-            if self.pretrained_weights["backbone"] != None:
+            if self.pretrained_weights["backbone"] != False:
                 print("Loading LeNet Backbone weights...")
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
