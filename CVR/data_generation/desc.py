@@ -1,3 +1,4 @@
+from CVR.data_generation.subnetwork_tasks import sn_task_inside, sn_task_contact
 from data_generation.tasks import *
 from data_generation.subnetwork_tasks import sn_task_contact_inside
 
@@ -209,7 +210,11 @@ TASKS=[
     # In each image, similarly shaped objects are in contact. All objects are randomly flipped.
     ['task_flip_contact_2', task_flip_contact_2],
     # In each image, one object is inside and in contact with another.
-    ['sn_task_contact_inside', sn_task_contact_inside]
+    ['sn_task_contact_inside', sn_task_contact_inside],
+    # task inside, but with extra constrains and diff colors for each shape
+    ['sn_task_inside', sn_task_inside],
+    # task contact, with extra constraints on color
+    ['sn_task_contact', sn_task_contact]
 ]
 
 

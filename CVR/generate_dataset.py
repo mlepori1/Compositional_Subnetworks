@@ -120,7 +120,9 @@ TASKS_IDX={
     100: "task_pos_flip_2",
     101: "task_flip_contact_1",
     102: "task_flip_contact_2",
-    103: "sn_task_contact_inside"
+    103: "sn_task_contact_inside",
+    104: "sn_task_inside",
+    105: "sn_task_contact"
 }
 
 

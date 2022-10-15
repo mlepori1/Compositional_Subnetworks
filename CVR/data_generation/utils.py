@@ -335,17 +335,19 @@ def sample_contact_insideness(s1, s2, size2, a=0):
 
     pos2 = samples[0]
 
-    idx_p_contact_c1 = (c1 * np.array((np.cos(angle),np.sin(angle))).reshape(-1)).sum(-1) > 0
-    idx_p_contact_c2 = (c2 * np.array((np.cos(angle),np.sin(angle))).reshape(-1)).sum(-1) > 0 # Flipped from when you make something in contact and outside
+    # idx_p_contact_c1 = (c1 * np.array((np.cos(angle),np.sin(angle))).reshape(-1)).sum(-1) > 0
+    # idx_p_contact_c2 = (c2 * np.array((np.cos(angle),np.sin(angle))).reshape(-1)).sum(-1) > 0 # Flipped from when you make something in contact and outside
+    # idx_p_contact_c1 = np.ones(idx_p_contact_c1.shape, dtype=bool) # Temporarily get rid of this
+    # idx_p_contact_c2 = np.ones(idx_p_contact_c2.shape, dtype=bool)
     
     # move object in direction
     c = c2 + pos2
     
-    idx_min = np.linalg.norm(c1[idx_p_contact_c1][:,None,:] - c[idx_p_contact_c2][None,:,:], axis=2).argmin()
-    s_ = idx_p_contact_c2.sum()
+    idx_min = np.linalg.norm(c1[:,None,:] - c[None,:,:], axis=2).argmin()
+    s_ = len(c2) 
     idx_min_c1, idx_min_c2 = idx_min // s_, idx_min % s_
-    p_clump = c1[idx_p_contact_c1][idx_min_c1]
-    p_obj = c2[idx_p_contact_c2][idx_min_c2]
+    p_clump = c1[idx_min_c1]
+    p_obj = c2[idx_min_c2]
     new_pos = (p_clump - p_obj)*(1-4/128)
     # ############## 
     
