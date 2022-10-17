@@ -220,7 +220,7 @@ def sn_task_contact(condition='c'):
                     s1.randomize()
                     s2.randomize()
 
-            xy2.append(sample * size_a[i, None] + xy1[i])
+            xy2.append(sample * size_a[i] + xy1[i])
             shapes.append([s1, s2])
         
         elif rule_instance == "no_inside_contact":
@@ -238,9 +238,8 @@ def sn_task_contact(condition='c'):
             xy1_odd = positions[0, :] + xy1_odd_init
 
             xy1[i] = xy1_odd
-
             shapes.append([s1, s2])
-            xy2.append(xy2_odd.reshape(1, 2))
+            xy2.append(xy2_odd)
     
     # Define which way we will break the rule to create the odd one out
     odd_one_out = np.random.choice(["inside_no_contact", "no_inside_no_contact"])
@@ -365,10 +364,10 @@ def sn_task_inside(condition='c'):
                     s1.randomize()
                     s2.randomize()
 
-            xy2.append(sample * size_a[i, None] + xy1[i])
+            xy2.append(np.array(sample * size_a[i] + xy1[i]).reshape(-1))
             shapes.append([s1, s2])
 
-        elif odd_one_out == "inside_no_contact":
+        elif rule_instance == "inside_no_contact":
             # this is just the normal insideness function
             done = False
 
@@ -379,6 +378,8 @@ def sn_task_inside(condition='c'):
                 # The function already does this, but it operates in a continuous x,y coordinate space,
                 # which may result in objects touching once things are aliased in image pixels.
                 # This hack ensures that you never run into this edge case.
+                s1 = Shape(gap_max=0.07, hole_radius=0.2)
+                s2 = Shape(gap_max=0.01)
                 samples = sample_position_inside_many(s1, [s2], [(size_b[i]/size_a[i]) + .2])
                 if len(samples)>0:
                     done = True
@@ -392,9 +393,9 @@ def sn_task_inside(condition='c'):
             if not done:
                 return np.zeros([100,100])
 
-            xy2_odd = samples[0]
-            xy2_odd = np.array(xy2_odd)*size_a[i, None] + xy1[i]
-            xy2.append(xy2_odd)
+            xy2_new = samples[0]
+            xy2_new = np.array(xy2_new)*size_a[i] + xy1[i]
+            xy2.append(xy2_new.reshape(-1))
             shapes.append([s1, s2])
     
     # Define which way we will break the rule to create the odd one out
@@ -415,7 +416,7 @@ def sn_task_inside(condition='c'):
         xy2_odd = xy2_odd[0:1]
 
         shapes.append([s1,s2])
-        xy2 = np.concatenate([np.array(xy2),xy2_odd], 0)
+        xy2.append(xy2_odd.reshape(-1))
 
     elif odd_one_out == "no_inside_contact":
         # This is just the normal contact function
@@ -434,10 +435,9 @@ def sn_task_inside(condition='c'):
         xy1[-1] = xy1_odd
 
         shapes.append([s1, s2])
-        xy2 = np.concatenate([np.array(xy2),xy2_odd], 0)
+        xy2.append(xy2_odd.reshape(-1))
 
 
- 
     xy2 = np.stack(xy2, axis=0)
 
     xy = np.stack([xy1, xy2], axis=1)
