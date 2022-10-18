@@ -238,7 +238,7 @@ class CNN(Base):
         if backbone == "lenet":
             """ LeNet
             """
-            self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=480)
+            self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=7680)
             num_ftrs = self.backbone.embed_dim
 
             # If the pretrained weights path is not None, then load up pretrained weights!
@@ -265,7 +265,7 @@ class CNN(Base):
             self.lamb = kwargs["l0_lambda"]
 
             # Define backbone structure
-            self.backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=480) # Defines the structure of L0 LeNet
+            self.backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=7680) # Defines the structure of L0 LeNet
 
             if self.pretrained_weights["backbone"] != None:
                 print("Loading L0 LeNet Backbone weights...")

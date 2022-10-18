@@ -114,12 +114,16 @@ class L0Conv2d(nn.Module):
             self.in_channels, self.out_channels, self.kernel_size, self.stride, self.padding)
 
 class ResBlock(nn.Module):
-    def __init__(self, Conv, in_channels, out_channels, stride=1, downsample=None):
+    def __init__(self, Conv, in_channels, out_channels, stride=1, downsample=None, batch_norm=False):
         super(ResBlock, self).__init__()
         self.conv_a = Conv(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        self.bn_a = nn.BatchNorm2d(out_channels)
         self.conv_b = Conv(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
-        self.bn_b = nn.BatchNorm2d(out_channels)
+        if batch_norm:
+            self.bn_a = nn.BatchNorm2d(out_channels)
+            self.bn_b = nn.BatchNorm2d(out_channels)
+        else:
+            self.bn_a = nn.Identity()
+            self.bn_b = nn.Identity()
         self.downsample = downsample
 
     def forward(self, x):
@@ -133,15 +137,15 @@ class ResBlock(nn.Module):
         return F.relu(residual + out, inplace=True)
     
 class ResStage(nn.Module):
-    def __init__(self, Conv, in_channels, out_channels, stride=1):
+    def __init__(self, Conv, in_channels, out_channels, stride=1, batch_norm=False):
         super(ResStage, self).__init__()
         downsample = None
         if stride != 1 or in_channels != out_channels:
             downsample = nn.Conv2d(in_channels, out_channels, 1, 2, 0, bias=False)
             
-        self.block1 = ResBlock(Conv, in_channels, out_channels, stride, downsample)
-        self.block2 = ResBlock(Conv, out_channels, out_channels)
-        self.block3 = ResBlock(Conv, out_channels, out_channels)
+        self.block1 = ResBlock(Conv, in_channels, out_channels, stride, downsample, batch_norm=batch_norm)
+        self.block2 = ResBlock(Conv, out_channels, out_channels, batch_norm=batch_norm)
+        self.block3 = ResBlock(Conv, out_channels, out_channels, batch_norm=batch_norm)
 
     def forward(self, x):
         out = self.block1(x)
@@ -150,10 +154,11 @@ class ResStage(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=False):
         super(ResNet, self).__init__()
 
         self.isL0 = isL0
+        self.bn = batch_norm
 
         if isL0:
             Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value)
@@ -161,11 +166,14 @@ class ResNet(nn.Module):
             Conv = functools.partial(L0Conv2d, l0=False)
 
         self.conv0 = Conv(3, 16, 3, 1, 1)
-        self.bn0 = nn.BatchNorm2d(16)
+        if self.bn:
+            self.bn0 = nn.BatchNorm2d(16)
+        else:
+            self.bn0 = nn.Identity()
 
-        self.stage1 = ResStage(Conv, 16, 16, 1)
-        self.stage2 = ResStage(Conv, 16, 32, 2)
-        self.stage3 = ResStage(Conv, 32, 64, 2)
+        self.stage1 = ResStage(Conv, 16, 16, stride=1, batch_norm=self.bn)
+        self.stage2 = ResStage(Conv, 16, 32, stride=2, batch_norm=self.bn)
+        self.stage3 = ResStage(Conv, 32, 64, stride=2, batch_norm=self.bn)
 
         self.avgpool = nn.AvgPool2d(8)
         self.embed_dim=embed_dim
