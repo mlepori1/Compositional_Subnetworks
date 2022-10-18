@@ -3,48 +3,47 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 120
+max_epochs: 60
 num_workers: 4
 checkpoint: ''
 finetune: 0
 freeze_pretrained: 0
 log_every_n_steps: 100
 ckpt_period: 1
-seed: -1
-early_stopping: 0
+seed: 0
+early_stopping: 1
 refresh_rate: 10
-es_patience: 20
+es_patience: 10
 check_val_every_n_epoch: 1
 #arch
-backbone: 'L0resnet18'
+backbone: 'resnet18'
 lr: 0.0001
 wd: 0.00
-n_tasks: 0
+n_tasks: 1
 mlp_dim: 128
 mlp_hidden_dim: 1024
 task_embedding: 0
-# data
+# data 
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '104' # Denotes multitask training
+task: '103'
 batch_size: 64
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "Rand_Inside_Subnetwork"
-exp_dir: '../Subnetworks_db/resnet18/Rand_Inside_Subnetwork'
+exp_name: "Resnet_Comp_Training"
+exp_dir: '../Subnetworks_db/resnet18/Resnet_Comp_Training'
 
 # Config variables introduced for mask identification
-l0_components: {"backbone": True, "mlp": True}
-train_masks: {"backbone": True, "mlp": True}
-train_weights: {"backbone": False, "mlp": False, "embedding": False}
+l0_components: {"backbone": False, "mlp": False}
+train_masks: {"backbone": False, "mlp": False}
+train_weights: {"backbone": True, "mlp": True, "embedding": False}
 pretrained_weights: { 
   "backbone": False,
   "mlp": False,
   "embedding": False
   } # False for random initialization
-l0_init: -0.2
+l0_init: 0.0
 l0_lambda: .00000001
-max_temp: 300
+max_temp: 200
 eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
-
