@@ -176,6 +176,7 @@ class CNN(Base):
         if backbone == "resnet18":
             """ Resnet18
             """
+            assert(self.l0_components["backbone"] == False)
             self.backbone = ResNet(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
@@ -198,13 +199,14 @@ class CNN(Base):
             """ L0Resnet18
             """
 
+            assert(self.l0_components["backbone"] == True)
+
             # Get L0 parameters
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
             # Define backbone structure
             self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
-
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
@@ -238,6 +240,7 @@ class CNN(Base):
         if backbone == "lenet":
             """ LeNet
             """
+            assert(self.l0_components["backbone"] == False)
             self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=7680)
             num_ftrs = self.backbone.embed_dim
 
@@ -260,6 +263,7 @@ class CNN(Base):
         elif backbone == "L0lenet":
             """ L0 LeNet
             """
+            assert(self.l0_components["backbone"] == True)
             # Get L0 parameters
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
