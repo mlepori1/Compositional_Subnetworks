@@ -1,4 +1,4 @@
-from CVR.data_generation.subnetwork_tasks import sn_task_inside, sn_task_contact
+from CVR.data_generation.subnetwork_tasks import sn_task_inside, sn_task_contact, sn_task_contact_adversarial_inside, sn_task_inside_adversarial_contact
 from data_generation.tasks import *
 from data_generation.subnetwork_tasks import sn_task_contact_inside
 
@@ -214,7 +214,11 @@ TASKS=[
     # task inside, but with extra constrains and diff colors for each shape
     ['sn_task_inside', sn_task_inside],
     # task contact, with extra constraints on color
-    ['sn_task_contact', sn_task_contact]
+    ['sn_task_contact', sn_task_contact],
+    # task inside, but constrained to be adversarial to contact subnets
+    ['sn_task_inside_adversarial_contact', sn_task_inside_adversarial_contact],
+    # task contact, but constrained to be adversarial to inside
+    ['sn_task_contact_adversarial_inside', sn_task_contact_adversarial_inside]
 ]
 
 

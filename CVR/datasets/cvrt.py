@@ -177,7 +177,9 @@ TASKS={
     102: "task_flip_contact_2",
     103: "sn_task_contact_inside",
     104: "sn_task_inside",
-    105: "sn_task_contact"
+    105: "sn_task_contact",
+    106: "sn_task_inside_adversarial_contact",
+    107: "sn_task_contact_adversarial_inside"
 }
 
 

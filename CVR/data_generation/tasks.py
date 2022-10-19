@@ -11,7 +11,7 @@ import math
 
 from data_generation.shape import Shape
 from data_generation.utils import *
-from data_generation.subnetwork_tasks import sn_task_contact_inside, sn_task_inside, sn_task_contact
+from data_generation.subnetwork_tasks import *
 
 render = render_cv
 
@@ -9489,7 +9489,9 @@ TASKS=[
     ["task_flip_contact_2", task_flip_contact_2, "In each image, similarly shaped objects are in contact. All objects are randomly flipped."],
     ["sn_task_contact_inside", sn_task_contact_inside, "In each image, one object is inside and in contact with another."],
     ["sn_task_inside", sn_task_inside, "Same as task inside, with more constraints"],
-    ["sn_task_contact", sn_task_contact, "Same as task contact, with constraints on color"]
+    ["sn_task_contact", sn_task_contact, "Same as task contact, with constraints on color"],
+    ["sn_task_inside_adversarial_contact", sn_task_inside_adversarial_contact, "Same as task inside, adversarial against contact"],
+    ["sn_task_contact_adversarial_inside", sn_task_contact_adversarial_inside, "Same as task contact, adversarial against inside"]
 ]
 
 

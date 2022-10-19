@@ -16,7 +16,8 @@ class L0UnstructuredLinear(nn.Module):
         out_features: int,
         bias: bool = True,
         mask_init_value: float = 0.0,
-        temp: float = 1.
+        temp: float = 1.,
+        inverse_mask: bool = False
     ) -> None:
         """Initialize a L0UstructuredLinear module.
 
@@ -28,6 +29,7 @@ class L0UnstructuredLinear(nn.Module):
         self.mask_init_value = mask_init_value
         self.weight = nn.Parameter(torch.zeros(out_features, in_features))  # type: ignore
         self.temp = temp
+        self.inverse_mask = inverse_mask
 
         if bias:
             self.bias = nn.Parameter(torch.zeros(out_features))  # type: ignore
@@ -41,7 +43,8 @@ class L0UnstructuredLinear(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        if not self.training or self.mask_weight.requires_grad == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testingß
+        if (not self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
+        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask      
@@ -55,6 +58,7 @@ class L0UnstructuredLinear(nn.Module):
         module: nn.Linear,
         mask_init_value: float = 0.0,
         keep_weights: bool = True,
+        inverse_mask: bool = False
     ) -> "L0UnstructedLinear":
         """Construct from a pretrained nn.Linear module.
         IMPORTANT: the weights are conserved, but can be reinitialized
@@ -77,7 +81,7 @@ class L0UnstructuredLinear(nn.Module):
             mask = module.mask_weight
         else:
             mask = None
-        new_module = self(in_features, out_features, bias, mask_init_value)
+        new_module = self(in_features, out_features, bias, mask_init_value, inverse_mask=inverse_mask)
 
         if keep_weights:
             new_module.weight.data = module.weight.data.clone()
@@ -134,14 +138,16 @@ class L0UnstructuredLinear(nn.Module):
         return "{}({})".format(self.__class__.__name__, self.extra_repr())
 
 class L0MLP(nn.Module):
-    def __init__(self, mlp, mask_init_value):
+    def __init__(self, mlp, mask_init_value, ablate_mask=False):
         # MLP is either a regular MLP (such as the one defined below) 
-        # or another unstructured L0 MLP
+        # or another unstructured L0 MLP. 
+        # Ablate mask is used during testing to see how performance varies without 
+        # the found subnetwork
         super(L0MLP, self).__init__()
         self.model = []
         for layer in mlp.model.children():
             if isinstance(layer, nn.Linear):
-                self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value))
+                self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value, inverse_mask=ablate_mask))
             else:
                 self.model.append(layer)
         self.embed_size = self.model[-1].out_features # last layer is an L0 layer

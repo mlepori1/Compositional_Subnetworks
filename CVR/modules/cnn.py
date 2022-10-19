@@ -173,6 +173,11 @@ class CNN(Base):
         self.pretrained_weights = kwargs["pretrained_weights"]
         self.eval_only = kwargs["eval_only"]
 
+        if kwargs.has_key("ablate_mask") and kwargs["ablate_mask"] == True:
+            self.ablate_mask = True
+        else:
+            self.ablate_mask = False
+
         if backbone == "resnet18":
             """ Resnet18
             """
@@ -203,7 +208,7 @@ class CNN(Base):
             self.lamb = kwargs["l0_lambda"]
 
             # Define backbone structure
-            self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024) # Defines the structure of L0 Resnet
+            self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 Resnet
 
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
@@ -318,7 +323,7 @@ class CNN(Base):
 
         if self.l0_components["mlp"]:
             print("Constructing L0 MLP...")
-            self.mlp = L0MLP(self.mlp, kwargs["l0_init"])
+            self.mlp = L0MLP(self.mlp, kwargs["l0_init"], ablate_mask=self.ablate_mask)
             self.lamb = kwargs["l0_lambda"]
 
 

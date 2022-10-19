@@ -11,7 +11,7 @@ import functools
 
 
 class L0Conv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1.):
+    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., inverse_mask=False):
         super(L0Conv2d, self).__init__()
         self.l0 = l0
         self.mask_init_value = mask_init_value
@@ -22,6 +22,7 @@ class L0Conv2d(nn.Module):
         self.padding = padding
         self.stride = stride
         self.temp = temp
+        self.inverse_mask=inverse_mask
 
         self.weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
         if bias:
@@ -49,7 +50,8 @@ class L0Conv2d(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        if not self.training or self.mask_weight.requires_grad == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testingß
+        if (not self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
+        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask 
@@ -154,14 +156,15 @@ class ResStage(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=False):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=False, ablate_mask=False):
         super(ResNet, self).__init__()
 
         self.isL0 = isL0
         self.bn = batch_norm
+        self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
 
         if isL0:
-            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value)
+            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, inverse_mask=ablate_mask)
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
