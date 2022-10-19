@@ -16,7 +16,7 @@ refresh_rate: 10
 es_patience: 20
 check_val_every_n_epoch: 1
 #arch
-backbone: 'resnet18'
+backbone: 'L0resnet18'
 lr: 0.0001
 wd: 0.00
 n_tasks: 0
@@ -35,11 +35,11 @@ exp_name: "Rand_Contact_Subnetwork"
 exp_dir: '../Subnetworks_db/resnet18/Rand_Contact_Subnetwork'
 
 # Config variables introduced for mask identification
-l0_components: {"backbone": False, "mlp": True}
-train_masks: {"backbone": False, "mlp": True}
+l0_components: {"backbone": True, "mlp": True}
+train_masks: {"backbone": True, "mlp": True}
 train_weights: {"backbone": False, "mlp": False, "embedding": False}
 pretrained_weights: { 
-  "backbone": '../Subnetworks_db/resnet18/Resnet_Comp_Training/backbone.pt',
+  "backbone": False,
   "mlp": False,
   "embedding": False
   } # False for random initialization
