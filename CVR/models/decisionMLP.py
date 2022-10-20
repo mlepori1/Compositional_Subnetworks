@@ -166,7 +166,6 @@ class L0MLP(nn.Module):
         for layer in self.model.children():
             if isinstance(layer, L0UnstructuredLinear):
                 layer.temp = temp
-                print(layer.temp) # for debug
  
 #Linear network to prune after training
 class MLP(nn.Module):

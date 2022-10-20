@@ -192,7 +192,6 @@ class ResNet(nn.Module):
         for layer in self.modules():
             if type(layer) == L0Conv2d:
                 layer.temp = temp
-                print(layer.temp) # for debug
                 
     def forward(self, x):
         out = F.relu(self.bn0(self.conv0(x)), inplace=True)
