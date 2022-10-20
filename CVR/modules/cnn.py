@@ -15,6 +15,7 @@ from models.scn import SCL
 from models.wren import WReN
 from models.resnet18 import ResNet, L0Conv2d
 from models.lenet import LeNet
+from models.vgg16 import VGG16
 #from models.mlpEncoder import L0MLP, MLP
 from models.decisionMLP import MLP, L0MLP, L0UnstructuredLinear
 
@@ -212,6 +213,64 @@ class CNN(Base):
 
             # Define backbone structure
             self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 Resnet
+
+            if self.pretrained_weights["backbone"] != False:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
+
+            # If you don't want to train the L0 backbone mask, freeze the mask
+            if self.train_masks["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d: # freeze conv layers
+                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                            layer.mask_weight.requires_grad = False
+            
+            # If you don't want to train the backbone weights, freeze em
+            if self.train_weights["backbone"] == False:
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d: # freeze all weights and biases
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+            
+            if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
+                self.backbone.train(False)
+
+            num_ftrs = self.backbone.embed_dim
+
+        if backbone == "vgg16":
+            """ VGG16 backbone
+            """
+            assert(self.l0_components["backbone"] == False)
+            self.backbone = VGG16(isL0=False, mask_init_value=1, embed_dim=1024)
+            num_ftrs = self.backbone.embed_dim
+
+            # If the pretrained weights path is not None, then load up pretrained weights!
+            if self.pretrained_weights["backbone"] != False:
+                self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
+
+            # If not training the weights in the backbone, freeze it
+            if self.train_weights["backbone"] == False:
+                self.backbone.train(False)
+
+                for layer in self.backbone.modules():
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
+                        layer.weight.requires_grad = False
+                        if layer.bias != None: 
+                            layer.bias.requires_grad = False
+
+
+        elif backbone == "L0vgg16":
+            """ L0VGG16 backbone
+            """
+
+            assert(self.l0_components["backbone"] == True)
+
+            # Get L0 parameters
+            l0_init = kwargs["l0_init"]
+            self.lamb = kwargs["l0_lambda"]
+
+            # Define backbone structure
+            self.backbone = VGG16(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 VGG16
 
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)

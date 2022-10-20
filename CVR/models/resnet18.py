@@ -54,8 +54,6 @@ class L0Conv2d(nn.Module):
             mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
         elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else:
-
-        # FOR TESTING ONLY, REMOVE DISCRETE MASK
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask 
 
