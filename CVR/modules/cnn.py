@@ -15,7 +15,7 @@ from models.scn import SCL
 from models.wren import WReN
 from models.resnet18 import ResNet, L0Conv2d
 from models.lenet import LeNet
-from models.vgg16 import VGG16
+from models.vgg11 import VGG11
 #from models.mlpEncoder import L0MLP, MLP
 from models.decisionMLP import MLP, L0MLP, L0UnstructuredLinear
 
@@ -237,11 +237,11 @@ class CNN(Base):
 
             num_ftrs = self.backbone.embed_dim
 
-        if backbone == "vgg16":
+        if backbone == "vgg11":
             """ VGG16 backbone
             """
             assert(self.l0_components["backbone"] == False)
-            self.backbone = VGG16(isL0=False, mask_init_value=1, embed_dim=1024)
+            self.backbone = VGG11(isL0=False, mask_init_value=1, embed_dim=1024)
             num_ftrs = self.backbone.embed_dim
 
             # If the pretrained weights path is not None, then load up pretrained weights!
@@ -259,7 +259,7 @@ class CNN(Base):
                             layer.bias.requires_grad = False
 
 
-        elif backbone == "L0vgg16":
+        elif backbone == "L0vgg11":
             """ L0VGG16 backbone
             """
 
@@ -270,7 +270,7 @@ class CNN(Base):
             self.lamb = kwargs["l0_lambda"]
 
             # Define backbone structure
-            self.backbone = VGG16(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 VGG16
+            self.backbone = VGG11(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 VGG16
 
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
