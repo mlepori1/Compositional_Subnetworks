@@ -173,7 +173,7 @@ class CNN(Base):
         self.pretrained_weights = kwargs["pretrained_weights"]
         self.eval_only = kwargs["eval_only"]
 
-        if kwargs.has_key("ablate_mask") and kwargs["ablate_mask"] == True:
+        if "ablate_mask" in kwargs and kwargs["ablate_mask"] == True:
             self.ablate_mask = True
         else:
             self.ablate_mask = False
