@@ -11,7 +11,7 @@ import functools
 from .resnet18 import L0Conv2d
 
 class VGG11(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, ablate_mask=False):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, ablate_mask=None):
         super(VGG11, self).__init__()
 
         """
@@ -22,7 +22,7 @@ class VGG11(nn.Module):
         self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
 
         if isL0:
-            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, inverse_mask=ablate_mask)
+            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, ablate_mask=ablate_mask)
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 

@@ -17,7 +17,7 @@ class L0UnstructuredLinear(nn.Module):
         bias: bool = True,
         mask_init_value: float = 0.0,
         temp: float = 1.,
-        inverse_mask: bool = False
+        ablate_mask: str = None
     ) -> None:
         """Initialize a L0UstructuredLinear module.
 
@@ -29,12 +29,18 @@ class L0UnstructuredLinear(nn.Module):
         self.mask_init_value = mask_init_value
         self.weight = nn.Parameter(torch.zeros(out_features, in_features))  # type: ignore
         self.temp = temp
-        self.inverse_mask = inverse_mask
+        self.ablate_mask = ablate_mask
 
         if bias:
             self.bias = nn.Parameter(torch.zeros(out_features))  # type: ignore
         else:
             self.register_parameter("bias", None)  # type: ignore
+
+        # Create a random tensor to reinit ablated parameters
+        if self.ablate_mask == "random":
+            self.random_weight = nn.Parameter(torch.zeros(out_features, in_features))
+            init.kaiming_uniform_(self.random_weight, a=math.sqrt(5))
+            self.random_weight.requires_grad=False
 
         self.reset_parameters()
 
@@ -43,10 +49,10 @@ class L0UnstructuredLinear(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        if (not self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
-        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad) == False: 
+        if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad) == False: 
+            mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
+        elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad) == False: 
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
-            print("ablating")
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask      
@@ -127,7 +133,12 @@ class L0UnstructuredLinear(nn.Module):
             N-dimensional tensor, with last dimension `out_features`
         """
         self.mask = self.compute_mask()
-        masked_weight = self.weight * self.mask
+        if self.ablate_mask == "random":
+            masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
+            masked_weight += ~self.mask * self.random_weight# Invert the mask to target the remaining weights, make them random
+        else:
+            masked_weight = self.weight * self.mask
+
         out = F.linear(data, masked_weight, self.bias)
         return out
 
@@ -140,7 +151,7 @@ class L0UnstructuredLinear(nn.Module):
         return "{}({})".format(self.__class__.__name__, self.extra_repr())
 
 class L0MLP(nn.Module):
-    def __init__(self, mlp, mask_init_value, ablate_mask=False):
+    def __init__(self, mlp, mask_init_value, ablate_mask=None):
         # MLP is either a regular MLP (such as the one defined below) 
         # or another unstructured L0 MLP. 
         # Ablate mask is used during testing to see how performance varies without 

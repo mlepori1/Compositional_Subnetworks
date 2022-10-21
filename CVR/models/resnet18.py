@@ -11,7 +11,7 @@ import functools
 
 
 class L0Conv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., inverse_mask=False):
+    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
         super(L0Conv2d, self).__init__()
         self.l0 = l0
         self.mask_init_value = mask_init_value
@@ -22,14 +22,21 @@ class L0Conv2d(nn.Module):
         self.padding = padding
         self.stride = stride
         self.temp = temp
-        self.inverse_mask=inverse_mask
-        print(inverse_mask)
+        self.ablate_mask=ablate_mask
+
         self.weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))
         else:
             self.register_parameter('bias', None)
         self.reset_parameters()
+
+        # Create a random tensor to reinit ablated parameters
+        if self.ablate_mask == "random":
+            self.random_weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
+            init.kaiming_uniform_(self.random_weight, a=math.sqrt(5))
+            self.random_weight.requires_grad=False
+
         
     def reset_parameters(self) -> None:
         # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
@@ -50,11 +57,10 @@ class L0Conv2d(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        if (not self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): 
+        if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
-        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): 
+        elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
-            print("Conv ablate")
         else:
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask 
@@ -63,10 +69,13 @@ class L0Conv2d(nn.Module):
         self.training = train_bool         
         
     def forward(self, x):
-        print(self.inverse_mask)
         if self.l0:
             self.mask = self.compute_mask()
-            masked_weight = self.weight * self.mask
+            if self.ablate_mask == "random":
+                masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
+                masked_weight += ~self.mask * self.random_weight# Invert the mask to target the remaining weights, make them random
+            else:
+                masked_weight = self.weight * self.mask
         else:
             masked_weight = self.weight
         out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding)        
@@ -160,15 +169,14 @@ class ResStage(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=False):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None):
         super(ResNet, self).__init__()
 
         self.isL0 = isL0
         self.bn = batch_norm
         self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
-        print("ResNet Mask ablation: ", self.ablate_mask)
         if isL0:
-            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, inverse_mask=self.ablate_mask)
+            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, ablate_mask=self.ablate_mask)
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 

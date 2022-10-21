@@ -174,11 +174,10 @@ class CNN(Base):
         self.pretrained_weights = kwargs["pretrained_weights"]
         self.eval_only = kwargs["eval_only"]
         
-        if "ablate_mask" in kwargs and kwargs["ablate_mask"] == True:
-            self.ablate_mask = True
-            print("og true")
+        if "ablate_mask" in kwargs:
+            self.ablate_mask = kwargs["ablate_mask"]
         else:
-            self.ablate_mask = False
+            self.ablate_mask = None
 
         if backbone == "resnet18":
             """ Resnet18
@@ -212,8 +211,6 @@ class CNN(Base):
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
             
-            print("before instantiation")
-            print(self.ablate_mask)
             # Define backbone structure
             self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 Resnet
 
@@ -238,9 +235,7 @@ class CNN(Base):
             if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
                 self.backbone.train(False)
 
-            print("aboutta define num_ftrs")
             num_ftrs = self.backbone.embed_dim
-            print(num_ftrs)
 
         if backbone == "vgg11":
             """ VGG16 backbone
