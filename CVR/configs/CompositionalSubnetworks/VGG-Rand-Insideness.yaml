@@ -1,4 +1,4 @@
-path_db: '../Subnetworks_db/resnet18'
+path_db: '../Subnetworks_db/vgg'
 model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
@@ -16,7 +16,7 @@ refresh_rate: 10
 es_patience: 20
 check_val_every_n_epoch: 1
 #arch
-backbone: 'L0resnet18'
+backbone: 'L0vgg11'
 lr: 0.0001
 wd: 0.00
 n_tasks: 0
@@ -25,26 +25,26 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '103' # Denotes multitask training
-batch_size: 64
+task: '104' # Denotes multitask training
+batch_size: 16
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "Resnet_Inside_Test_Comp"
-exp_dir: '../Subnetworks_db/resnet18/Resnet_Inside_Test_Comp'
+exp_name: "VGG_Rand_Inside_Subnetwork"
+exp_dir: '../Subnetworks_db/vgg/VGG_Rand_Inside_Subnetwork'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}
-train_masks: {"backbone": False, "mlp": False}
+train_masks: {"backbone": True, "mlp": True}
 train_weights: {"backbone": False, "mlp": False, "embedding": False}
 pretrained_weights: { 
-  "backbone": '../Subnetworks_db/resnet18/Resnet_Inside_Subnetwork/backbone.pt',
-  "mlp": '../Subnetworks_db/resnet18/Resnet_Inside_Subnetwork/mlp.pt',
+  "backbone": False, 
+  "mlp": False,
   "embedding": False
   } # False for random initialization
-l0_init: -0.1
+l0_init: -0.0
 l0_lambda: .00000001
 max_temp: 200
-eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
+eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
 

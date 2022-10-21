@@ -25,14 +25,14 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '103' # Denotes multitask training
-batch_size: 64
+task: '104' # Denotes multitask training
+batch_size: 2
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "Resnet_Inside_Test_Comp"
-exp_dir: '../Subnetworks_db/resnet18/Resnet_Inside_Test_Comp'
+exp_name: "Resnet_Ablate_Inside_Test_Inside"
+exp_dir: '../Subnetworks_db/resnet18/Resnet_Ablate_Inside_Test_Inside'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}
@@ -47,4 +47,4 @@ l0_init: -0.1
 l0_lambda: .00000001
 max_temp: 200
 eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
-
+ablate_mask: True

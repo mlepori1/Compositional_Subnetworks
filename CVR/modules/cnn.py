@@ -173,9 +173,10 @@ class CNN(Base):
         self.train_weights = kwargs["train_weights"]
         self.pretrained_weights = kwargs["pretrained_weights"]
         self.eval_only = kwargs["eval_only"]
-
+        
         if "ablate_mask" in kwargs and kwargs["ablate_mask"] == True:
             self.ablate_mask = True
+            print("og true")
         else:
             self.ablate_mask = False
 
@@ -210,7 +211,9 @@ class CNN(Base):
             # Get L0 parameters
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
-
+            
+            print("before instantiation")
+            print(self.ablate_mask)
             # Define backbone structure
             self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 Resnet
 
@@ -221,7 +224,7 @@ class CNN(Base):
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d: # freeze conv layers
-                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                        if not self.train_masks and layer.l0 == True: # Only decision is whether to freeze mask
                             layer.mask_weight.requires_grad = False
             
             # If you don't want to train the backbone weights, freeze em
@@ -235,13 +238,15 @@ class CNN(Base):
             if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
                 self.backbone.train(False)
 
+            print("aboutta define num_ftrs")
             num_ftrs = self.backbone.embed_dim
+            print(num_ftrs)
 
         if backbone == "vgg11":
             """ VGG16 backbone
             """
             assert(self.l0_components["backbone"] == False)
-            self.backbone = VGG11(isL0=False, mask_init_value=1, embed_dim=1024)
+            self.backbone = VGG11(isL0=False, mask_init_value=1, embed_dim=8192)
             num_ftrs = self.backbone.embed_dim
 
             # If the pretrained weights path is not None, then load up pretrained weights!
@@ -270,7 +275,7 @@ class CNN(Base):
             self.lamb = kwargs["l0_lambda"]
 
             # Define backbone structure
-            self.backbone = VGG11(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 VGG16
+            self.backbone = VGG11(isL0=True, mask_init_value=l0_init, embed_dim=8192, ablate_mask=self.ablate_mask) # Defines the structure of L0 VGG16
 
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
@@ -279,7 +284,7 @@ class CNN(Base):
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d: # freeze conv layers
-                        if not self.train_mask and layer.l0 == True: # Only decision is whether to freeze mask
+                        if not self.train_masks and layer.l0 == True: # Only decision is whether to freeze mask
                             layer.mask_weight.requires_grad = False
             
             # If you don't want to train the backbone weights, freeze em

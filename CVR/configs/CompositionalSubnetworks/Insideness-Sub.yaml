@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 120
+max_epochs: 90
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -43,8 +43,8 @@ pretrained_weights: {
   "mlp": '../Subnetworks_db/resnet18/Resnet_Comp_Training/mlp.pt',
   "embedding": False
   } # False for random initialization
-l0_init: -0.2
+l0_init: 0.2
 l0_lambda: .00000001
-max_temp: 300
+max_temp: 200
 eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
 

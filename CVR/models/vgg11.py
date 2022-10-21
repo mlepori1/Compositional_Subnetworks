@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn.init as init
 import math
 import functools
-from resnet18 import L0Conv2d
+from .resnet18 import L0Conv2d
 
 class VGG11(nn.Module):
     def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, ablate_mask=False):
@@ -27,7 +27,7 @@ class VGG11(nn.Module):
             Conv = functools.partial(L0Conv2d, l0=False)
 
         self.conv_layers = nn.Sequential(
-            Conv(self.in_channels, 64, kernel_size=3, padding=1),
+            Conv(3, 64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             Conv(64, 128, kernel_size=3, padding=1),

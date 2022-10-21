@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 60
+max_epochs: 30
 num_workers: 4
 checkpoint: ''
 finetune: 0

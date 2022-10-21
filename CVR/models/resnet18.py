@@ -23,7 +23,7 @@ class L0Conv2d(nn.Module):
         self.stride = stride
         self.temp = temp
         self.inverse_mask=inverse_mask
-
+        print(inverse_mask)
         self.weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))
@@ -52,7 +52,9 @@ class L0Conv2d(nn.Module):
     def compute_mask(self):
         if (not self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
-        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
+        elif (self.inverse_mask) and (not self.training or self.mask_weight.requires_grad == False): 
+            mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
+            print("Conv ablate")
         else:
             mask = F.sigmoid(self.temp * self.mask_weight)
         return mask 
@@ -61,6 +63,7 @@ class L0Conv2d(nn.Module):
         self.training = train_bool         
         
     def forward(self, x):
+        print(self.inverse_mask)
         if self.l0:
             self.mask = self.compute_mask()
             masked_weight = self.weight * self.mask
@@ -163,9 +166,9 @@ class ResNet(nn.Module):
         self.isL0 = isL0
         self.bn = batch_norm
         self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
-
+        print("ResNet Mask ablation: ", self.ablate_mask)
         if isL0:
-            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, inverse_mask=ablate_mask)
+            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, inverse_mask=self.ablate_mask)
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
