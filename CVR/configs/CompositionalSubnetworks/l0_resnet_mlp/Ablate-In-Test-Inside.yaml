@@ -1,4 +1,4 @@
-path_db: '../..//Subnetworks_db/resnet18'
+path_db: '../../Subnetworks_db/resnet18'
 model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
