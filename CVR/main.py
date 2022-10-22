@@ -174,10 +174,12 @@ def cli_main():
     # testing
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-    torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
-    torch.save(best_model.mlp.state_dict(), os.path.join(args.exp_dir, 'mlp.pt'))
-    if best_model.task_embedding != None:
-        torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, 'embedding.pt'))
+    if args.eval_only == False:
+        torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
+        torch.save(best_model.mlp.state_dict(), os.path.join(args.exp_dir, 'mlp.pt'))
+        if best_model.task_embedding != None:
+            torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, 'embedding.pt'))
+
     trainer.test(model=best_model, datamodule=datamodule)
     train_result = best_model.test_results
 

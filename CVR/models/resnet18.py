@@ -169,7 +169,7 @@ class ResStage(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None, first_l0=True):
         super(ResNet, self).__init__()
 
         self.isL0 = isL0
@@ -180,7 +180,10 @@ class ResNet(nn.Module):
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
-        self.conv0 = L0Conv2d(3, 16, 3, 1, 1, l0=False)
+        if isL0 and first_l0:
+            self.conv0 = Conv(3, 16, 3, 1, 1)
+        else:
+            self.conv0 = L0Conv2d(3, 16, 3, 1, 1, l0=False)
 
         if self.bn:
             self.bn0 = nn.BatchNorm2d(16)
