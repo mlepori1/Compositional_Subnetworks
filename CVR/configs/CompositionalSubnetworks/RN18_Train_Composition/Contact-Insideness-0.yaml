@@ -32,7 +32,7 @@ val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
 exp_name: "0"
-exp_dir: '/gpfs/data/epavlick/mlepori/projects/CompositionalSubnetworks/resnet18/Comp_Training/0'
+exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/resnet18/Comp_Training/0'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": False, "mlp": False}
