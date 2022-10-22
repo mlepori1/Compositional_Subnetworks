@@ -73,7 +73,7 @@ class L0Conv2d(nn.Module):
             self.mask = self.compute_mask()
             if self.ablate_mask == "random":
                 masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
-                masked_weight += ~self.mask * self.random_weight# Invert the mask to target the remaining weights, make them random
+                masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
             else:
                 masked_weight = self.weight * self.mask
         else:
@@ -180,7 +180,8 @@ class ResNet(nn.Module):
         else:
             Conv = functools.partial(L0Conv2d, l0=False)
 
-        self.conv0 = Conv(3, 16, 3, 1, 1)
+        self.conv0 = L0Conv2d(3, 16, 3, 1, 1, l0=False)
+
         if self.bn:
             self.bn0 = nn.BatchNorm2d(16)
         else:

@@ -66,7 +66,7 @@ class L0UnstructuredLinear(nn.Module):
         module: nn.Linear,
         mask_init_value: float = 0.0,
         keep_weights: bool = True,
-        inverse_mask: bool = False
+        ablate_mask: str = None
     ) -> "L0UnstructedLinear":
         """Construct from a pretrained nn.Linear module.
         IMPORTANT: the weights are conserved, but can be reinitialized
@@ -89,7 +89,7 @@ class L0UnstructuredLinear(nn.Module):
             mask = module.mask_weight
         else:
             mask = None
-        new_module = self(in_features, out_features, bias, mask_init_value, inverse_mask=inverse_mask)
+        new_module = self(in_features, out_features, bias, mask_init_value, ablate_mask=ablate_mask)
 
         if keep_weights:
             new_module.weight.data = module.weight.data.clone()
@@ -135,7 +135,7 @@ class L0UnstructuredLinear(nn.Module):
         self.mask = self.compute_mask()
         if self.ablate_mask == "random":
             masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
-            masked_weight += ~self.mask * self.random_weight# Invert the mask to target the remaining weights, make them random
+            masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
         else:
             masked_weight = self.weight * self.mask
 
@@ -160,7 +160,7 @@ class L0MLP(nn.Module):
         self.model = []
         for layer in mlp.model.children():
             if isinstance(layer, nn.Linear):
-                self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value, inverse_mask=ablate_mask))
+                self.model.append(L0UnstructuredLinear.from_module(layer, mask_init_value=mask_init_value, ablate_mask=ablate_mask))
             else:
                 self.model.append(layer)
         self.embed_size = self.model[-1].out_features # last layer is an L0 layer
