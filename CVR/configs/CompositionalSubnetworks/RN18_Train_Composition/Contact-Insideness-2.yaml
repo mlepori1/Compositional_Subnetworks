@@ -24,7 +24,7 @@ mlp_dim: 128
 mlp_hidden_dim: 1024
 task_embedding: 0
 # data 
-data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
 task: '103'
 batch_size: 64
 train_transform: null
