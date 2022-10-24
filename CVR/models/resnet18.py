@@ -185,6 +185,7 @@ class ResNet(nn.Module):
         Conv = functools.partial(L0Conv2d, l0=False)
 
         if isL0 and "first" in self.l0_stages:
+            print("first")
             self.conv0 = L0Conv2d(3, 16, 3, 1, 1, l0=False)
         else:
             self.conv0 = Conv(3, 16, 3, 1, 1)
@@ -195,16 +196,19 @@ class ResNet(nn.Module):
             self.bn0 = nn.Identity()
 
         if isL0 and "stage_1" in self.l0_stages:
+            print("stage_1")
             self.stage1 = ResStage(L0_Conv, 16, 16, stride=1, batch_norm=self.bn)
         else:
             self.stage1 = ResStage(Conv, 16, 16, stride=1, batch_norm=self.bn)
 
         if isL0 and "stage_2" in self.l0_stages:
+            print("stage_2")
             self.stage2 = ResStage(L0_Conv, 16, 32, stride=2, batch_norm=self.bn)
         else:
             self.stage2 = ResStage(Conv, 16, 32, stride=2, batch_norm=self.bn)
 
         if isL0 and "stage_3" in self.l0_stages:
+            print("stage_3")
             self.stage3 = ResStage(L0_Conv, 32, 64, stride=2, batch_norm=self.bn)
         else:
             self.stage3 = ResStage(Conv, 32, 64, stride=2, batch_norm=self.bn)

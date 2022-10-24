@@ -4,7 +4,7 @@ dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
 max_epochs: 60
-num_workers: 4
+num_workers: 1
 checkpoint: ''
 finetune: 0
 freeze_pretrained: 0
