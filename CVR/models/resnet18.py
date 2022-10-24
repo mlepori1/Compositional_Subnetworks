@@ -169,30 +169,45 @@ class ResStage(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None, first_l0=True):
+    def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None, l0_stages=None):
         super(ResNet, self).__init__()
 
         self.isL0 = isL0
         self.bn = batch_norm
         self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
-        if isL0:
-            Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, ablate_mask=self.ablate_mask)
-        else:
-            Conv = functools.partial(L0Conv2d, l0=False)
 
-        if isL0 and first_l0:
-            self.conv0 = Conv(3, 16, 3, 1, 1)
+        if l0_stages != None:
+            self.l0_stages = l0_stages
         else:
+            self.l0_stages = ["first", "stage_1", "stage_2", "stage_3"]
+
+        L0_Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, ablate_mask=self.ablate_mask)
+        Conv = functools.partial(L0Conv2d, l0=False)
+
+        if isL0 and "first" in self.l0_stages:
             self.conv0 = L0Conv2d(3, 16, 3, 1, 1, l0=False)
+        else:
+            self.conv0 = Conv(3, 16, 3, 1, 1)
 
         if self.bn:
             self.bn0 = nn.BatchNorm2d(16)
         else:
             self.bn0 = nn.Identity()
 
-        self.stage1 = ResStage(Conv, 16, 16, stride=1, batch_norm=self.bn)
-        self.stage2 = ResStage(Conv, 16, 32, stride=2, batch_norm=self.bn)
-        self.stage3 = ResStage(Conv, 32, 64, stride=2, batch_norm=self.bn)
+        if isL0 and "stage_1" in self.l0_stages:
+            self.stage1 = ResStage(L0_Conv, 16, 16, stride=1, batch_norm=self.bn)
+        else:
+            self.stage1 = ResStage(Conv, 16, 16, stride=1, batch_norm=self.bn)
+
+        if isL0 and "stage_2" in self.l0_stages:
+            self.stage2 = ResStage(L0_Conv, 16, 32, stride=2, batch_norm=self.bn)
+        else:
+            self.stage2 = ResStage(Conv, 16, 32, stride=2, batch_norm=self.bn)
+
+        if isL0 and "stage_3" in self.l0_stages:
+            self.stage3 = ResStage(L0_Conv, 32, 64, stride=2, batch_norm=self.bn)
+        else:
+            self.stage3 = ResStage(Conv, 32, 64, stride=2, batch_norm=self.bn)
 
         self.avgpool = nn.AvgPool2d(8)
         self.embed_dim=embed_dim

@@ -168,7 +168,7 @@ class CNN(Base):
         use_pretrained = False
         self.mlp_hidden_dim = mlp_hidden_dim
         self.mlp_out_dim = mlp_dim
-        self.l0_components = kwargs["l0_components"]
+        self.l0_components = kwargs["l0_components"] # High level, are the backbone and mlp l0
         self.train_masks = kwargs["train_masks"]
         self.train_weights = kwargs["train_weights"]
         self.pretrained_weights = kwargs["pretrained_weights"]
@@ -178,6 +178,11 @@ class CNN(Base):
             self.ablate_mask = kwargs["ablate_mask"]
         else:
             self.ablate_mask = None
+
+        if "l0_stages" in kwargs:
+            self.l0_stages = kwargs["l0_stages"] # Granular, what parts of the backbone are L0
+        else:
+            self.l0_stages = None
 
         if backbone == "resnet18":
             """ Resnet18
@@ -212,7 +217,7 @@ class CNN(Base):
             self.lamb = kwargs["l0_lambda"]
             
             # Define backbone structure
-            self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask) # Defines the structure of L0 Resnet
+            self.backbone = ResNet(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages) # Defines the structure of L0 Resnet
 
             if self.pretrained_weights["backbone"] != False:
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
