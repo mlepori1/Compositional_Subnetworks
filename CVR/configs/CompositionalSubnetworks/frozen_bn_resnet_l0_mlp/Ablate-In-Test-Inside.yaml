@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 120
+max_epochs: 90
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -25,26 +25,26 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '107' # Denotes multitask training
-batch_size: 64
+task: '106' # Denotes multitask training
+batch_size: 2
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "Resnet_Comp_Test_Contact"
-exp_dir: '../Subnetworks_db/resnet18/Resnet_Comp_Test_Contact'
+exp_name: "Resnet_Ablate_Inside_Test_Inside"
+exp_dir: '../Subnetworks_db/resnet18/Resnet_Ablate_Inside_Test_Inside'
 
 # Config variables introduced for mask identification
-l0_components: {"backbone": False, "mlp": False}
+l0_components: {"backbone": False, "mlp": True}
 train_masks: {"backbone": False, "mlp": False}
 train_weights: {"backbone": False, "mlp": False, "embedding": False}
 pretrained_weights: { 
-  "backbone": '../Subnetworks_db/resnet18/Resnet_Comp_Training/backbone.pt',
-  "mlp": '../Subnetworks_db/resnet18/Resnet_Comp_Training/mlp.pt',
+  "backbone": '../Subnetworks_db/resnet18/Resnet_Inside_Subnetwork/backbone.pt',
+  "mlp": '../Subnetworks_db/resnet18/Resnet_Inside_Subnetwork/mlp.pt',
   "embedding": False
   } # False for random initialization
-l0_init: -0.2
+l0_init: -0.1
 l0_lambda: .00000001
-max_temp: 300
+max_temp: 200
 eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
-
+ablate_mask: "zero"

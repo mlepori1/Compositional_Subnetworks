@@ -3,7 +3,7 @@ model: 'CNN'
 dataset: 'CVRTDataModule'
 # trainer
 gpus: 1
-max_epochs: 120
+max_epochs: 90
 num_workers: 4
 checkpoint: ''
 finetune: 0
@@ -25,7 +25,7 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '105' # Denotes multitask training
+task: '107' # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null
@@ -43,8 +43,8 @@ pretrained_weights: {
   "mlp": '../Subnetworks_db/resnet18/Resnet_Comp_Training/mlp.pt',
   "embedding": False
   } # False for random initialization
-l0_init: -0.2
+l0_init: -0.1
 l0_lambda: .00000001
-max_temp: 300
+max_temp: 200
 eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
 

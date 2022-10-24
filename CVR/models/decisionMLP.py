@@ -51,10 +51,13 @@ class L0UnstructuredLinear(nn.Module):
     def compute_mask(self):
         if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
+            print("fdsa")
         elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
+            print(mask.sum())
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
+            print("whaaa?")
         return mask      
 
     def train(self, train_bool):
