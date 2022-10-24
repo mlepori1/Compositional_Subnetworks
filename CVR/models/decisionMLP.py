@@ -49,9 +49,9 @@ class L0UnstructuredLinear(nn.Module):
         nn.init.constant_(self.mask_weight, self.mask_init_value)
 
     def compute_mask(self):
-        if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad) == False: 
+        if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
-        elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad) == False: 
+        elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else: 
             mask = F.sigmoid(self.temp * self.mask_weight)
