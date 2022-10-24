@@ -26,7 +26,7 @@ task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
 task: '104' # Denotes multitask training
-batch_size: 64
+batch_size: 16
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
