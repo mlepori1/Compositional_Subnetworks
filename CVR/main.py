@@ -223,8 +223,9 @@ def cli_main():
     output_dict.update({'2_'+k:v for k,v in global_avg.items()})
     output_dict.update({'5_'+k:v for k,v in per_task_avg.items()})
 
-    results_save_path = os.path.join(args.exp_dir, 'results.npy')
-    np.save(results_save_path, {'global_avg': global_avg, 'per_task_avg': per_task_avg, 'per_task': per_task, 'metrics': metrics})
+    if not args.eval_only:
+        results_save_path = os.path.join(args.exp_dir, 'results.npy')
+        np.save(results_save_path, {'global_avg': global_avg, 'per_task_avg': per_task_avg, 'per_task': per_task, 'metrics': metrics})
 
     df = df.append(output_dict, ignore_index=True)
     print("Saving csv")
