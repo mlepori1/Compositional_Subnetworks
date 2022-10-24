@@ -25,7 +25,7 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '104' # Denotes multitask training
+task: '106' # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null

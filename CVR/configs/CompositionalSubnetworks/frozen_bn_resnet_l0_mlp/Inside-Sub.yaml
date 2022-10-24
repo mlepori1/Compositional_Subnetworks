@@ -25,14 +25,14 @@ mlp_hidden_dim: 1024
 task_embedding: 0
 # data
 data_dir: '/media/data_cifs_lrs/projects/prj_comp_subnets/comp_data/'
-task: '107' # Denotes multitask training
+task: '104' # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "Resnet_Contact_Subnetwork"
-exp_dir: '../Subnetworks_db/resnet18/Resnet_Contact_Subnetwork'
+exp_name: "Resnet_Inside_Subnetwork"
+exp_dir: '../Subnetworks_db/resnet18/Resnet_Inside_Subnetwork'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": False, "mlp": True}
