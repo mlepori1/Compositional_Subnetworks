@@ -8,125 +8,7 @@ import numpy as np
 import torch.nn.init as init
 import math
 import functools
-
-
-class L0Conv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
-        super(L0Conv2d, self).__init__()
-        self.l0 = l0
-        self.mask_init_value = mask_init_value
-        
-        self.in_channels = in_channels
-        self.out_channels = out_channels    
-        self.kernel_size = kernel_size
-        self.padding = padding
-        self.stride = stride
-        self.temp = temp
-        self.ablate_mask=ablate_mask
-
-        self.weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
-        if bias:
-            self.bias = nn.Parameter(torch.empty(out_channels))
-        else:
-            self.register_parameter('bias', None)
-        self.reset_parameters()
-
-        # Create a random tensor to reinit ablated parameters
-        if self.ablate_mask == "random":
-            self.random_weight = nn.Parameter(torch.Tensor(out_channels, in_channels, kernel_size, kernel_size))
-            init.kaiming_uniform_(self.random_weight, a=math.sqrt(5))
-            self.random_weight.requires_grad=False
-
-        
-    def reset_parameters(self) -> None:
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(k), 1/sqrt(k)), where k = weight.size(1) * prod(*kernel_size)
-        # For more details see: https://github.com/pytorch/pytorch/issues/15314#issuecomment-477448573
-        if self.l0:
-            self.init_mask()
-
-        init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-        if self.bias is not None:
-            fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
-            if fan_in != 0:
-                bound = 1 / math.sqrt(fan_in)
-                init.uniform_(self.bias, -bound, bound)
-                
-    def init_mask(self):
-        self.mask_weight = nn.Parameter(torch.Tensor(self.out_channels, self.in_channels, self.kernel_size, self.kernel_size))
-        nn.init.constant_(self.mask_weight, self.mask_init_value)
-
-    def compute_mask(self):
-        if (self.ablate_mask == None) and (not self.training or self.mask_weight.requires_grad == False): 
-            mask = (self.mask_weight > 0).float() # Hard cutoff once frozen or testing
-        elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad == False): 
-            mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
-        else:
-            mask = F.sigmoid(self.temp * self.mask_weight)
-        return mask 
-
-    def train(self, train_bool):
-        self.training = train_bool         
-        
-    def forward(self, x):
-        if self.l0:
-            self.mask = self.compute_mask()
-            if self.ablate_mask == "random":
-                masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
-                masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
-            else:
-                masked_weight = self.weight * self.mask
-        else:
-            masked_weight = self.weight
-        out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding)        
-        return out
-
-    @classmethod
-    def from_module(
-        self,
-        module,
-        mask_init_value: float = 0.0,
-        keep_weights: bool = True,
-    ) -> "L0Conv2d":
-        """Construct from a pretrained conv2d module.
-        IMPORTANT: the weights are conserved, but can be reinitialized
-        with `keep_weights = False`.
-        Parameters
-        ----------
-        module: Conv2d, L0Conv2d
-            A nn.Conv2d or L0Conv2d
-        mask_init_value : float, optional
-            Initialization value for the sigmoid .
-        Returns
-        -------
-        L0Conv2d
-            The input module with a CS mask introduced.
-        """
-        in_channels = module.in_channels
-        out_channels = module.out_channels
-        kernel_size = module.kernel_size
-        padding = module.padding
-        stride = module.stride        
-
-        bias = module.bias is not None
-        if hasattr(module, "mask_weight"):
-            mask = module.mask_weight
-        else:
-            mask = None
-        new_module = self(in_channels, out_channels, kernel_size, bias=bias, padding=padding, stride=stride, mask_init_value=mask_init_value)
-
-        if keep_weights:
-            new_module.weight.data = module.weight.data.clone()
-            if bias:
-                new_module.bias.data = module.bias.data.clone()
-            if mask:
-                new_module.mask_weight.data = module.mask_weight.data.clone()
-
-        return new_module
-
-    def extra_repr(self):
-        return '{}, {}, kernel_size={}, stride={}, padding={}'.format(
-            self.in_channels, self.out_channels, self.kernel_size, self.stride, self.padding)
+from .resnet import L0Conv2d
 
 class ResBlock(nn.Module):
     def __init__(self, Conv, in_channels, out_channels, stride=1, downsample=None, batch_norm=False):
@@ -168,9 +50,9 @@ class ResStage(nn.Module):
         out = self.block3(out)
         return out
 
-class ResNet(nn.Module):
+class ResNet18(nn.Module):
     def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, batch_norm=True, ablate_mask=None, l0_stages=None):
-        super(ResNet, self).__init__()
+        super(ResNet18, self).__init__()
 
         self.isL0 = isL0
         self.bn = batch_norm

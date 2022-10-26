@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn.init as init
 import math
 import functools
-from .resnet18 import L0Conv2d
+from .resnet import L0Conv2d
 
 class VGG11(nn.Module):
     def __init__(self, isL0=False, mask_init_value=0., embed_dim=10, ablate_mask=None):

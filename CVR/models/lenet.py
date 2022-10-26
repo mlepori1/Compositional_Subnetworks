@@ -1,4 +1,4 @@
-from .resnet18 import L0Conv2d
+from .resnet import L0Conv2d
 import torch.nn as nn
 import functools
 import torch.nn.functional as F
