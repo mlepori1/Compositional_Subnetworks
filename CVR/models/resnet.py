@@ -13,16 +13,6 @@ import functools
 
 __all__ = [
     "ResNet",
-    "ResNet18_Weights",
-    "ResNet34_Weights",
-    "ResNet50_Weights",
-    "ResNet101_Weights",
-    "ResNet152_Weights",
-    "ResNeXt50_32X4D_Weights",
-    "ResNeXt101_32X8D_Weights",
-    "ResNeXt101_64X4D_Weights",
-    "Wide_ResNet50_2_Weights",
-    "Wide_ResNet101_2_Weights",
     "resnet18",
     "resnet34",
     "resnet50",
@@ -297,7 +287,7 @@ class ResNet(nn.Module):
         mask_init_value: float = 0.,
         embed_dim:int = 10,
         ablate_mask:str = None,
-        l0_stages:list[str] = None
+        l0_stages:list = None
     ) -> None:
         super().__init__()
         if norm_layer is None:
