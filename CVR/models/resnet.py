@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
-
+from torch.nn.utils import _pair
 import torch.nn.init as init
 import math
 
@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 class L0Conv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
+    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, dilation=1, groups=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
         super(L0Conv2d, self).__init__()
         self.l0 = l0
         self.mask_init_value = mask_init_value
@@ -36,6 +36,8 @@ class L0Conv2d(nn.Module):
         self.kernel_size = kernel_size
         self.padding = padding
         self.stride = stride
+        self.dilation_ = _pair(dilation)
+        self.groups = groups
         self.temp = temp
         self.ablate_mask=ablate_mask
 
@@ -93,7 +95,7 @@ class L0Conv2d(nn.Module):
                 masked_weight = self.weight * self.mask
         else:
             masked_weight = self.weight
-        out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding)        
+        out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)        
         return out
 
     @classmethod
