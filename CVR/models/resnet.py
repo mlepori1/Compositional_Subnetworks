@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
-from torch.nn.utils import _pair
+from torch.nn.modules.utils import _pair
 import torch.nn.init as init
 import math
 
@@ -36,7 +36,7 @@ class L0Conv2d(nn.Module):
         self.kernel_size = kernel_size
         self.padding = padding
         self.stride = stride
-        self.dilation_ = _pair(dilation)
+        self.dilation = _pair(dilation)
         self.groups = groups
         self.temp = temp
         self.ablate_mask=ablate_mask
