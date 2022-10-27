@@ -271,6 +271,7 @@ class Bottleneck(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
+        print(identity.shape)
         out += identity
         out = self.relu(out)
 
