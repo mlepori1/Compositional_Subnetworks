@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 class L0Conv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, padding=1, stride=1, dilation=1, groups=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
+    def __init__(self, in_channels, out_channels, kernel_size, padding=0, stride=1, dilation=1, groups=1, bias=False, l0=False, mask_init_value=0., temp: float = 1., ablate_mask=None):
         super(L0Conv2d, self).__init__()
         self.l0 = l0
         self.mask_init_value = mask_init_value
