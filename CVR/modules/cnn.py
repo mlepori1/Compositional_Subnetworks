@@ -207,7 +207,7 @@ class CNN(Base):
 
         elif self.l0_components["backbone"] == True:
             if backbone == "L0resnet18": self.backbone = ResNet18(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
-            elif backbone == "L0resnet50": self.backbone = resnet50(isL0=False, embed_dim=2048)
+            elif backbone == "L0resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=l0_init, ablate_mask=self.ablate_mask)
             elif backbone == "L0vgg11": self.backbone = VGG11(isL0=True, mask_init_value=l0_init, embed_dim=8192, ablate_mask=self.ablate_mask) 
             elif backbone == "L0lenet": self.backbone = LeNet(isL0=True, mask_init_value=l0_init, embed_dim=7680)
             else: raise ArgumentError("backbone not recognized")
