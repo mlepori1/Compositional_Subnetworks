@@ -218,6 +218,7 @@ class CNN(Base):
             else: raise ArgumentError("backbone not recognized")
             
             if self.pretrained_weights["backbone"] != False:
+                print("loading some weights\n\n")
                 self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
             # If you don't want to train the L0 backbone mask, freeze the mask
