@@ -37,8 +37,6 @@ def cli_main():
 
     for task in tasks:
         for ablation in ablation_strategies:
-            args.task = task
-            args.ablate_mask = ablation
             if args.seed is not None:
                 pl.seed_everything(args.seed)
 
@@ -54,6 +52,10 @@ def cli_main():
             parser = dataset_type.add_dataset_specific_args(parser)
 
             args = parse_args(parser, argv)
+
+            # Set the args
+            args.task = task
+            args.ablate_mask = ablation
 
             # initializing the dataset and model
             datamodule = dataset_type(**args.__dict__)
