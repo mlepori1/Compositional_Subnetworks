@@ -33,6 +33,6 @@ pretrained_weights: {
   "embedding": False
   } # False for random initialization
 eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
-l0_stages: ["stage_4"],
+l0_stages: ["stage_4"]
 ablation_strategies: ["zero", "random"]
 
