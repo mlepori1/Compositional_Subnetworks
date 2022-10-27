@@ -36,6 +36,11 @@ def cli_main():
     # Iterate through different test settings for your base model configuration
 
     # trainer args
+    # model args
+    model_type = vars(modules)[args.model]
+    # dataset args
+    dataset_type = vars(datasets)[args.dataset]
+
     parser = pl.Trainer.add_argparse_args(parser)
     parser = model_type.add_model_specific_args(parser)
     args = parse_args(parser, argv)
@@ -44,14 +49,6 @@ def cli_main():
         for ablation in ablation_strategies:
             if args.seed is not None:
                 pl.seed_everything(args.seed)
-
-
-
-            # model args
-            model_type = vars(modules)[args.model]
-
-            # dataset args
-            dataset_type = vars(datasets)[args.dataset]
 
             # Set the args
             args.task = task
