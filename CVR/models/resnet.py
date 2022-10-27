@@ -253,17 +253,20 @@ class Bottleneck(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
-
+        print(x.shape)
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
+        print(out.shape)
 
         out = self.conv2(out)
         out = self.bn2(out)
         out = self.relu(out)
+        print(out.shape)
 
         out = self.conv3(out)
         out = self.bn3(out)
+        print(out.shape)
 
         if self.downsample is not None:
             identity = self.downsample(x)
@@ -307,6 +310,7 @@ class ResNet(nn.Module):
         else:
             self.l0_stages = ["first", "stage_1", "stage_2", "stage_3", "stage_4"]
 
+        # Set up two layer constructors
         L0_Conv = functools.partial(L0Conv2d, l0=True, mask_init_value=mask_init_value, ablate_mask=self.ablate_mask)
         Conv = functools.partial(L0Conv2d, l0=False)
 
@@ -324,6 +328,7 @@ class ResNet(nn.Module):
         self.groups = groups
         self.base_width = width_per_group
 
+        # Set up the network layers
         if self.isL0 and "first" in self.l0_stages:
             self.conv1 = L0_Conv(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
         else:
