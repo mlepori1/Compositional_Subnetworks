@@ -35,4 +35,7 @@ pretrained_weights: {
 eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
 l0_stages: ["stage_3", "stage_4"]
 ablation_strategies: ["zero", "random"]
-
+# Unused at test
+l0_init: -0.1
+l0_lambda: .00000001
+max_temp: 300
