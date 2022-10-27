@@ -179,7 +179,9 @@ TASKS={
     104: "sn_task_inside",
     105: "sn_task_contact",
     106: "sn_task_inside_adversarial_contact",
-    107: "sn_task_contact_adversarial_inside"
+    107: "sn_task_contact_adversarial_inside",
+    108: "sn_task_contact_inside_ablate_contact",
+    109: "sn_task_contact_inside_ablate_inside"
 }
 
 

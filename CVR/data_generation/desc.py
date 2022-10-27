@@ -218,7 +218,12 @@ TASKS=[
     # task inside, but constrained to be adversarial to contact subnets
     ['sn_task_inside_adversarial_contact', sn_task_inside_adversarial_contact],
     # task contact, but constrained to be adversarial to inside
-    ['sn_task_contact_adversarial_inside', sn_task_contact_adversarial_inside]
+    ['sn_task_contact_adversarial_inside', sn_task_contact_adversarial_inside],
+    #  "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."
+    ["sn_task_contact_inside_ablate_contact", partial(sn_task_contact_inside, odd_one_out="no_inside")],
+    # "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."
+    ["sn_task_contact_inside_ablate_inside", partial(sn_task_contact_inside, odd_one_out="no_contact")]
+
 ]
 
 
