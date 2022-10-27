@@ -326,6 +326,7 @@ class ResNet(nn.Module):
 
         # Set up the network layers
         if self.isL0 and "first" in self.l0_stages:
+            print("first")
             self.conv1 = L0_Conv(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
         else:
             self.conv1 = Conv(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
@@ -335,21 +336,25 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         if self.isL0 and "stage_1" in self.l0_stages:
+            print("stage1")
             self.layer1 = self._make_layer(block, 64, layers[0], conv_fn=L0_Conv)
         else:
             self.layer1 = self._make_layer(block, 64, layers[0], conv_fn=Conv)
 
         if self.isL0 and "stage_2" in self.l0_stages:
+            print("stage2")
             self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0], conv_fn=L0_Conv)
         else:
             self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0], conv_fn=Conv)
 
         if self.isL0 and "stage_3" in self.l0_stages:
+            print("stage3")
             self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1], conv_fn=L0_Conv)
         else:
             self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1], conv_fn=Conv)
         
         if self.isL0 and "stage_4" in self.l0_stages:
+            print("stage4")
             self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2], conv_fn=L0_Conv)
         else:
             self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2], conv_fn=Conv)
