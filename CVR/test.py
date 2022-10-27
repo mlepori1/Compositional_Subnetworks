@@ -38,6 +38,7 @@ def cli_main():
     for task in tasks:
         for ablation in ablation_strategies:
             args.task = task
+            print(args.task)
             args.ablate_mask = ablation
             if args.seed is not None:
                 pl.seed_everything(args.seed)
