@@ -14,7 +14,7 @@ mlp_hidden_dim: 256
 task_embedding: 0
 # data
 data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
-task: ['108', '109'] # Denotes multitask training
+tasks: ['108', '109'] # Denotes multitask training
 batch_size: 64
 train_transform: null
 val_transform: null
