@@ -36,13 +36,16 @@ def cli_main():
     # Iterate through different test settings for your base model configuration
 
     # trainer args
+    parser = pl.Trainer.add_argparse_args(parser)
+
     # model args
     model_type = vars(modules)[args.model]
+    parser = model_type.add_model_specific_args(parser)
+
     # dataset args
     dataset_type = vars(datasets)[args.dataset]
+    parser = dataset_type.add_dataset_specific_args(parser)
 
-    parser = pl.Trainer.add_argparse_args(parser)
-    parser = model_type.add_model_specific_args(parser)
     args = parse_args(parser, argv)
 
     for task in tasks:
