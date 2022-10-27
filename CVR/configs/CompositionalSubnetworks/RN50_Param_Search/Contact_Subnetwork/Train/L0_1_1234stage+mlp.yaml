@@ -31,8 +31,8 @@ train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "L0_-1_stage123+mlp"
-exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Contact/L0_-1_stage123+mlp'
+exp_name: "L0_1_stage1234+mlp"
+exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Contact/L0_1_stage1234+mlp'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}
@@ -43,9 +43,9 @@ pretrained_weights: {
   "mlp": '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Comp_Training/0/mlp.pt',
   "embedding": False
   } # False for random initialization
-l0_init: -0.1
+l0_init: 0.1
 l0_lambda: .00000001
 max_temp: 300
 eval_only: False # This is derivable from train_masks and train_weights, but make it explicit with another variable
-l0_stages: ["stage_1", "stage_2", "stage_3"]
+l0_stages: ["stage_1", "stage_2", "stage_3", "stage_4"]
 
