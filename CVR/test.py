@@ -96,7 +96,7 @@ def cli_main():
             df = df.append(output_dict, ignore_index=True)
 
     print("Saving csv")
-    df.to_csv(os.path.join(args.path_db, args.exp_name + '_test_db.csv'))
+    df.to_csv(os.path.join(args.path_db, args.exp_name + '_db.csv'))
 
 if __name__ == '__main__':
     print(os.getpid())

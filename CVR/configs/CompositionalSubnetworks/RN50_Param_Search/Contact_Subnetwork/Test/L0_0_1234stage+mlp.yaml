@@ -20,7 +20,7 @@ train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_name: "L0_0_stage4+mlp_test"
+exp_name: "L0_0_stage1234+mlp_test"
 exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Contact/L0_0_stage1234+mlp_test'
 
 # Config variables introduced for mask identification
