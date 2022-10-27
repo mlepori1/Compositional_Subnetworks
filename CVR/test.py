@@ -85,16 +85,9 @@ def cli_main():
                 '0_model': args.model,
                 '0_seed': args.seed,
                 '0_dataset': args.dataset,
-                '0_checkpoint': args.checkpoint,
-                '0_finetune': args.finetune,
-                '0_freeze_pretrained': args.freeze_pretrained,
                 '1_task': args.task,
-                '1_n_samples': args.n_samples,
-                '3_max_epochs': args.max_epochs,
                 '3_backbone': args.backbone,
                 '3_batch_size': args.batch_size,
-                '3_lr': args.lr,
-                '3_wd': args.wd,
             }
 
             output_dict.update({'2_'+k:v for k,v in global_avg.items()})
