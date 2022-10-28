@@ -55,10 +55,11 @@ def cli_main():
 
             # Set the args
             args.task = task
-            
+
             if ablation == "none":
                 args.ablate_mask = None
-            args.ablate_mask = ablation
+            else:
+                args.ablate_mask = ablation
 
             # initializing the dataset and model
             datamodule = dataset_type(**args.__dict__)
