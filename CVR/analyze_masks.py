@@ -49,20 +49,21 @@ def cli_main():
     print("CNN L4")
     cnn1_l4 = cnn1.backbone.layer4
     cnn2_l4 = cnn2.backbone.layer4
-    update_dict = {}
+
     for name, layer1 in cnn1_l4.named_parameters():
 
         if "mask_weight" in name:
-            layer2 = cnn2_l4.named_parameters()[name]
+            for name2, layer2 in cnn2_l4.named_parameters():
+                if name2==name:
+                    mask1 = layer1 > 0
+                    mask2 = layer2 > 0
 
-            mask1 = layer1 > 0
-            mask2 = layer2 > 0
-
-            print("Mask1 params: ", mask1.sum())
-            print("Mask2 params: ", mask2.sum())
-            print("Mask intesection: ", torch.logical_and(mask1, mask2).sum())
-            print("Size of tensor: ", mask1.reshape(-1).size())
-            
+                    print("Mask1 params: ", mask1.sum())
+                    print("Mask2 params: ", mask2.sum())
+                    print("Mask intesection: ", torch.logical_and(mask1, mask2).sum())
+                    print("Size of tensor: ", mask1.reshape(-1).size())
+                    intersection_mask = torch.logical_and(mask1, mask2).float()
+                    layer1.data = intersection_mask         
     
     print("MLP")
     cnn1_mlp = cnn1.mlp
@@ -70,18 +71,20 @@ def cli_main():
     for name, layer1 in cnn1_mlp.named_parameters():
 
         if "mask_weight" in name:
-            layer2 = cnn2_mlp.named_parameters()[name]
-            mask1 = layer1.compute_mask()
-            mask2 = layer2.compute_mask()
+            for name2, layer2 in cnn2_mlp.named_parameters():
+                if name2==name:
+                    mask1 = layer1 > 0
+                    mask2 = layer2 > 0
+                    print("Mask1 params: ", mask1.sum())
+                    print("Mask2 params: ", mask2.sum())
+                    print("Mask intesection: ", torch.logical_and(mask1, mask2).sum())
+                    print("Size of tensor: ", mask1.reshape(-1).size())
+                    intersection_mask = torch.logical_and(mask1, mask2).float()
+                    layer1.data = intersection_mask
 
-            print("Mask1 params: ", mask1.sum())
-            print("Mask2 params: ", mask2.sum())
-            print("Mask intesection: ", torch.logical_and(mask1, mask2).sum())
-            print("Size of tensor: ", mask1.reshape(-1).size())
-            intersection_mask = torch.logical_and(mask1, mask2).float()
-            layer1.data = intersection_mask
-
-    print(cnn1_l4.named_parameters()["1.conv2.mask_weight"])
+    for name, layer1 in cnn1_mlp.named_parameters():
+        if "mask_weight" in name:
+            print(layer1)
             
 if __name__ == '__main__':
     print(os.getpid())
