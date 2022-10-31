@@ -44,16 +44,12 @@ def cli_main():
                 ablate_mask=None,
                 l0_init=0,
                 l0_lambda=0.000000001)
-    for name, w in cnn1.backbone.layer4.named_parameters():
-        print(name)
-    print("CNN L4")
-    cnn1_l4 = cnn1.backbone.layer4
-    cnn2_l4 = cnn2.backbone.layer4
 
-    for name, layer1 in cnn1_l4.named_parameters():
+
+    for name, layer1 in cnn1.named_parameters():
 
         if "mask_weight" in name:
-            for name2, layer2 in cnn2_l4.named_parameters():
+            for name2, layer2 in cnn2.named_parameters():
                 if name2==name:
                     mask1 = layer1 > 0
                     mask2 = layer2 > 0
@@ -65,29 +61,16 @@ def cli_main():
                     intersection_mask = torch.logical_and(mask1, mask2).float()
                     layer1.data = intersection_mask         
     
-    print("MLP")
-    cnn1_mlp = cnn1.mlp
-    cnn2_mlp = cnn2.mlp
-    for name, layer1 in cnn1_mlp.named_parameters():
-
-        if "mask_weight" in name:
-            for name2, layer2 in cnn2_mlp.named_parameters():
-                if name2==name:
-                    mask1 = layer1 > 0
-                    mask2 = layer2 > 0
-                    print("Mask1 params: ", mask1.sum())
-                    print("Mask2 params: ", mask2.sum())
-                    print("Mask intesection: ", torch.logical_and(mask1, mask2).sum())
-                    print("Size of tensor: ", mask1.reshape(-1).size())
-                    intersection_mask = torch.logical_and(mask1, mask2).float()
-                    layer1.data = intersection_mask
-
     
-    for name, layer1 in cnn1_mlp.named_parameters():
+    for name, layer1 in cnn1.named_parameters():
         if "mask_weight" in name:
             print(layer1)
             print(layer1.sum())
 
+    os.makedirs("/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-03_stage4+mlp_intersect/", exist_ok=True)
+
+    torch.save(cnn1.backbone.state_dict(), os.path.join("/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-03_stage4+mlp_intersect/", 'backbone.pt'))
+    torch.save(cnn1.mlp.state_dict(), os.path.join("/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-03_stage4+mlp_intersect/", 'mlp.pt'))
 if __name__ == '__main__':
     print(os.getpid())
 
