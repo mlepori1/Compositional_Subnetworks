@@ -82,10 +82,12 @@ def cli_main():
                     intersection_mask = torch.logical_and(mask1, mask2).float()
                     layer1.data = intersection_mask
 
+    
     for name, layer1 in cnn1_mlp.named_parameters():
         if "mask_weight" in name:
             print(layer1)
-            
+            print(layer1.sum())
+
 if __name__ == '__main__':
     print(os.getpid())
 
