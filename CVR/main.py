@@ -117,6 +117,9 @@ def cli_main():
                 for l0_stages in args.l0_stage_list:
                     for l0_init in args.l0_init_list:
 
+                        # Increment model ID for next training
+                        model_id += 1
+
                         # Reset pretrained weights, train weights and train mask from testing
                         args.pretrained_weights = copy.deepcopy(base_pretrained_weights)
                         args.train_mask = copy.deepcopy(base_train_masks)
@@ -167,14 +170,14 @@ def cli_main():
                         # Load up best model
                         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-                        pretrained_weights = {
+                        trained_weights = {
                             "backbone": os.path.join(args.exp_dir, str(model_id) + '_backbone.pt'),
                             "mlp": os.path.join(args.exp_dir, str(model_id) + '_mlp.pt')
                         }
 
                         # Save it
-                        torch.save(best_model.backbone.state_dict(), pretrained_weights["backbone"])
-                        torch.save(best_model.mlp.state_dict(), pretrained_weights["mlp"])
+                        torch.save(best_model.backbone.state_dict(), trained_weights["backbone"])
+                        torch.save(best_model.mlp.state_dict(), trained_weights["mlp"])
                         if best_model.task_embedding != None:
                             torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, str(model_id) + '_embedding.pt'))
 
@@ -208,7 +211,7 @@ def cli_main():
 
                         # Set pretrained_weights to create new models with different behavior
                         # using the weights we just trained
-                        args.pretrained_weights = pretrained_weights
+                        args.pretrained_weights = trained_weights
 
                         # When creating models, freeze model weights and mask weights
                         for key in args.train_masks.keys():
@@ -267,8 +270,6 @@ def cli_main():
                                 # Will overwrite this file after every evaluation
                                 df.to_csv(os.path.join(args.exp_dir, 'results.csv'))
 
-                        # Increment model ID for next training
-                        model_id += 1
 
 if __name__ == '__main__':
     print(os.getpid())
