@@ -6,6 +6,7 @@ import copy
 import torch
 import numpy as np
 import pandas as pd
+import copy
 
 import pytorch_lightning as pl
 
@@ -102,9 +103,9 @@ def cli_main():
 
     args = parse_args(parser, argv)
 
-    base_pretrained_weights = args.pretrained_weights
-    base_train_masks = args.train_masks
-    base_train_weights = args.train_weights
+    base_pretrained_weights = copy.deepcopy(args.pretrained_weights)
+    base_train_masks = copy.deepcopy(args.train_masks)
+    base_train_weights = copy.deepcopy(args.train_weights)
 
     model_id = 0
     df = pd.DataFrame()
