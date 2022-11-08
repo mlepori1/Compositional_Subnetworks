@@ -78,13 +78,9 @@ def cli_main():
 
     parser.add_argument('--exp_dir', type=str, default='../experiments/', help='experiment output directory')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
-    parser.add_argument('--resume_training', action='store_true', help='resume training from checkpoint training')
     parser.add_argument('--model', type=str, default='CNN_VAE', help='self supervised training method')
     parser.add_argument('--dataset', type=str, default='SVHNSupDataModule', help='dataset to use for training')
     parser.add_argument('--ckpt_period', type=int, default=3, help='save checkpoints every')
-    parser.add_argument('--checkpoint', type=str, default='', help='model checkpoint for resuming training or finetuning')
-    parser.add_argument('--finetune', type=int, default=0, help='0 = no finetuning')
-    parser.add_argument('--freeze_pretrained', type=int, default=0, help='0 = no freezing')
     parser.add_argument('--early_stopping', type=int, default=0, help='0 = no early stopping')
     parser.add_argument('--refresh_rate', type=int, default=10, help='progress bar refresh rate')
     parser.add_argument('--es_patience', type=int, default=40, help='early stopping patience')
