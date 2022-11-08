@@ -118,9 +118,9 @@ def cli_main():
                     for l0_init in args.l0_init_list:
 
                         # Reset pretrained weights, train weights and train mask from testing
-                        args.pretrained_weights = base_pretrained_weights
-                        args.train_mask = base_train_masks
-                        args.train_weights = base_train_weights
+                        args.pretrained_weights = copy.deepcopy(base_pretrained_weights)
+                        args.train_mask = copy.deepcopy(base_train_masks)
+                        args.train_weights = copy.deepcopy(base_train_weights)
 
                         args.task = args.train_task
 
