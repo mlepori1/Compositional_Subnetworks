@@ -236,7 +236,7 @@ def cli_main():
 
                                 # Test using trainer from before
                                 trainer.test(model=test_model, datamodule=test_datamodule)
-                                train_result = model.test_results
+                                train_result = test_model.test_results
 
                                 global_avg, per_task, per_task_avg = process_results(train_result, args.task)
 
