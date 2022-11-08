@@ -76,9 +76,7 @@ def cli_main():
 
     parser.add_argument("-c", "--config", default=None, help="where to load YAML configuration", metavar="FILE")
 
-    parser.add_argument('--exp_name', type=str, default='test', help='experiment name')
     parser.add_argument('--exp_dir', type=str, default='../experiments/', help='experiment output directory')
-    parser.add_argument('--path_db', type=str, default='../dbs', help='experiment database path')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
     parser.add_argument('--resume_training', action='store_true', help='resume training from checkpoint training')
     parser.add_argument('--model', type=str, default='CNN_VAE', help='self supervised training method')
@@ -94,8 +92,6 @@ def cli_main():
 
 
     args = parse_args(parser, argv) # Here is where variables from the config file override command line args
-    if args.seed is not None:
-        pl.seed_everything(args.seed)
 
     # trainer args
     parser = pl.Trainer.add_argparse_args(parser)
@@ -110,126 +106,172 @@ def cli_main():
 
     args = parse_args(parser, argv)
 
-    # initializing the dataset and model
-    datamodule = dataset_type(**args.__dict__)
-    model = model_type(**args.__dict__)
+    base_pretrained_weights = args.pretrained_weights
+    base_train_mask = args.train_mask
+    base_train_weights = args.train_weights
 
-    print(model.hparams)
-
-    fit_kwargs = {}
-    # save config
-    if args.resume_training:
-
-        ckpt = list(filter(lambda x: '.ckpt' in x, os.listdir(args.exp_dir)))[-1]
-        ckpt = os.path.join(args.exp_dir, ckpt)
-
-        print('resuming from checkpoint', ckpt)
-        fit_kwargs['ckpt_path'] = ckpt
-
-    else:
-        if (args.checkpoint != '' and args.finetune == 1) or (args.checkpoint != '' and '.ckpt' not in args.checkpoint and '.tar' not in args.checkpoint):
-            ckpt = args.checkpoint
-            if '.ckpt' not in ckpt:
-                ckpt = list(filter(lambda x: '.ckpt' in x, os.listdir(ckpt)))
-                ckpts = [c for c in ckpt if 'epoch' in c]
-                if len(ckpts)>0:
-                    ckpt = ckpts[0]
-                else:
-                    ckpt = ckpt[0]
-                ckpt = os.path.join(args.checkpoint, ckpt)
-
-            model.load_finetune_weights(ckpt)
-
-        elif args.checkpoint != '':
-            ckpt = args.checkpoint
-
-            model.load_backbone_weights(ckpt)
-
-        os.makedirs(args.exp_dir, exist_ok=True)
-        os.makedirs(args.path_db, exist_ok=True)
-        save_config(args.__dict__, os.path.join(args.exp_dir, 'config.yaml'))
-
-    if args.freeze_pretrained == 1:
-        model.freeze_pretrained()
-
-    # training
-    logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
-    model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
-    callbacks = [model_checkpoint]
-    if args.early_stopping!=0:
-        early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
-        callbacks.append(early_stopping)
-    if args.train_masks["backbone"] or args.train_masks["mlp"]:
-        callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
-    callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
-    metrics_callback = MetricsCallback()
-    callbacks.append(metrics_callback)
-
-    trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
-
-    
-    if args.eval_only == False:
-        trainer.fit(model, datamodule, **fit_kwargs)
-
-    # testing
-    best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
-
-    if args.eval_only == False:
-        torch.save(best_model.backbone.state_dict(), os.path.join(args.exp_dir, 'backbone.pt'))
-        torch.save(best_model.mlp.state_dict(), os.path.join(args.exp_dir, 'mlp.pt'))
-        if best_model.task_embedding != None:
-            torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, 'embedding.pt'))
-
-    trainer.test(model=best_model, datamodule=datamodule)
-    train_result = best_model.test_results
-
-    global_avg, per_task, per_task_avg = process_results(train_result, args.task)
-
-    metrics = metrics_callback.get_all()
-
-    if args.eval_only:
-        best_val_acc = 0.0
-        best_epoch = 0.0
-    else:
-        best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
-        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
-
-    # saving results
-    logger.log_hyperparams(best_model.hparams, metrics={'hp/'+k : v for k, v in global_avg.items()})
-    logger.save()
-
+    model_id = 0
     df = pd.DataFrame()
-    output_dict = {
-        '0_train': 0,
-        '0_exp_name': args.exp_name,
-        '0_exp_dir': args.exp_dir,
-        '0_model': args.model,
-        '0_seed': args.seed,
-        '0_dataset': args.dataset,
-        '0_checkpoint': args.checkpoint,
-        '0_finetune': args.finetune,
-        '0_freeze_pretrained': args.freeze_pretrained,
-        '1_task': args.task,
-        '1_n_samples': args.n_samples,
-        '2_val_acc': best_val_acc,
-        '2_best_epoch': best_epoch,
-        '3_max_epochs': args.max_epochs,
-        '3_backbone': args.backbone,
-        '3_batch_size': args.batch_size,
-        '3_lr': args.lr,
-        '3_wd': args.wd,
-    }
 
-    output_dict.update({'2_'+k:v for k,v in global_avg.items()})
-    output_dict.update({'5_'+k:v for k,v in per_task_avg.items()})
+    # Iterate through all training hyperparameters
+    for seed in args.seed_list:
+        for lr in args.lr_list:
+            for batch_size in args.batch_size_list:
+                for l0_stages in args.l0_stage_list:
+                    for l0_init in args.l0_init_list:
 
-    if not args.eval_only:
-        results_save_path = os.path.join(args.exp_dir, 'results.npy')
-        np.save(results_save_path, {'global_avg': global_avg, 'per_task_avg': per_task_avg, 'per_task': per_task, 'metrics': metrics})
+                        # Reset pretrained weights, train weights and train mask from testing
+                        args.pretrained_weights = base_pretrained_weights
+                        args.train_mask = base_train_mask
+                        args.train_weights = base_train_weights
 
-    df = df.append(output_dict, ignore_index=True)
-    print("Saving csv")
-    df.to_csv(os.path.join(args.path_db, args.exp_name + '_db.csv'))
+                        args.task = args.train_task
+
+                        args.lr = lr
+                        args.batch_size = batch_size
+
+                        args.seed = seed
+                        if args.seed is not None:
+                            pl.seed_everything(args.seed)
+
+                        args.l0_stages = l0_stages
+                        args.l0_init = l0_init
+
+                        # initializing the dataset and model
+                        datamodule = dataset_type(**args.__dict__)
+                        model = model_type(**args.__dict__)
+
+                        print(model.hparams)
+
+                        fit_kwargs = {}
+
+                        os.makedirs(args.exp_dir, exist_ok=True)
+                        save_config(args.__dict__, os.path.join(args.exp_dir, 'config.yaml'))
+
+                        # training
+
+                        # Set up callbacks
+                        logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
+                        model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
+                        callbacks = [model_checkpoint]
+                        if args.early_stopping!=0:
+                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
+                            callbacks.append(early_stopping)
+                        if args.train_masks["backbone"] or args.train_masks["mlp"]:
+                            callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
+                        callbacks.append(TQDMProgressBar(refresh_rate=args.refresh_rate))
+                        metrics_callback = MetricsCallback()
+                        callbacks.append(metrics_callback)
+
+                        trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
+                        
+                        trainer.fit(model, datamodule, **fit_kwargs)
+
+                        # Load up best model
+                        best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
+
+                        pretrained_weights = {
+                            "backbone": os.path.join(args.exp_dir, str(model_id) + '_backbone.pt'),
+                            "mlp": os.path.join(args.exp_dir, str(model_id) + '_mlp.pt')
+                        }
+
+                        # Save it
+                        torch.save(best_model.backbone.state_dict(), pretrained_weights["backbone"])
+                        torch.save(best_model.mlp.state_dict(), pretrained_weights["mlp"])
+                        if best_model.task_embedding != None:
+                            torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, str(model_id) + '_embedding.pt'))
+
+                        metrics = metrics_callback.get_all()
+                        best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
+                        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+
+                        output_dict = {
+                                '0_Model_ID': model_id,
+                                '0_train': 1,
+                                '0_train_task': args.train_task,
+                                '0_ablation': '',
+                                '0_exp_dir': args.exp_dir,
+                                '0_model': args.model,
+                                '0_seed': args.seed,
+                                '0_dataset': args.dataset,
+                                '1_task': args.task,
+                                '2_val_acc': best_val_acc,
+                                '2_best_epoch': best_epoch,
+                                '3_backbone': args.backbone,
+                                '3_batch_size': args.batch_size,
+                                '3_lr': args.lr,
+                                '3_l0_init': l0_init,
+                                '3_l0_stages': l0_stages
+                            }
+
+                        # Append results on val set
+                        df = df.append(output_dict, ignore_index=True)
+
+                        # Test in a variety of configurations
+
+                        # Set pretrained_weights to create new models with different behavior
+                        # using the weights we just trained
+                        args.pretrained_weights = pretrained_weights
+
+                        # When creating models, freeze model weights and mask weights
+                        for key in args.train_masks.keys():
+                            args.train_masks[key] = False
+
+                        for key in args.train_weights.keys():
+                            args.train_weights[key] = False
+
+                        for task in args.test_tasks:
+                            for ablation in args.ablation_strategies:
+
+                                if args.seed is not None:
+                                    pl.seed_everything(args.seed)
+
+                                # Set the args
+                                args.task = task
+
+                                if ablation == "none":
+                                    args.ablate_mask = None
+                                else:
+                                    args.ablate_mask = ablation
+
+                                # initializing the dataset and model
+                                test_datamodule = dataset_type(**args.__dict__)
+                                test_model = model_type(**args.__dict__)
+
+                                # Test using trainer from before
+                                trainer.test(model=test_model, datamodule=test_datamodule)
+                                train_result = model.test_results
+
+                                global_avg, per_task, per_task_avg = process_results(train_result, args.task)
+
+                                output_dict = {
+                                        '0_Model_ID': model_id,
+                                        '0_train': 0,
+                                        '0_train_task': args.train_task,
+                                        '0_ablation': args.ablate_mask,
+                                        '0_exp_dir': args.exp_dir,
+                                        '0_model': args.model,
+                                        '0_seed': args.seed,
+                                        '0_dataset': args.dataset,
+                                        '1_task': args.task,
+                                        '3_backbone': args.backbone,
+                                        '3_batch_size': args.batch_size,
+                                        '3_lr': args.lr,
+                                        '3_l0_init': l0_init,
+                                        '3_l0_stages': l0_stages
+                                    }
+
+                                output_dict.update({'2_'+k:v for k,v in global_avg.items()})
+                                output_dict.update({'5_'+k:v for k,v in per_task_avg.items()})
+
+                                df = df.append(output_dict, ignore_index=True)
+
+                                print("Saving csv")
+                                # Will overwrite this file after every evaluation
+                                df.to_csv(os.path.join(args.exp_dir, 'results.csv'))
+
+                        # Increment model ID for next training
+                        model_id += 1
 
 if __name__ == '__main__':
     print(os.getpid())
