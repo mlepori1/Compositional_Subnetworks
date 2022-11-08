@@ -103,7 +103,7 @@ def cli_main():
     args = parse_args(parser, argv)
 
     base_pretrained_weights = args.pretrained_weights
-    base_train_mask = args.train_mask
+    base_train_masks = args.train_masks
     base_train_weights = args.train_weights
 
     model_id = 0
@@ -118,7 +118,7 @@ def cli_main():
 
                         # Reset pretrained weights, train weights and train mask from testing
                         args.pretrained_weights = base_pretrained_weights
-                        args.train_mask = base_train_mask
+                        args.train_mask = base_train_masks
                         args.train_weights = base_train_weights
 
                         args.task = args.train_task
