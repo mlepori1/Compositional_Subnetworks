@@ -146,6 +146,7 @@ def cli_main():
                         fit_kwargs = {}
 
                         os.makedirs(args.exp_dir, exist_ok=True)
+                        os.makedirs(args.results_dir, exist_ok=True)
                         save_config(args.__dict__, os.path.join(args.exp_dir, 'config.yaml'))
 
                         # training
@@ -268,7 +269,7 @@ def cli_main():
 
                                 print("Saving csv")
                                 # Will overwrite this file after every evaluation
-                                df.to_csv(os.path.join(args.exp_dir, 'results.csv'))
+                                df.to_csv(os.path.join(args.results_dir, 'results.csv'))
 
 
 if __name__ == '__main__':
