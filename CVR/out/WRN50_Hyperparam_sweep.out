@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6615223
+##  Job Name : CS-WRN50_Hyperparam_sweep
+##  Nodelist : gpu2115
+##      CPUs : 1
+##  Mem/Node : 32768 MB
+## Directory : /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/CVR
+##   Job Started : Wed Nov  9 19:41:25 EST 2022
+###############################################################################
