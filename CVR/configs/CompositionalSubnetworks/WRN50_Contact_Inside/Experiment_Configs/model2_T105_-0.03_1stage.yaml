@@ -1,0 +1,66 @@
+ablation_strategies:
+- zero
+- random
+- none
+backbone: L0wideresnet50
+batch_size_list:
+- 64
+check_val_every_n_epoch: 1
+ckpt_period: 1
+data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/
+dataset: CVRTDataModule
+early_stopping: 0
+es_patience: 0
+exp_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/Contact_Inside_Experiments/model2_T105_-0.03_1stage
+gpus: 1
+l0_components:
+  backbone: true
+  mlp: true
+l0_init_list:
+- -0.03
+l0_lambda: 1.0e-08
+l0_stage_list:
+- stage_4
+log_every_n_steps: 100
+lr_list:
+- 0.01
+- 0.0001
+max_epochs: 90
+max_temp: 200
+mlp_dim: 128
+mlp_hidden_dim: 2048
+model: CNN
+n_samples: 10000
+n_tasks: 1
+num_workers: 1
+pretrained_weights:
+  backbone: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models/2_backbone.pt
+  embedding: false
+  mlp: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models/2_mlp.pt
+refresh_rate: 10
+results_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/wide_resnet50/Contact_Inside_Experiments/model2_T105_-0.03_1stage
+seed_list:
+- 1
+- 2
+- 3
+- 4
+- 5
+task_embedding: 0
+test_set: ''
+test_tasks:
+- '103'
+- '104'
+- '105'
+- '108'
+- '109'
+train_masks:
+  backbone: true
+  mlp: true
+train_task: '105'
+train_transform: null
+train_weights:
+  backbone: false
+  embedding: false
+  mlp: false
+val_transform: null
+wd: 0.0
