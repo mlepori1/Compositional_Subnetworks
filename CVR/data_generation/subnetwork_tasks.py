@@ -754,7 +754,7 @@ def sn_task_1_inside_adversarial_contact(condition='c'):
     return xy, size, shapes, color
 
 
-def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
+def sn_task_2_inside_count(condition='c', odd_one_out = "no_inside"):
     """
     The rule is that 3 images contain N big objects and N small objects. Each big object contains a small object.
 
@@ -788,9 +788,9 @@ def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
         shape_ = []
 
         done = False
-        n_objects = n_object_pairs + 1 # To ensure that all shapes are drawn from the same 
-            # distribution (even if there is another shape in the OOO condition), sample shape
-            # sizes and positions as if there were N+1 objects in the image.
+        n_objects = n_object_pairs + 2 # To ensure that all shapes are drawn from the same 
+            # distribution (even if there are two more shapes in the OOO condition), sample shape
+            # sizes and positions as if there were N+2 objects in the image.
 
         min_size_obj = min(0.9/n_objects, 0.3)
         min_btw_size = min_size_obj
@@ -824,7 +824,7 @@ def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
         size = np.random.rand(n_objects) * (max_size - min_size) + min_size
         size_in = np.random.rand(n_objects) * (size/2.5 - size/4) + size/4
 
-        # Now generate n_object_pairs shapes (which is one less than the number used to calc sizes and positions)
+        # Now generate n_object_pairs shapes 
         for j in range(n_object_pairs):
             done = False
             s1 = Shape(gap_max=0.08, hole_radius=0.2)
@@ -871,7 +871,7 @@ def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
         shape_ = []
 
         done = False
-        n_objects = n_object_pairs + 1 # To ensure that all shapes are drawn from the same 
+        n_objects = n_object_pairs + 2 # To ensure that all shapes are drawn from the same 
             # distribution (even if there is another/one fewer shape in the OOO condition), sample shape
             # sizes and positions as if there were N+1 objects in the image.
 
@@ -907,7 +907,7 @@ def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
         size = np.random.rand(n_objects) * (max_size - min_size) + min_size
         size_in = np.random.rand(n_objects) * (size/2.5 - size/4) + size/4
 
-        # Now generate n_object_pairs shapes (which is one less than the number used to calc sizes and positions)
+        # Now generate n_object_pairs shapes 
         for j in range(n_odd_object_pairs):
             done = False
             s1 = Shape(gap_max=0.08, hole_radius=0.2)
@@ -939,9 +939,125 @@ def sn_task_2_inside_count(condition='c', odd_one_out = "no_count"):
         all_size.append(size_)
         all_shape.append(shape_)
 
+    if odd_one_out == "no_inside":
+        # Same total number of shapes, but one pair is not nested
+
+        xy_ = []
+        size_ = []
+        shape_ = []
+
+        done = False
+        n_objects = n_object_pairs + 2 # To ensure that all shapes are drawn from the same 
+            # distribution (even if there are two more shapes in the OOO condition), sample shape
+            # sizes and positions as if there were N+2 objects in the image. In this OOO condition
+            # they are used to place the extra non-nested object!
+        n_odd_objects = n_object_pairs * 2
+
+        min_size_obj = min(0.9/n_objects, 0.3)
+        min_btw_size = min_size_obj
+
+        triu_idx = np.triu_indices(n_objects, k=1)
+        triu_idx = triu_idx[0]*n_objects + triu_idx[1]
+
+        for _ in range(max_attempts):
+            xy = np.random.rand(n_samples_over, n_objects, 2) * (1-min_size_obj) + min_size_obj/2
+            no_overlap = (np.abs(xy[:,:,None,:] - xy[:,None,:,:]) - min_btw_size>0).any(3).reshape([-1, n_objects*n_objects])[:,triu_idx].all(1)
+            if no_overlap.sum()>0:
+                done = True
+                break
+
+        if not done:
+            print('')
+
+        xy = xy[no_overlap][0]
+
+        if n_objects >1: # Always true in this case
+            non_diag = np.where(~np.eye(n_objects,dtype=bool))
+            non_diag = non_diag[0]*n_objects + non_diag[1]
+            dists_obj = np.abs(xy[:,None,:] - xy[None,:,:]).max(2).reshape([n_objects**2])[non_diag].reshape([n_objects, n_objects-1]).min(1)
+            dists_edge = np.stack([xy, 1-xy],2).min(1).min(1)*2
+            max_size = np.stack([dists_edge, dists_obj], 1).min(1)
+        else:
+            max_size = 0.6
+        # max_size = np.stack([xy, 1-xy],2).min(2).min(2)
+        min_size = max_size/2 # Consider constraining size range
+
+        size = np.random.rand(n_objects) * (max_size - min_size) + min_size
+        size_in = np.random.rand(n_objects) * (size/2.5 - size/4) + size/4
+
+        # Now generate n_object_pairs - 1 nested shapes
+        for j in range(n_object_pairs - 1):
+            done = False
+            s1 = Shape(gap_max=0.08, hole_radius=0.2)
+            s2 = Shape(gap_max=0.01)
+            for _ in range(max_attempts):
+
+                samples = sample_position_inside_1(s1, s2, size_in[j]/size[j])
+                if len(samples)>0:
+                    done = True
+
+                if done:
+                    break
+                else:
+                    s1.randomize()
+                    s2.randomize()
+
+            if done:
+                xy_in = samples[0]
+
+                xy_.append(xy[j])
+                shape_.append(s1)
+                size_.append(size[j])
+
+                xy_.append(xy_in * size[j] + xy[j])
+                shape_.append(s2)
+                size_.append(size_in[j])
+
+        # Now generate two non-nested objects
+        done = False
+        s1 = Shape(gap_max=0.08, hole_radius=0.2)
+        s2 = Shape(gap_max=0.01)
+
+        # We have already generated these xy values and sizes 
+        # for 2 extra shapes, now use them
+        s1_idx = n_object_pairs - 1
+        s2_idx = n_object_pairs
+        xy_.append(xy[s1_idx])
+        shape_.append(s1)
+        size_.append(size[s1_idx])
+
+        xy_.append(xy[s2_idx]) # Place small object somewhere new
+        shape_.append(s2)
+        size_.append(size_in[s1_idx]) # hasn't been used yet
+
+
+        all_xy.append(xy_)
+        all_size.append(size_)
+        all_shape.append(shape_)
+
     if 'c' in condition:
-        color = sample_random_colors(n_samples)
+        color = sample_random_colors(n_rule_objects + n_odd_objects)
+
+        shape_colors = np.array([np.ones([3]) * c for c in color])
+        rule_objects = int(n_rule_objects / 3)
+        print(rule_objects)
+        print([len(s) for s in [shape_colors[i*rule_objects:i+1*rule_objects] for i in range(3)]])
+        color1 = [np.stack(shape_colors[i*rule_objects:i+1*rule_objects], axis=0) for i in range(3)]
+        color1.append(np.stack(shape_colors[3*rule_objects:], axis=0))
+        print(len(color1))
+        print(color1[0].shape)
+        print("XX")
         color = [np.ones([n_objects + n_odd_objects, 3]) * color[i:i+1] for i in range(n_samples)]
+        #print(color)
+        print(len(color))
+        print(color[0].shape)
+        print("FDSA")
+        '''        color = sample_random_colors(n_objects + n_odd_objects)
+        print(color.shape)
+        print(np.ones([n_objects + n_odd_objects, 3]).shape)
+        color = np.ones([n_objects + n_odd_objects, 3]) * color
+        print(color)
+        '''
 
     else:
         color = sample_random_colors(1)
