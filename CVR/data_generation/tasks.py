@@ -9489,13 +9489,13 @@ TASKS=[
     ["task_pos_flip_2", task_pos_flip_2, "Each image contains 2 objects with similar shapes. One of the objects is flipped along the axis formed by the two objects."],
     ["task_flip_contact_1", task_flip_contact_1, "Each image contains 3 objects among which 2 have the same shape and 2 are in contact. The objects with similar shapes are in contact and randomly flipped in all images."],
     ["task_flip_contact_2", task_flip_contact_2, "In each image, similarly shaped objects are in contact. All objects are randomly flipped."],
-    ["sn_task_contact_inside", sn_task_contact_inside, "In each image, one object is inside and in contact with another."],
-    ["sn_task_inside", sn_task_inside, "Same as task inside, with more constraints"],
-    ["sn_task_contact", sn_task_contact, "Same as task contact, with constraints on color"],
-    ["sn_task_inside_adversarial_contact", sn_task_inside_adversarial_contact, "Same as task inside, adversarial against contact"],
-    ["sn_task_contact_adversarial_inside", sn_task_contact_adversarial_inside, "Same as task contact, adversarial against inside"],
-    ["sn_task_contact_inside_ablate_contact", partial(sn_task_contact_inside, odd_one_out="no_inside"), "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."],
-    ["sn_task_contact_inside_ablate_inside", partial(sn_task_contact_inside, odd_one_out="no_contact"), "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."]
+    ["sn_task_1_contact_inside", sn_task_1_contact_inside, "In each image, one object is inside and in contact with another."],
+    ["sn_task_1_inside", sn_task_1_inside, "Same as task inside, with more constraints"],
+    ["sn_task_contact", sn_task_1_contact, "Same as task contact, with constraints on color"],
+    ["sn_task_1_inside_adversarial_contact", sn_task_1_inside_adversarial_contact, "Same as task inside, adversarial against contact"],
+    ["sn_task_1_contact_adversarial_inside", sn_task_1_contact_adversarial_inside, "Same as task contact, adversarial against inside"],
+    ["sn_task_1_contact_inside_ablate_contact", partial(sn_task_1_contact_inside, odd_one_out="no_inside"), "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."],
+    ["sn_task_1_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact"), "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."]
 
 ]
 

@@ -1,6 +1,6 @@
-from CVR.data_generation.subnetwork_tasks import sn_task_inside, sn_task_contact, sn_task_contact_adversarial_inside, sn_task_inside_adversarial_contact
+from CVR.data_generation.subnetwork_tasks import sn_task_1_inside, sn_task_contact, sn_task_1_contact_adversarial_inside, sn_task_1_inside_adversarial_contact
 from data_generation.tasks import *
-from data_generation.subnetwork_tasks import sn_task_contact_inside
+from data_generation.subnetwork_tasks import sn_task_1_contact_inside
 
 TASKS=[
     # The images contain objects of the same shape.
@@ -210,19 +210,19 @@ TASKS=[
     # In each image, similarly shaped objects are in contact. All objects are randomly flipped.
     ['task_flip_contact_2', task_flip_contact_2],
     # In each image, one object is inside and in contact with another.
-    ['sn_task_contact_inside', sn_task_contact_inside],
+    ['sn_task_contact_inside', sn_task_1_contact_inside],
     # task inside, but with extra constrains and diff colors for each shape
-    ['sn_task_inside', sn_task_inside],
+    ['sn_task_inside', sn_task_1_inside],
     # task contact, with extra constraints on color
-    ['sn_task_contact', sn_task_contact],
+    ['sn_task_contact', sn_task_1_contact],
     # task inside, but constrained to be adversarial to contact subnets
-    ['sn_task_inside_adversarial_contact', sn_task_inside_adversarial_contact],
+    ['sn_task_inside_adversarial_contact', sn_task_1_inside_adversarial_contact],
     # task contact, but constrained to be adversarial to inside
-    ['sn_task_contact_adversarial_inside', sn_task_contact_adversarial_inside],
+    ['sn_task_contact_adversarial_inside', sn_task_1_contact_adversarial_inside],
     #  "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."
-    ["sn_task_contact_inside_ablate_contact", partial(sn_task_contact_inside, odd_one_out="no_inside")],
+    ["sn_task_contact_inside_ablate_contact", partial(sn_task_1_contact_inside, odd_one_out="no_inside")],
     # "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."
-    ["sn_task_contact_inside_ablate_inside", partial(sn_task_contact_inside, odd_one_out="no_contact")]
+    ["sn_task_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")]
 
 ]
 

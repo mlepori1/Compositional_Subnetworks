@@ -120,7 +120,7 @@ def cli_main():
 
                         # Reset pretrained weights, train weights and train mask from testing
                         args.pretrained_weights = copy.deepcopy(base_pretrained_weights)
-                        args.train_mask = copy.deepcopy(base_train_masks)
+                        args.train_masks = copy.deepcopy(base_train_masks)
                         args.train_weights = copy.deepcopy(base_train_weights)
 
                         args.task = args.train_task
