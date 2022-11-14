@@ -49,3 +49,5 @@ l0_lambda: .00000001 # From Continuous Sparsification Paper
 max_temp: 200 # From Continuous Sparsification Paper
 l0_stage_list: None # Need to set these in script
 ablation_strategies: ["zero", "random", "none"] # Include all ablation for tests, including no ablation
+use_last: True # Used for determining whether to load best model or final model
+

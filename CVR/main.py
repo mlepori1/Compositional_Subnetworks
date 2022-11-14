@@ -151,8 +151,13 @@ def cli_main():
 
                         # Set up callbacks
                         logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
-                        model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
-                        callbacks = [model_checkpoint]
+                        
+                        # Disable loading best model for experiments, as we want the final model for continuous sparsification
+                        if args.use_last == True:
+                            callbacks = []
+                        else:
+                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
+                            callbacks = [model_checkpoint]
                         if args.early_stopping!=0:
                             early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
                             callbacks.append(early_stopping)
@@ -166,8 +171,11 @@ def cli_main():
                         
                         trainer.fit(model, datamodule, **fit_kwargs)
 
-                        # Load up best model
-                        best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
+                        # Load up best model if pretraining
+                        if args.use_last == True:
+                            best_model = model
+                        else:
+                            best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
                         trained_weights = {
                             "backbone": os.path.join(args.exp_dir, str(model_id) + '_backbone.pt'),
@@ -196,6 +204,7 @@ def cli_main():
                                 '1_task': args.task,
                                 '2_val_acc': best_val_acc,
                                 '2_best_epoch': best_epoch,
+                                '2_used_last_model': args.use_last,
                                 '3_backbone': args.backbone,
                                 '3_batch_size': args.batch_size,
                                 '3_lr': args.lr,
@@ -261,8 +270,6 @@ def cli_main():
                                     }
 
                                 output_dict.update({'2_'+k:v for k,v in global_avg.items()})
-                                output_dict.update({'5_'+k:v for k,v in per_task_avg.items()})
-
                                 df = df.append(output_dict, ignore_index=True)
 
                                 print("Saving csv")
