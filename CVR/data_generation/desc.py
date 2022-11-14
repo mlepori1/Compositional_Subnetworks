@@ -1,6 +1,5 @@
-from CVR.data_generation.subnetwork_tasks import sn_task_1_inside, sn_task_contact, sn_task_1_contact_adversarial_inside, sn_task_1_inside_adversarial_contact
+from data_generation.subnetwork_tasks import *
 from data_generation.tasks import *
-from data_generation.subnetwork_tasks import sn_task_1_contact_inside
 
 TASKS=[
     # The images contain objects of the same shape.
@@ -222,7 +221,9 @@ TASKS=[
     #  "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."
     ["sn_task_contact_inside_ablate_contact", partial(sn_task_1_contact_inside, odd_one_out="no_inside")],
     # "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."
-    ["sn_task_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")]
+    ["sn_task_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")],
+    # The rule is that 3 images contain N big objects and N small objects. Each big object contains a small object.
+    ["sn_task_2_inside_count", sn_task_2_inside_count]
 
 ]
 

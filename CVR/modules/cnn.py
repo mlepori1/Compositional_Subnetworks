@@ -74,6 +74,18 @@ class Base(pl.LightningModule):
         l0_loss = sum(m.sum() for m in masks)
         return (error_loss + (self.lamb * l0_loss), l0_loss)  
       
+
+    def get_l0_norm(self):
+        masks = []
+        for layer in self.mlp.modules():
+                if hasattr(layer, "mask"):
+                    masks.append(layer.mask)
+        for layer in self.backbone.modules():
+            if hasattr(layer, "mask"):
+                masks.append(layer.mask)
+        l0_norm = sum(m.sum() for m in masks)
+        return l0_norm
+
     def step(self, batch, batch_idx):
 
         y_hat, y = self.shared_step(batch)
@@ -109,17 +121,17 @@ class Base(pl.LightningModule):
         y_hat, y = self.shared_step(batch)
 
         if self.train_masks["backbone"] or self.train_masks["mlp"]:
-            loss, l0_loss = self.l0_loss(y_hat, y)
+            loss, l0_norm = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
-            l0_loss = torch.zeros(loss.shape)
+            l0_norm = l0_norm()
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
             "loss": loss.reshape(1),
             "acc": acc.reshape(1),
-            "L0": l0_loss.reshape(1)
+            "L0": l0_norm.reshape(1)
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
