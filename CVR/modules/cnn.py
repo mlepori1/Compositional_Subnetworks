@@ -124,7 +124,7 @@ class Base(pl.LightningModule):
             loss, l0_norm = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
-            l0_norm = l0_norm()
+            l0_norm = self.get_l0_norm()
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
