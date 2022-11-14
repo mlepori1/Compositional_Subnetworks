@@ -1,0 +1,10 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6634622
+##  Job Name : CS-Experiment_Configs
+##  Nodelist : gpu2110
+##      CPUs : 1
+##  Mem/Node : 32768 MB
+## Directory : /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/CVR
+##   Job Started : Fri Nov 11 17:09:44 EST 2022
+###############################################################################
+49998

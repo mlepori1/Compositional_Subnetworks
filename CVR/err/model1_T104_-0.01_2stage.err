@@ -1,0 +1,852 @@
+module: loading 'python/3.7.4'
+module: loading 'gcc/10.2'
+module: gcc: "Note: loading the gcc module overrides the gcc version on the system.  If you want to revert to the version of gcc provided by the OS, unload the gcc module."
+module: loading 'cuda/11.1.1'
+module: cuda: To use: module load gcc/10.2
+module: loading 'cudnn/8.2.0'
+module: cudnn: To use: module load cuda/11.1.1 gcc/10.2
+Global seed set to 1
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/users/mlepori/.local/lib/python3.7/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:608: UserWarning: Checkpoint directory /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/Contact_Inside_Experiments/model1_T104_-0.01_2stage exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+25.2 M    Trainable params
+71.3 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+/users/mlepori/.local/lib/python3.7/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:245: PossibleUserWarning: The dataloader, val_dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 64 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+  category=PossibleUserWarning,
+/users/mlepori/.local/lib/python3.7/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:245: PossibleUserWarning: The dataloader, train_dataloader, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 64 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+  category=PossibleUserWarning,
+/users/mlepori/.local/lib/python3.7/site-packages/torch/nn/functional.py:1709: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+/users/mlepori/.local/lib/python3.7/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:245: PossibleUserWarning: The dataloader, test_dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 64 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+  category=PossibleUserWarning,
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 1
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 2
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 3
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 4
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 87.5 M
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+20.7 M    Trainable params
+75.7 M    Non-trainable params
+96.5 M    Total params
+385.835   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Global seed set to 5
+Multiprocessing is handled by SLURM.
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name     | Type   | Params
+------------------------------------
+0 | backbone | ResNet | 108 M 
+1 | mlp      | L0MLP  | 8.9 M 
+------------------------------------
+41.9 M    Trainable params
+75.7 M    Non-trainable params
+117 M     Total params
+470.769   Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+slurmstepd: error: *** JOB 6634924 ON gpu2110 CANCELLED AT 2022-11-12T11:48:58 ***
