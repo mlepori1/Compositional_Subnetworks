@@ -62,11 +62,9 @@ class TemperatureCallback(Callback):
         if self.l0_masks["backbone"]:
             temp = pl_module.backbone.get_temp()
             pl_module.backbone.set_temp(temp * self.temp_increase)
-            print(pl_module.backbone.temp)
         elif self.l0_masks["mlp"]:
             temp = pl_module.mlp.get_temp()
             pl_module.mlp.set_temp(temp * self.temp_increase)
-            print(pl_module.mlp.get_temp())
 
 
 def cli_main():

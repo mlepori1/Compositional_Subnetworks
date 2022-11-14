@@ -2,6 +2,8 @@
 
 #SBATCH -N 1-1 -n 1  # CPU cores
 #SBATCH -p gpu,3090-gcondo --gres=gpu:1
+#SBATCH -a carney-tserre-condo
+#SBATCH -p gpu--gres=gpu:1
 #SBATCH --mem=32gb
 #SBATCH -t 20:00:00
 

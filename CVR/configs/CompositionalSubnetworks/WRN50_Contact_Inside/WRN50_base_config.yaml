@@ -10,7 +10,7 @@ max_epochs: 90 # From Continuous Sparsification Paper
 num_workers: 1
 log_every_n_steps: 100
 ckpt_period: 1
-seed_list: [1, 2, 3, 4, 5] # For calculating statistics on results
+seed_list: [1, 2, 3] # For calculating statistics on results
 early_stopping: 0 # No early stopping when training masks
 refresh_rate: 10
 es_patience: 0

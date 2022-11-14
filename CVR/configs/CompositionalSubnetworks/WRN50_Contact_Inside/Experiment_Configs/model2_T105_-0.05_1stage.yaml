@@ -20,7 +20,7 @@ l0_init_list:
 - -0.05
 l0_lambda: 1.0e-08
 l0_stage_list:
-- stage_4
+- - stage_4
 log_every_n_steps: 100
 lr_list:
 - 0.01
@@ -43,8 +43,6 @@ seed_list:
 - 1
 - 2
 - 3
-- 4
-- 5
 task_embedding: 0
 test_set: ''
 test_tasks:
