@@ -223,7 +223,11 @@ TASKS=[
     # "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."
     ["sn_task_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")],
     # The rule is that 3 images contain N big objects and N small objects. Each big object contains a small object.
-    ["sn_task_2_inside_count", sn_task_2_inside_count]
+    ["sn_task_2_inside_count", sn_task_2_inside_count],
+    # Same as inside count, with rule assignment different
+    ["sn_task_2_inside", sn_task_2_inside],
+    # Same as inside count, with rule assignment different
+    ["sn_task_2_count", sn_task_2_count]
 
 ]
 
