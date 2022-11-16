@@ -29,7 +29,7 @@ for pretrained_model in pretrained_models:
                 
                 # Edit individual parameters
                 number_l0_stages = len(stages_list)
-                exp_name = "_".join(["model" + pretrained_model, "T" + train_task, str(l0_init), str(number_l0_stages)+"stage"])
+                exp_name = "_".join(["RN50", "model" + pretrained_model, "T" + train_task, str(l0_init), str(number_l0_stages)+"stage"])
                 config["exp_dir"] += exp_name
                 config["results_dir"] += exp_name
 
