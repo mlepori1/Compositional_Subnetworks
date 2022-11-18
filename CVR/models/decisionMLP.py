@@ -142,6 +142,8 @@ class L0UnstructuredLinear(nn.Module):
             masked_weight = self.weight * self.mask
 
         out = F.linear(data, masked_weight, self.bias)
+        print("MLP Masked weight sum")
+        print(masked_weight.sum())
         print("MLP out sum")
         print(out.sum())
         return out
