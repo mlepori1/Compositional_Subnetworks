@@ -57,6 +57,6 @@ train_weights:
   backbone: false
   embedding: false
   mlp: false
-use_last: true
+use_last: false
 val_transform: null
 wd: 0.0

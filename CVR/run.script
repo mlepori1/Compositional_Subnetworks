@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH -N 1-1 -n 1 
-#SBATCH -p gpu --gres=gpu:1
-#SBATCH --account=carney-tserre-condo
+#SBATCH -p 3090-gcondo --gres=gpu:1
+#SBATCH --account=default
 #SBATCH --mem=12gb
 #SBATCH -t 12:00:00
 
