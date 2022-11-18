@@ -169,11 +169,14 @@ def cli_main():
 
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
+                        torch.save(model.mlp.model[-1].weight, os.path.join(args.exp_dir, str(model_id) + '_mlp.pt'+"_preweights"))
+
                         trainer.fit(model, datamodule, **fit_kwargs)
 
                         # Load up best model if pretraining
                         if args.use_last == True:
-                            best_model = trainer.lightning_module
+                            #best_model = trainer.lightning_module
+                            best_model = model
                         else:
                             best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
@@ -181,6 +184,8 @@ def cli_main():
                             "backbone": os.path.join(args.exp_dir, str(model_id) + '_backbone.pt'),
                             "mlp": os.path.join(args.exp_dir, str(model_id) + '_mlp.pt')
                         }
+
+                        torch.save(best_model.mlp.model[-1].weight, trained_weights["mlp"]+"_postweights")
 
                         torch.save(best_model.backbone.state_dict(), trained_weights["backbone"])
                         torch.save(best_model.mlp.state_dict(), trained_weights["mlp"])
@@ -254,15 +259,17 @@ def cli_main():
                                 test_datamodule = dataset_type(**args.__dict__)
                                 test_model = model_type(**args.__dict__)
                                 
-                                if ablation == "none":
-                                    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_none_mask")
-                                if ablation == "zero":
-                                    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_zero_mask")
+                                #if ablation == "none":
+                                #    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_none_mask")
+                                #if ablation == "zero":
+                                #    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_zero_mask")
 
                                 # Test using trainer from before
                                 trainer.test(model=test_model, datamodule=test_datamodule)
                                 test_result = test_model.test_results
                                 
+                                torch.save(test_model.mlp.model[-1].weight, trained_weights["mlp"]+"_testweights")
+
                                 global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
                                 output_dict = {
