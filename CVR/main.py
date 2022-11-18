@@ -169,7 +169,7 @@ def cli_main():
 
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
-                        trainer.fit(model, datamodule, **fit_kwargs)
+                        #trainer.fit(model, datamodule, **fit_kwargs)
 
                         # Load up best model if pretraining
                         if args.use_last == True:
@@ -190,10 +190,10 @@ def cli_main():
                         metrics = metrics_callback.get_all()
                         if args.use_last == True:
                             # Get the last validation accuracy if we're using the last model
-                            best_val_acc = metrics['metrics/val_acc'][-1]
+                            best_val_acc = 0#metrics['metrics/val_acc'][-1]
                         else:
-                            best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
-                        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+                            best_val_acc = 0#np.nanmax(metrics['metrics/val_acc'] + [0])
+                        best_epoch = 0#(np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
 
                         output_dict = {
                                 '0_Model_ID': model_id,
