@@ -54,11 +54,7 @@ class L0UnstructuredLinear(nn.Module):
         elif (self.ablate_mask != None) and (not self.training or self.mask_weight.requires_grad == False): 
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else: 
-            mask = F.sigmoid(self.temp * self.mask_weight)
-        print("MLP MASK SUM")
-        print(mask.sum())
-        print("MLP MASK WEIGHT SUM")
-        print(self.mask_weight.sum())        
+            mask = F.sigmoid(self.temp * self.mask_weight)      
         return mask      
 
     def train(self, train_bool):
