@@ -94,6 +94,7 @@ class L0Conv2d(nn.Module):
             else:
                 masked_weight = self.weight * self.mask
                 if self.ablate_mask == "zero":
+                    print(self.mask)
                     print("CNN MASK SUM")
                     print(self.mask.sum())
         else:
