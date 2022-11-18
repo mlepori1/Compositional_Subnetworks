@@ -173,7 +173,7 @@ def cli_main():
 
                         # Load up best model if pretraining
                         if args.use_last == True:
-                            best_model = model
+                            best_model = trainer.lightning_module
                         else:
                             best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
