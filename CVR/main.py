@@ -245,6 +245,10 @@ def cli_main():
                                 else:
                                     args.ablate_mask = ablation
 
+                                logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
+
+                                trainer = pl.Trainer.from_argparse_args(args, logger=logger)
+
                                 # initializing the dataset and model
                                 print(args.pretrained_weights)
                                 test_datamodule = dataset_type(**args.__dict__)
@@ -252,9 +256,11 @@ def cli_main():
 
                                 # Test using trainer from before
                                 trainer.test(model=test_model, datamodule=test_datamodule)
-                                train_result = test_model.test_results
-
-                                global_avg, per_task, per_task_avg = process_results(train_result, args.task)
+                                test_result = test_model.test_results
+                                
+                                torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_mask")
+                                
+                                global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
                                 output_dict = {
                                         '0_Model_ID': model_id,

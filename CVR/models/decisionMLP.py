@@ -138,9 +138,6 @@ class L0UnstructuredLinear(nn.Module):
             masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
         else:
             masked_weight = self.weight * self.mask
-            if self.ablate_mask == "zero":
-                print("MLP MASK SUM")
-                print(self.mask.sum())
 
         out = F.linear(data, masked_weight, self.bias)
         return out
