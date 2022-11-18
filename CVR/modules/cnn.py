@@ -237,7 +237,7 @@ class CNN(Base):
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d: # freeze conv layers
-                        if not self.train_masks and layer.l0 == True: # Only decision is whether to freeze mask
+                        if layer.l0 == True: # Only decision is whether to freeze mask
                             layer.mask_weight.requires_grad = False
             
             # If you don't want to train the backbone weights, freeze em

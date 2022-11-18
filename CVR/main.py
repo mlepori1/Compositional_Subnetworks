@@ -169,7 +169,7 @@ def cli_main():
 
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
-                        #trainer.fit(model, datamodule, **fit_kwargs)
+                        trainer.fit(model, datamodule, **fit_kwargs)
 
                         # Load up best model if pretraining
                         if args.use_last == True:
