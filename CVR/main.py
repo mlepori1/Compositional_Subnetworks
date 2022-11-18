@@ -258,8 +258,10 @@ def cli_main():
                                 trainer.test(model=test_model, datamodule=test_datamodule)
                                 test_result = test_model.test_results
                                 
-                                torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_mask")
-                                
+                                if ablation == "none":
+                                    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_none_mask")
+                                if ablation == "zero":
+                                    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_zero_mask")
                                 global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
                                 output_dict = {
