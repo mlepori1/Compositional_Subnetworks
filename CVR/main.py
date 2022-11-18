@@ -253,15 +253,16 @@ def cli_main():
                                 print(args.pretrained_weights)
                                 test_datamodule = dataset_type(**args.__dict__)
                                 test_model = model_type(**args.__dict__)
-
-                                # Test using trainer from before
-                                trainer.test(model=test_model, datamodule=test_datamodule)
-                                test_result = test_model.test_results
                                 
                                 if ablation == "none":
                                     torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_none_mask")
                                 if ablation == "zero":
                                     torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_zero_mask")
+
+                                # Test using trainer from before
+                                trainer.test(model=test_model, datamodule=test_datamodule)
+                                test_result = test_model.test_results
+                                
                                 global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
                                 output_dict = {
