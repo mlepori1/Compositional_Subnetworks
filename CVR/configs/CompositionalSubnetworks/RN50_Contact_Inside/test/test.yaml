@@ -11,22 +11,21 @@ data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/
 dataset: CVRTDataModule
 early_stopping: 0
 es_patience: 0
-exp_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/model1_T104_-0.01_1stage
+exp_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/test
 gpus: 1
 l0_components:
   backbone: true
   mlp: true
 l0_init_list:
-- -0.01
+- -0.00
 l0_lambda: 1.0e-08
 l0_stage_list:
 - - stage_4
 log_every_n_steps: 100
 lr_list:
 - 0.01
-- 0.0001
 max_epochs: 2
-max_temp: 200
+max_temp: 50
 mlp_dim: 128
 mlp_hidden_dim: 2048
 model: CNN
@@ -38,11 +37,9 @@ pretrained_weights:
   embedding: false
   mlp: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/ConIn_Models/1_mlp.pt
 refresh_rate: 10
-results_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/model1_T104_-0.01_1stage
+results_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/test
 seed_list:
 - 1
-- 2
-- 3
 task_embedding: 0
 test_set: ''
 test_tasks:

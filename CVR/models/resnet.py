@@ -80,6 +80,10 @@ class L0Conv2d(nn.Module):
             mask = (self.mask_weight <= 0).float() # Used for subnetwork ablation
         else:
             mask = F.sigmoid(self.temp * self.mask_weight)
+        print("CNN MASK SUM")
+        print(mask.sum())
+        print("CNN MASK WEIGHT SUM")
+        print(self.mask_weight.sum())
         return mask 
 
     def train(self, train_bool):

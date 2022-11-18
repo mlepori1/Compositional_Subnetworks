@@ -182,7 +182,6 @@ def cli_main():
                             "mlp": os.path.join(args.exp_dir, str(model_id) + '_mlp.pt')
                         }
 
-                        # Save it
                         torch.save(best_model.backbone.state_dict(), trained_weights["backbone"])
                         torch.save(best_model.mlp.state_dict(), trained_weights["mlp"])
                         if best_model.task_embedding != None:
@@ -247,6 +246,7 @@ def cli_main():
                                     args.ablate_mask = ablation
 
                                 # initializing the dataset and model
+                                print(args.pretrained_weights)
                                 test_datamodule = dataset_type(**args.__dict__)
                                 test_model = model_type(**args.__dict__)
 
