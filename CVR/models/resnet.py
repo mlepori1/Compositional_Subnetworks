@@ -88,8 +88,6 @@ class L0Conv2d(nn.Module):
     def forward(self, x):
         if self.l0:
             self.mask = self.compute_mask()
-            print("CNN mask sum")
-            print(self.mask.sum())
             if self.ablate_mask == "random":
                 masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
                 masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
@@ -98,11 +96,7 @@ class L0Conv2d(nn.Module):
         else:
             masked_weight = self.weight
         
-        out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)
-        print("CNN Masked weight sum")
-        print(masked_weight.sum())
-        print("CNN out sum")
-        print(out.sum())        
+        out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)   
         return out
 
     @classmethod

@@ -319,8 +319,6 @@ class CNN(Base):
             # Calculates the dot product of each mlp vector with every other vector (as well as itself) via broadcasting. Then sums the total
             # similarity
         x = -x # The odd one out's total similarity to every other vector should be LOWER than the other vector's, so negate the dot products, making argmax(x) = odd one out because it is the least negative
-        print("Out 0")
-        print(x[0])
         return x
 
     @staticmethod

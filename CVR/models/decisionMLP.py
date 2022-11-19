@@ -133,8 +133,6 @@ class L0UnstructuredLinear(nn.Module):
             N-dimensional tensor, with last dimension `out_features`
         """
         self.mask = self.compute_mask()
-        print("MLP mask sum")
-        print(self.mask.sum())
         if self.ablate_mask == "random":
             masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
             masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
@@ -142,10 +140,6 @@ class L0UnstructuredLinear(nn.Module):
             masked_weight = self.weight * self.mask
 
         out = F.linear(data, masked_weight, self.bias)
-        print("MLP Masked weight sum")
-        print(masked_weight.sum())
-        print("MLP out sum")
-        print(out.sum())
         return out
 
     def extra_repr(self) -> str:
@@ -174,7 +168,6 @@ class L0MLP(nn.Module):
         self.model = nn.Sequential(*self.model)
     
     def forward(self, input):
-        print("\nForward Call")
         return self.model(input)
 
     def get_temp(self):

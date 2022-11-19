@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 # import yaml sys
 import argparse
 import copy
@@ -154,7 +155,8 @@ def cli_main():
                         
                         # Disable loading best model for experiments, as we want the final model for continuous sparsification
                         if args.use_last == True:
-                            callbacks = []
+                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, monitor=None, save_last=True)
+                            callbacks = [model_checkpoint]
                         else:
                             model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
                             callbacks = [model_checkpoint]
@@ -169,23 +171,17 @@ def cli_main():
 
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
-                        torch.save(model.mlp.model[-1].weight, os.path.join(args.exp_dir, str(model_id) + '_mlp.pt'+"_preweights"))
 
                         trainer.fit(model, datamodule, **fit_kwargs)
 
                         # Load up best model if pretraining
-                        if args.use_last == True:
-                            #best_model = trainer.lightning_module
-                            best_model = model
-                        else:
-                            best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
+                        best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
                         trained_weights = {
                             "backbone": os.path.join(args.exp_dir, str(model_id) + '_backbone.pt'),
                             "mlp": os.path.join(args.exp_dir, str(model_id) + '_mlp.pt')
                         }
 
-                        torch.save(best_model.mlp.model[-1].weight, trained_weights["mlp"]+"_postweights")
 
                         torch.save(best_model.backbone.state_dict(), trained_weights["backbone"])
                         torch.save(best_model.mlp.state_dict(), trained_weights["mlp"])
@@ -195,10 +191,10 @@ def cli_main():
                         metrics = metrics_callback.get_all()
                         if args.use_last == True:
                             # Get the last validation accuracy if we're using the last model
-                            best_val_acc = 0#metrics['metrics/val_acc'][-1]
+                            best_val_acc = metrics['metrics/val_acc'][-1]
                         else:
-                            best_val_acc = 0#np.nanmax(metrics['metrics/val_acc'] + [0])
-                        best_epoch = 0#(np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+                            best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
+                        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
 
                         output_dict = {
                                 '0_Model_ID': model_id,
@@ -255,20 +251,13 @@ def cli_main():
                                 trainer = pl.Trainer.from_argparse_args(args, logger=logger)
 
                                 # initializing the dataset and model
-                                print(args.pretrained_weights)
                                 test_datamodule = dataset_type(**args.__dict__)
                                 test_model = model_type(**args.__dict__)
-                                
-                                #if ablation == "none":
-                                #    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_none_mask")
-                                #if ablation == "zero":
-                                #    torch.save(test_model.mlp.model[-1].mask, trained_weights["mlp"]+"_zero_mask")
-
-                                # Test using trainer from before
+                            
+                                # Test
                                 trainer.test(model=test_model, datamodule=test_datamodule)
                                 test_result = test_model.test_results
                                 
-                                torch.save(test_model.mlp.model[-1].weight, trained_weights["mlp"]+"_testweights")
 
                                 global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
@@ -296,6 +285,8 @@ def cli_main():
                                 # Will overwrite this file after every evaluation
                                 df.to_csv(os.path.join(args.results_dir, 'results.csv'))
 
+                        # Get rid of trained models after testing
+                        shutil.rmtree(args.exp_dir)
 
 if __name__ == '__main__':
     print(os.getpid())
