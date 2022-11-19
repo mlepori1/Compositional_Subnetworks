@@ -99,11 +99,10 @@ class L0Conv2d(nn.Module):
             masked_weight = self.weight
         
         out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)
-        if self.l0:
-            print("CNN Masked weight sum")
-            print(masked_weight.sum())
-            print("CNN out sum")
-            print(out.sum())        
+        print("CNN Masked weight sum")
+        print(masked_weight.sum())
+        print("CNN out sum")
+        print(out.sum())        
         return out
 
     @classmethod
