@@ -124,7 +124,10 @@ class Base(pl.LightningModule):
             loss, l0_norm = self.l0_loss(y_hat, y)
         else:
             loss = F.cross_entropy(y_hat, y)
-            l0_norm = self.get_l0_norm()
+            if self.l0_components["backbone"] or self.l0_components["mlp"]:
+                l0_norm = self.get_l0_norm()
+            else:
+                l0_norm = torch.Tensor([0])
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
