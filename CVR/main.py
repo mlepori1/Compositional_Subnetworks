@@ -286,7 +286,8 @@ def cli_main():
                                 df.to_csv(os.path.join(args.results_dir, 'results.csv'))
 
                         # Get rid of trained models after testing
-                        shutil.rmtree(args.exp_dir)
+                        if not args.save_models:
+                            shutil.rmtree(args.exp_dir)
 
 if __name__ == '__main__':
     print(os.getpid())

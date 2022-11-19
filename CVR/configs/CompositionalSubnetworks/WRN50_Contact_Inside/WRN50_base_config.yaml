@@ -26,7 +26,7 @@ task_embedding: 0
 # data 
 data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
 train_task: None # Set in script
-test_tasks: ['103', '104', '105', '108', '109'] # Test resulting subnetwork on a variety of configurations
+test_tasks: ['103', '104', '105', '106', '107', '108'] # Test resulting subnetwork on a variety of configurations
 batch_size_list: [64] # Stick with Batch size of 64 from initial results
 train_transform: null
 val_transform: null
@@ -50,4 +50,5 @@ max_temp: 200 # From Continuous Sparsification Paper
 l0_stage_list: None # Need to set these in script
 ablation_strategies: ["zero", "random", "none"] # Include all ablation for tests, including no ablation
 use_last: True # Used for determining whether to load best model or final model
+save_models: False
 

@@ -39,6 +39,7 @@ pretrained_weights:
   mlp: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/ConIn_Models/2_mlp.pt
 refresh_rate: 10
 results_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/RN50_model2_T104_-0.01_1stage
+save_models: false
 seed_list:
 - 1
 - 2
@@ -49,8 +50,9 @@ test_tasks:
 - '103'
 - '104'
 - '105'
+- '106'
+- '107'
 - '108'
-- '109'
 train_masks:
   backbone: true
   mlp: true

@@ -180,13 +180,12 @@ TASKS={
     103: "sn_task_1_contact_inside",
     104: "sn_task_1_inside",
     105: "sn_task_1_contact",
-    106: "sn_task_1_inside_adversarial_contact",
-    107: "sn_task_1_contact_adversarial_inside",
-    108: "sn_task_1_contact_inside_ablate_contact",
-    109: "sn_task_1_contact_inside_ablate_inside",
-    110: "sn_task_2_inside_count",
-    111: "sn_task_2_inside",
-    112: "sn_task_2_count"
+    106: "sn_task_1_contact_inside_both_ooo",
+    107: "sn_task_1_contact_inside_ablate_contact",
+    108: "sn_task_1_contact_inside_ablate_inside",
+    109: "sn_task_2_inside_count",
+    110: "sn_task_2_inside",
+    111: "sn_task_2_count"
 }
 
 

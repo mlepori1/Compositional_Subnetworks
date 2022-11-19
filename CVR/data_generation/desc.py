@@ -209,19 +209,17 @@ TASKS=[
     # In each image, similarly shaped objects are in contact. All objects are randomly flipped.
     ['task_flip_contact_2', task_flip_contact_2],
     # In each image, one object is inside and in contact with another.
-    ['sn_task_contact_inside', sn_task_1_contact_inside],
+    ['sn_task_1_contact_inside', sn_task_1_contact_inside],
     # task inside, but with extra constrains and diff colors for each shape
-    ['sn_task_inside', sn_task_1_inside],
+    ['sn_task_1_inside', sn_task_1_inside],
     # task contact, with extra constraints on color
-    ['sn_task_contact', sn_task_1_contact],
-    # task inside, but constrained to be adversarial to contact subnets
-    ['sn_task_inside_adversarial_contact', sn_task_1_inside_adversarial_contact],
-    # task contact, but constrained to be adversarial to inside
-    ['sn_task_contact_adversarial_inside', sn_task_1_contact_adversarial_inside],
+    ['sn_task_1_contact', sn_task_1_contact],
+    #  "Same as contact inside, with the odd one out always being outside and not in contact."
+    ["sn_task_1_contact_inside_both_ooo", partial(sn_task_1_contact_inside, odd_one_out="no_contact_inside")],
     #  "Same as contact inside, with the odd one out always being outside and in contact. Ablating  contact should still achieve high perf."
-    ["sn_task_contact_inside_ablate_contact", partial(sn_task_1_contact_inside, odd_one_out="no_inside")],
+    ["sn_task_1_contact_inside_ablate_contact", partial(sn_task_1_contact_inside, odd_one_out="no_inside")],
     # "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."
-    ["sn_task_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")],
+    ["sn_task_1_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact")],
     # The rule is that 3 images contain N big objects and N small objects. Each big object contains a small object.
     ["sn_task_2_inside_count", sn_task_2_inside_count],
     # Same as inside count, with rule assignment different
