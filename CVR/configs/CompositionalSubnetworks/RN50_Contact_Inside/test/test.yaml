@@ -1,6 +1,5 @@
 ablation_strategies:
 - zero
-- none
 backbone: L0resnet50
 batch_size_list:
 - 64
@@ -16,15 +15,15 @@ l0_components:
   backbone: true
   mlp: true
 l0_init_list:
-- -0.001
+- -5.0
 l0_lambda: 1.0e-8
 l0_stage_list:
 - - stage_4
 log_every_n_steps: 100
 lr_list:
-- 0.5
+- 0.0000001
 max_epochs: 1
-max_temp: 50
+max_temp: 5
 mlp_dim: 128
 mlp_hidden_dim: 2048
 model: CNN

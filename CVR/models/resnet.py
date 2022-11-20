@@ -183,7 +183,7 @@ class BasicBlock(nn.Module):
     ) -> None:
         super().__init__()
         if norm_layer is None:
-            norm_layer = functools.partial(nn.BatchNorm2d, track_running_stats=False)
+            norm_layer = nn.BatchNorm2d
         if groups != 1 or base_width != 64:
             raise ValueError("BasicBlock only supports groups=1 and base_width=64")
         if dilation > 1:
@@ -239,7 +239,7 @@ class Bottleneck(nn.Module):
     ) -> None:
         super().__init__()
         if norm_layer is None:
-            norm_layer = functools.partial(nn.BatchNorm2d, track_running_stats=False)
+            norm_layer = nn.BatchNorm2d
         width = int(planes * (base_width / 64.0)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv1x1(inplanes, width, conv_fn=conv_fn)
@@ -293,7 +293,7 @@ class ResNet(nn.Module):
     ) -> None:
         super().__init__()
         if norm_layer is None:
-            norm_layer = functools.partial(nn.BatchNorm2d, track_running_stats=False)
+            norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
 
         # Added parameters
@@ -447,9 +447,21 @@ class ResNet(nn.Module):
 
     def set_temp(self, temp):
         self.temp = temp
-        for layer in self.modules():
+         in self.modules():
             if type(layer) == L0Conv2d:
                 layer.temp = temp
+
+    # Added this to handle BatchNorm behavior.
+    # We want to freeze BN statistics after training the original model
+    # We must not recalculate them during mask training.
+    def train(self):
+        if self.isL0:
+            super().train()
+            for layer in self.modules():
+                if type(layer) == nn.BatchNorm2d:
+                    layer.eval()
+        else:
+            super().train()
 
 
 def _resnet(
