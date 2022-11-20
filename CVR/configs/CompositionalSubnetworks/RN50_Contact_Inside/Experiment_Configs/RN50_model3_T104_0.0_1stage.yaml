@@ -11,7 +11,7 @@ data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/
 dataset: CVRTDataModule
 early_stopping: 0
 es_patience: 0
-exp_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/RN50_model3_T104_0.0_1stage
+exp_dir: /users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/RN50_model3_T104_0.0_1stage
 gpus: 1
 l0_components:
   backbone: true
@@ -38,7 +38,7 @@ pretrained_weights:
   embedding: false
   mlp: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/ConIn_Models/3_mlp.pt
 refresh_rate: 10
-results_dir: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/RN50_model3_T104_0.0_1stage
+results_dir: /users/mlepori/scratch/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/RN50_model3_T104_0.0_1stage
 save_models: false
 seed_list:
 - 1

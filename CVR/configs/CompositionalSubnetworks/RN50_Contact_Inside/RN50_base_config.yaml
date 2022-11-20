@@ -32,8 +32,8 @@ train_transform: null
 val_transform: null
 n_samples: 10000
 test_set: ''
-exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/' # Append to in script
-results_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/' # Append to in script
+exp_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/Contact_Inside_Experiments/' # Append to in script
+results_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/' # Append to in script
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}
