@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6742977
+##  Job Name : CS-RN50_Train_Models
+##  Nodelist : gpu2116
+##      CPUs : 1
+##  Mem/Node : 12288 MB
+## Directory : /gpfs/scratch/mlepori/Compositional_Subnetworks/CVR
+##   Job Started : Sun Nov 20 14:24:59 EST 2022
+###############################################################################

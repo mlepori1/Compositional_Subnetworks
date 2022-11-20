@@ -28,8 +28,8 @@ train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
 test_set: ''
-exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models/'
-results_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/wide_resnet50/ConIn_Models/'
+exp_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models/'
+results_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Results/wide_resnet50/ConIn_Models/'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": False, "mlp": False}

@@ -1,0 +1,18 @@
+module: loading 'python/3.7.4'
+module: loading 'gcc/10.2'
+module: gcc: "Note: loading the gcc module overrides the gcc version on the system.  If you want to revert to the version of gcc provided by the OS, unload the gcc module."
+module: loading 'cuda/11.1.1'
+module: cuda: To use: module load gcc/10.2
+module: loading 'cudnn/8.2.0'
+module: cudnn: To use: module load cuda/11.1.1 gcc/10.2
+Traceback (most recent call last):
+  File "/users/mlepori/scratch/Compositional_Subnetworks/CVR/main.py", line 19, in <module>
+    import modules
+  File "/gpfs/scratch/mlepori/Compositional_Subnetworks/CVR/modules/__init__.py", line 1, in <module>
+    from modules.cnn import CNN, SCN, WREN, SCNHead
+  File "/gpfs/scratch/mlepori/Compositional_Subnetworks/CVR/modules/cnn.py", line 10, in <module>
+    from models.resnet import *
+  File "/gpfs/scratch/mlepori/Compositional_Subnetworks/CVR/models/resnet.py", line 450
+    in self.modules():
+    ^
+IndentationError: unexpected indent

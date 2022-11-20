@@ -447,7 +447,7 @@ class ResNet(nn.Module):
 
     def set_temp(self, temp):
         self.temp = temp
-         in self.modules():
+        for layer in self.modules():
             if type(layer) == L0Conv2d:
                 layer.temp = temp
 
