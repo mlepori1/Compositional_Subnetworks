@@ -1,0 +1,8 @@
+,0_Model_ID,0_train,0_train_task,0_ablation,0_exp_dir,0_model,0_seed,0_dataset,1_task,2_val_acc,2_best_epoch,2_used_last_model,3_backbone,3_batch_size,3_lr,3_l0_init,3_l0_stages,2_test_L0,2_test_acc,2_test_loss
+0,1.0,1.0,103,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,103,1.0,11.0,0.0,resnet50,64.0,0.01,-1.0,None,,,
+1,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,103,,,,resnet50,64.0,0.01,-1.0,None,0.0,1.0,0.07218691
+2,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,104,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.2623047,2.2366595
+3,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,105,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.2515625,2.1466217
+4,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,106,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.99902344,0.067882
+5,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,107,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.9970703,0.09158014
+6,1.0,0.0,103,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/TestCalibration/Train/,CNN,1.0,CVRTDataModule,108,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.99902344,0.075604066
