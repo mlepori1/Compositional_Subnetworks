@@ -26,6 +26,7 @@ task_embedding: 0
 # data 
 data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
 train_task: None # Set in script
+calibration_task: '103' # Task for calibrating BN statistics
 test_tasks: ['103', '104', '105', '106', '107', '108'] # Test resulting subnetwork on a variety of configurations
 batch_size_list: [64] # Stick with Batch size of 64 from initial results
 train_transform: null

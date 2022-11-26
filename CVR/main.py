@@ -232,33 +232,50 @@ def cli_main():
                         for key in args.train_weights.keys():
                             args.train_weights[key] = False
 
-                        for task in args.test_tasks:
-                            for ablation in args.ablation_strategies:
+                        for ablation in args.ablation_strategies:
+                            # Run BN calibration for each ablation type
+
+                            if args.seed is not None:
+                                pl.seed_everything(args.seed)
+
+                            # Set the args
+                            args.task = args.calibration_task
+
+                            if ablation == "none":
+                                args.ablate_mask = None
+                            else:
+                                args.ablate_mask = ablation
+
+                            test_model = model_type(**args.__dict__)
+
+                            if args.calibration_task is not None:
+
+                                test_model.calibration_mode() # Ensure that no parameters are trainable, only track BN statistics!
+                                
+                                # initializing the dataset and model
+                                calibration_datamodule = dataset_type(**args.__dict__)
+
+                                # Running BN statistics are updated during forward pass
+                                calibration_loader = calibration_datamodule.train_dataloader()
+                                test_model.cuda()
+                                for (i, batch) in enumerate(calibration_loader):
+                                    test_model(batch[0].cuda())
+
+                            for task in args.test_tasks:
 
                                 if args.seed is not None:
                                     pl.seed_everything(args.seed)
 
-                                # Set the args
+                                # Set the correct test task
                                 args.task = task
 
-                                if ablation == "none":
-                                    args.ablate_mask = None
-                                else:
-                                    args.ablate_mask = ablation
-
-                                logger = TensorBoardLogger(args.exp_dir, default_hp_metric=False)
-
-                                trainer = pl.Trainer.from_argparse_args(args, logger=logger)
-
-                                # initializing the dataset and model
+                                # initializing the testing dataset
                                 test_datamodule = dataset_type(**args.__dict__)
-                                test_model = model_type(**args.__dict__)
                             
                                 # Test
                                 trainer.test(model=test_model, datamodule=test_datamodule)
                                 test_result = test_model.test_results
                                 
-
                                 global_avg, per_task, per_task_avg = process_results(test_result, args.task)
 
                                 output_dict = {

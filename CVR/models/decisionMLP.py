@@ -180,6 +180,15 @@ class L0MLP(nn.Module):
             if isinstance(layer, L0UnstructuredLinear):
                 layer.temp = temp
  
+    def calibration_mode(self):
+        for layer in self.model.modules():
+            if hasattr(layer, "weight"):
+                layer.weight.requires_grad = False
+            if hasattr(layer, "bias"):
+                layer.bias.requires_grad = False
+            if hasattr(layer, "mask_weight"):
+                layer.mask_weight.requires_grad = False
+
 #Linear network to prune after training
 class MLP(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim):

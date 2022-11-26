@@ -5,6 +5,7 @@ ablation_strategies:
 backbone: L0resnet50
 batch_size_list:
 - 64
+calibration_task: '103'
 check_val_every_n_epoch: 1
 ckpt_period: 1
 data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/
@@ -35,9 +36,9 @@ n_samples: 10000
 n_tasks: 1
 num_workers: 1
 pretrained_weights:
-  backbone: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/ConIn_Models/1_backbone.pt
+  backbone: /users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/ConIn_Models/1_backbone.pt
   embedding: false
-  mlp: /gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/ConIn_Models/1_mlp.pt
+  mlp: /users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/ConIn_Models/1_mlp.pt
 refresh_rate: 10
 results_dir: /users/mlepori/scratch/Compositional_Subnetworks/Results/resnet50/Contact_Inside_Experiments/RN50_model1_T105_0.0_2stage
 save_models: false

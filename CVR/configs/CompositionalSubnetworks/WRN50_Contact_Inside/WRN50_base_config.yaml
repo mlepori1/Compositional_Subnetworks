@@ -25,6 +25,7 @@ mlp_hidden_dim: 2048
 task_embedding: 0
 # data 
 data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
+calibration_task: '103' # Task for calibrating BN statistics
 train_task: None # Set in script
 test_tasks: ['103', '104', '105', '106', '107', '108'] # Test resulting subnetwork on a variety of configurations
 batch_size_list: [64] # Stick with Batch size of 64 from initial results
@@ -32,8 +33,8 @@ train_transform: null
 val_transform: null
 n_samples: 10000
 test_set: ''
-exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/Contact_Inside_Experiments/' # Append to in script
-results_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Results/wide_resnet50/Contact_Inside_Experiments/' # Append to in script
+exp_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Models/wide_resnet50/Contact_Inside_Experiments/' # Append to in script
+results_dir: '/users/mlepori/scratch/Compositional_Subnetworks/Results/wide_resnet50/Contact_Inside_Experiments/' # Append to in script
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}

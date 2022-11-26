@@ -264,7 +264,6 @@ class Bottleneck(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
-
         if self.downsample is not None:
             identity = self.downsample(x)
 
@@ -366,8 +365,9 @@ class ResNet(nn.Module):
             if isinstance(m, nn.Conv2d) or isinstance(m, L0Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+                if m.weight is not None and m.bias is not None:
+                    nn.init.constant_(m.weight, 1)
+                    nn.init.constant_(m.bias, 0)
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
@@ -451,17 +451,62 @@ class ResNet(nn.Module):
             if type(layer) == L0Conv2d:
                 layer.temp = temp
 
-    # Added this to handle BatchNorm behavior.
-    # We want to freeze BN statistics after training the original model
-    # We must not recalculate them during mask training.
-    def train(self):
-        if self.isL0:
-            super().train()
-            for layer in self.modules():
+    def train(self, train_bool=True):
+        super().train(train_bool)
+        if self.isL0 == True:
+            # Make sure that BN stats are frozen for all BN not in an L0 stage
+            if "first" not in self.l0_stages:
+                self.bn1.train(False)
+            if "stage_1" not in self.l0_stages:
+                for layer in self.layer1.modules():
+                    if type(layer) == nn.BatchNorm2d:
+                        layer.train(False)
+            if "stage_2" not in self.l0_stages:
+                for layer in self.layer2.modules():
+                    if type(layer) == nn.BatchNorm2d:
+                        layer.train(False)            
+            if "stage_3" not in self.l0_stages:
+                for layer in self.layer3.modules():
+                    if type(layer) == nn.BatchNorm2d:
+                        layer.train(False)
+            if "stage_4" not in self.l0_stages:
+                for layer in self.layer4.modules():
+                    if type(layer) == nn.BatchNorm2d:
+                        layer.train(False)
+
+    def calibration_mode(self):
+        # Ensure that every learned parameter is frozen for BN calibration
+        for layer in self.modules():
+            if type(layer) == nn.BatchNorm2d or type(layer) == L0Conv2d:
+                if layer.weight != None:
+                    layer.weight.requires_grad = False
+                if layer.bias != None:
+                    layer.bias.requires_grad = False
+                if hasattr(layer, "mask_weight"):
+                    layer.mask_weight.requires_grad = False  
+
+        # Make sure that BN layers are in train mode for calibration
+        # Calculating running stats is done in the forward pass,
+        # so don't need to worry about training affine parameters
+        if "first" in self.l0_stages:
+            self.bn1.train(True)
+        if "stage_1" in self.l0_stages:
+            for layer in self.layer1.modules():
                 if type(layer) == nn.BatchNorm2d:
-                    layer.eval()
-        else:
-            super().train()
+                    layer.train(True)
+        if "stage_2" in self.l0_stages:
+            for layer in self.layer2.modules():
+                if type(layer) == nn.BatchNorm2d:
+                    layer.train(True)            
+        if "stage_3" in self.l0_stages:
+            for layer in self.layer3.modules():
+                if type(layer) == nn.BatchNorm2d:
+                    layer.train(True)
+        if "stage_4" in self.l0_stages:
+            for layer in self.layer4.modules():
+                if type(layer) == nn.BatchNorm2d:
+                    layer.train(True)          
+
 
 
 def _resnet(

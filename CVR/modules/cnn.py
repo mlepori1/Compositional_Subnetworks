@@ -46,6 +46,7 @@ class Base(pl.LightningModule):
         perms = torch.stack([torch.randperm(4, device=self.device) for _ in range(x_size[0])], 0) # Permute examples within a problem (a grouping of 4 images pertaining to one rule), so the fourth image isn't always the odd on out
         y = perms.argmax(1) # In the original order, the fourth element was always the odd one out, so here, the argmax corresponds to
                             # 4 for each problem, corresponding to the out one out
+
         perms = perms + torch.arange(x_size[0], device=self.device)[:,None]*4 # Want to get the idx of each image, after flattening out the problems
         perms = perms.flatten()
 
@@ -216,7 +217,8 @@ class CNN(Base):
 
                 for layer in self.backbone.modules():
                     if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
-                        layer.weight.requires_grad = False
+                        if layer.weight != None:
+                            layer.weight.requires_grad = False
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
 
@@ -246,8 +248,9 @@ class CNN(Base):
             # If you don't want to train the backbone weights, freeze em
             if self.train_weights["backbone"] == False:
                 for layer in self.backbone.modules():
-                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d: # freeze all weights and biases
-                        layer.weight.requires_grad = False
+                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
+                        if layer.weight != None: # freeze all weights and biases
+                            layer.weight.requires_grad = False
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
             
@@ -303,11 +306,15 @@ class CNN(Base):
         # define encoder, decoder, fc_mu and fc_var
         pass
 
+    def calibration_mode(self):
+        # Freeze every single weight, bias, and mask weight in an L0 model
+        self.backbone.calibration_mode()
+        self.mlp.calibration_mode()
+
     def forward(self, x, task_idx=None):
 
         x_size = x.shape
         x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 images, rgb, height, width] -> [N*4 images, rgb, height, width]
-
         x = self.backbone(x) # Get representation for each image
         if task_idx is not None:
             x_task = self.task_embedding(task_idx.repeat_interleave(4)) # Repeat_interleave repeats tensor values N times [1, 2].repeat_interleave(2) = [1, 1, 2, 2]
@@ -316,7 +323,9 @@ class CNN(Base):
             x = torch.cat([x, x_task], 1) # mlp input is image representation cat task embedding
         x = self.mlp(x)
         x = nn.functional.normalize(x, dim=1) # Normalize the resulting MLP vectors
+
         x = x.reshape([-1, 4, self.mlp_out_dim]) # Reshape into (# problems, 4 images per problem, mlp size
+
         x = (x[:,:,None,:] * x[:,None,:,:]).sum(3).sum(2) # None indexing unsqueezes another dimensions at that index
             # So you have (# problems, 4 ims per problem, 1, mlp representation) * (# problems, 1, 4 ims per problem, mlp representation)
             # Calculates the dot product of each mlp vector with every other vector (as well as itself) via broadcasting. Then sums the total

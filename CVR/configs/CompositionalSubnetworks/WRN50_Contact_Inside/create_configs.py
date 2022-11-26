@@ -7,10 +7,10 @@ with open("WRN50_base_config.yaml", 'r') as stream:
 
 os.makedirs("Experiment_Configs", exist_ok=True)
 
-l0_inits = [0.0, -0.01, -0.03, -0.05] # from section 5.3 of continuous sparsification, got rid of -.02 to minimize combinatorics
+l0_inits = [0.1, 0.05, 0.0, -0.05] # Search
 train_tasks = ['104', '105'] # Train insideness and contact subnets
 
-pretrained_models_dir = "/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models"
+pretrained_models_dir = "/users/mlepori/scratch/Compositional_Subnetworks/Models/wide_resnet50/ConIn_Models"
 pretrained_models = ["1", "2", "3"]
 
 l0_stages_lists = [
