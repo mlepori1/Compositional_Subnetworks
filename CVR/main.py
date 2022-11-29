@@ -233,7 +233,8 @@ def cli_main():
                             args.train_weights[key] = False
 
                         for ablation in args.ablation_strategies:
-                            # Run BN calibration for each ablation type
+                            # Run BN calibration for each ablation type if using BatchNorm
+                            # Else, carry on to testing
 
                             if args.seed is not None:
                                 pl.seed_everything(args.seed)
