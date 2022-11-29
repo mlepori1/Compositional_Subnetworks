@@ -9497,8 +9497,10 @@ TASKS=[
     ["sn_task_1_contact_inside_ablate_inside", partial(sn_task_1_contact_inside, odd_one_out="no_contact"), "Same as contact inside, with the odd one out always being inside and not in contact. Ablating  inside should still achieve high perf."],
     ["sn_task_2_inside_count", sn_task_2_inside_count, "3 images contain N big objects and N small objects. Each big object contains a small object."],
     ["sn_task_2_inside", sn_task_2_inside, "Same as inside count with different rule assignment. + all nested, - some nonnested"],
-    ["sn_task_2_count", sn_task_2_count, "Same as inside count with different rule assignment. + same # total shapes, - diff count"]
-
+    ["sn_task_2_count", sn_task_2_count, "Same as inside count with different rule assignment. + same # total shapes, - diff count"],
+    ["sn_task_2_inside_count_both_ooo", partial(sn_task_2_inside_count, odd_one_out="no_count_inside"), "Same as inside count, with the odd one out always being outside and different number of shapes."],
+    ["sn_task_2_inside_count_ablate_inside", partial(sn_task_2_inside_count, odd_one_out="no_count"), "Same as inside count, with the odd one out always having a different number of shapes. Ablating inside should still achieve high perf."],
+    ["sn_task_2_inside_count_ablate_count", partial(sn_task_2_inside_count, odd_one_out="no_inside"), "Same as inside count, with the odd one out always being outside. Ablating count should still achieve high perf."]
 ]
 
 

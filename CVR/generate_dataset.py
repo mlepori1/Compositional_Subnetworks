@@ -128,7 +128,10 @@ TASKS_IDX={
     108: "sn_task_1_contact_inside_ablate_inside",
     109: "sn_task_2_inside_count",
     110: "sn_task_2_inside",
-    111: "sn_task_2_count"
+    111: "sn_task_2_count",
+    112: "sn_task_2_inside_count_both_ooo",
+    113: "sn_task_2_inside_count_ablate_inside",
+    114: "sn_task_2_inside_count_ablate_count"
 }
 
 
