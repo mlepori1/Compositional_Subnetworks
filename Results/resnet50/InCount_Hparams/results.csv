@@ -1,0 +1,17 @@
+,0_Model_ID,0_train,0_train_task,0_ablation,0_exp_dir,0_model,0_seed,0_dataset,1_task,2_val_acc,2_best_epoch,2_used_last_model,3_backbone,3_batch_size,3_lr,3_l0_init,3_l0_stages,2_test_L0,2_test_acc,2_test_loss
+0,1.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,1.0,44.0,0.0,resnet50,32.0,0.01,-1.0,None,,,
+1,1.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,32.0,0.01,-1.0,None,0.0,0.9970703125,0.09593915939331055
+2,2.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,0.27000001072883606,2.0,0.0,resnet50,64.0,0.01,-1.0,None,,,
+3,2.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,64.0,0.01,-1.0,None,0.0,0.24882812798023224,1.3862934112548828
+4,3.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,1.0,8.0,0.0,resnet50,32.0,0.001,-1.0,None,,,
+5,3.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,32.0,0.001,-1.0,None,0.0,0.99609375,0.09762964397668839
+6,4.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,1.0,9.0,0.0,resnet50,64.0,0.001,-1.0,None,,,
+7,4.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,64.0,0.001,-1.0,None,0.0,0.9921875,0.12050364166498184
+8,5.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,1.0,44.0,0.0,resnet50,32.0,0.0001,-1.0,None,,,
+9,5.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,32.0,0.0001,-1.0,None,0.0,0.9951171875,0.12834766507148743
+10,6.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,0.9779999852180481,55.0,0.0,resnet50,64.0,0.0001,-1.0,None,,,
+11,6.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,64.0,0.0001,-1.0,None,0.0,0.9580078125,0.23517750203609467
+12,7.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,0.6980000138282776,94.0,0.0,resnet50,32.0,1e-05,-1.0,None,,,
+13,7.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,32.0,1e-05,-1.0,None,0.0,0.6943359375,0.9821107983589172
+14,8.0,1.0,109,,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,0.6119999885559082,65.0,0.0,resnet50,64.0,1e-05,-1.0,None,,,
+15,8.0,0.0,109,None,/users/mlepori/scratch/Compositional_Subnetworks/Models/resnet50/InCount_Hparams/,CNN,0.0,CVRTDataModule,109,,,,resnet50,64.0,1e-05,-1.0,None,0.0,0.6255859136581421,1.1615965366363525
