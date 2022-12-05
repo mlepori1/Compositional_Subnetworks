@@ -23,6 +23,7 @@ __all__ = [
     "resnext101_64x4d",
     "wide_resnet50_2",
     "wide_resnet101_2",
+    "L0Conv2d"
 ]
 
 class L0Conv2d(nn.Module):

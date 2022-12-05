@@ -12,7 +12,6 @@ from models.vits import vit_small as vit_small_moco
 
 from models.scn import SCL
 from models.wren import WReN
-from models.resnet18 import ResNet18, L0Conv2d
 from models.lenet import LeNet
 from models.vgg11 import VGG11
 #from models.mlpEncoder import L0MLP, MLP
@@ -198,7 +197,7 @@ class CNN(Base):
 
         # set up model
         if self.l0_components["backbone"] == False:
-            if backbone == "resnet18": self.backbone = ResNet18(isL0=False, mask_init_value=1, embed_dim=1024)
+            if backbone == "resnet18": self.backbone = resnet18(isL0=False, mask_init_value=1, embed_dim=1024)
             elif backbone == "resnet50": self.backbone = resnet50(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d) # Note: Instance norm doesn't use affine transform or track running statistics
             elif backbone == "wideresnet50": self.backbone = wide_resnet50_2(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d)
             elif backbone == "vgg11": self.backbone = VGG11(isL0=False, mask_init_value=1, embed_dim=8192)
@@ -228,7 +227,7 @@ class CNN(Base):
             l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            if backbone == "L0resnet18": self.backbone = ResNet18(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
+            if backbone == "L0resnet18": self.backbone = resnet18(isL0=True, mask_init_value=l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
             elif backbone == "L0resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
             elif backbone == "L0wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
             elif backbone == "L0vgg11": self.backbone = VGG11(isL0=True, mask_init_value=l0_init, embed_dim=8192, ablate_mask=self.ablate_mask) 
