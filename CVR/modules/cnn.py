@@ -15,7 +15,7 @@ from models.wren import WReN
 from models.lenet import LeNet
 from models.vgg11 import VGG11
 #from models.mlpEncoder import MLP
-from models.decisionMLP import MLP, L0UnstructuredLinear
+from models.decisionMLP import MLP, L0Linear
 
 class Base(pl.LightningModule):
 
@@ -291,7 +291,7 @@ class CNN(Base):
             # Freeze weights except for mask weight
             print("Freezing MLP weights...")
             for layer in self.mlp.model.children():
-                if isinstance(layer, L0UnstructuredLinear) or isinstance(layer, nn.Linear):
+                if isinstance(layer, L0Linear) or isinstance(layer, nn.Linear):
                     layer.bias.requires_grad = False
                     layer.weight.requires_grad = False
 
@@ -299,7 +299,7 @@ class CNN(Base):
             # Freeze mask weight
             print("Freezing MLP mask weights...")
             for layer in self.mlp.model.children():
-                if isinstance(layer, L0UnstructuredLinear):
+                if isinstance(layer, L0Linear):
                     layer.mask_weight.requires_grad = False
 
     def init_networks(self):

@@ -5,6 +5,9 @@ import torch.nn.init as init
 import math
 import functools
 
+###
+# Just a copy from the CVR repository of the L0Linear layer, so that I can import it into the bert model definition
+###
 class L0Linear(nn.Module):
     """The hard concrete equivalent of ``nn.Linear``.
         Pruning is unstructured, with weights masked at
@@ -106,52 +109,3 @@ class L0Linear(nn.Module):
 
     def __repr__(self) -> str:
         return "{}({})".format(self.__class__.__name__, self.extra_repr())
-
-class MLP(nn.Module):
-    def __init__(self, 
-        in_dim, 
-        hidden_dim, 
-        out_dim, 
-        isL0 = False,
-        mask_init_value = 0, 
-        ablate_mask=None):
-        # MLP is either a regular MLP (such as the one defined below) 
-        # or another unstructured L0 MLP. 
-        # Ablate mask is used during testing to see how performance varies without 
-        # the found subnetwork
-        super(MLP, self).__init__()
-
-        self.isL0 = isL0
-        self.ablate_mask = ablate_mask # Used during testing to see performance when found mask is removed
-        self.temp = 1.
-
-        if self.isL0:
-            linear = functools.partial(L0Linear, l0=True, mask_init_value=mask_init_value, ablate_mask=ablate_mask)
-        else:
-            linear = functools.partial(L0Linear, l0=False)
-
-        if hidden_dim != 0:
-            self.model = nn.Sequential(
-                linear(in_dim, hidden_dim),
-                nn.ReLU(),
-                linear(hidden_dim, out_dim)
-            )
-        else:
-            self.model = nn.Sequential(
-                linear(in_dim, out_dim),
-            )
-        self.embed_dim = out_dim
-    
-    def forward(self, input):
-        return self.model(input)
-
-    def get_temp(self):
-        return self.temp
-
-    def set_temp(self, temp):
-        self.temp = temp
-        for layer in self.model.children():
-            if isinstance(layer, L0Linear):
-                layer.temp = temp
-
-

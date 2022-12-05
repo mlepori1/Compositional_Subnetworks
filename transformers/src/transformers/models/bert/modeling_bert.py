@@ -21,6 +21,7 @@ import os
 import warnings
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
+import functools
 
 import torch
 import torch.utils.checkpoint
@@ -39,6 +40,7 @@ from ...modeling_outputs import (
     SequenceClassifierOutput,
     TokenClassifierOutput,
 )
+from ...l0_layers import L0Linear
 from ...modeling_utils import PreTrainedModel
 from ...pytorch_utils import apply_chunking_to_forward, find_pruneable_heads_and_indices, prune_linear_layer
 from ...utils import (
@@ -241,7 +243,7 @@ class BertEmbeddings(nn.Module):
 
 
 class BertSelfAttention(nn.Module):
-    def __init__(self, config, position_embedding_type=None):
+    def __init__(self, config, position_embedding_type=None, isL0=False):
         super().__init__()
         if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
@@ -249,13 +251,20 @@ class BertSelfAttention(nn.Module):
                 f"heads ({config.num_attention_heads})"
             )
 
+        self.isL0 = isL0
+
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+
         self.num_attention_heads = config.num_attention_heads
         self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
+        self.query = linear(config.hidden_size, self.all_head_size)
+        self.key = linear(config.hidden_size, self.all_head_size)
+        self.value = linear(config.hidden_size, self.all_head_size)
 
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
         self.position_embedding_type = position_embedding_type or getattr(
@@ -375,9 +384,14 @@ class BertSelfAttention(nn.Module):
 
 
 class BertSelfOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, isL0=False):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
@@ -389,10 +403,11 @@ class BertSelfOutput(nn.Module):
 
 
 class BertAttention(nn.Module):
-    def __init__(self, config, position_embedding_type=None):
+    def __init__(self, config, position_embedding_type=None, isL0=False):
         super().__init__()
-        self.self = BertSelfAttention(config, position_embedding_type=position_embedding_type)
-        self.output = BertSelfOutput(config)
+        self.isL0 = isL0
+        self.self = BertSelfAttention(config, position_embedding_type=position_embedding_type, isL0=self.isL0)
+        self.output = BertSelfOutput(config, isL0=self.isL0)
         self.pruned_heads = set()
 
     def prune_heads(self, heads):
@@ -438,9 +453,14 @@ class BertAttention(nn.Module):
 
 
 class BertIntermediate(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, isL0=False):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.intermediate_size)
         if isinstance(config.hidden_act, str):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -453,9 +473,14 @@ class BertIntermediate(nn.Module):
 
 
 class BertOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, isL0=False):
         super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
@@ -467,19 +492,20 @@ class BertOutput(nn.Module):
 
 
 class BertLayer(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, isL0=False):
         super().__init__()
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
-        self.attention = BertAttention(config)
+        self.attention = BertAttention(config, isL0=self.isL0)
         self.is_decoder = config.is_decoder
         self.add_cross_attention = config.add_cross_attention
+        self.isL0 = isL0
         if self.add_cross_attention:
             if not self.is_decoder:
                 raise ValueError(f"{self} should be used as a decoder model if cross attention is added")
-            self.crossattention = BertAttention(config, position_embedding_type="absolute")
-        self.intermediate = BertIntermediate(config)
-        self.output = BertOutput(config)
+            self.crossattention = BertAttention(config, position_embedding_type="absolute", isL0=self.isL0)
+        self.intermediate = BertIntermediate(config, isL0=self.isL0)
+        self.output = BertOutput(config, isL0=self.isL0)
 
     def forward(
         self,
@@ -556,7 +582,15 @@ class BertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
+        ## CS addition: 
+        ## bertConfig will now have an "l0" key, indicating whether the model is subject to continuous sparsification
+        ## It will also have an "l0_start" key, mapping to the first layer (0 indexed)
+        ## in the BERT encoder with continuous sparsification. Need to pass that into each BertLayer
+        if config.l0:
+            self.layerL0 = [i >= config.l0_start for i in range(config.num_hidden_layers)]
+        else:
+            self.layerL0 = [False for _ in range(config.num_hidden_layers)]
+        self.layer = nn.ModuleList([BertLayer(config, self.layerL0[i]) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
@@ -652,7 +686,12 @@ class BertEncoder(nn.Module):
 class BertPooler(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.isL0 = config.l0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
@@ -747,7 +786,7 @@ class BertPreTrainedModel(PreTrainedModel):
 
     def _init_weights(self, module):
         """Initialize the weights"""
-        if isinstance(module, nn.Linear):
+        if isinstance(module, nn.Linear) or isinstance(module, L0Linear):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
             module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
@@ -887,6 +926,8 @@ class BertModel(BertPreTrainedModel):
         super().__init__(config)
         self.config = config
 
+        self.temp = 1.# Addition for CS
+
         self.embeddings = BertEmbeddings(config)
         self.encoder = BertEncoder(config)
 
@@ -908,6 +949,17 @@ class BertModel(BertPreTrainedModel):
         """
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
+
+    def get_temp(self):
+        # Added for continuous sparsification
+        return self.temp
+
+    def set_temp(self, temp):
+        # Used for continuous sparsification callback
+        self.temp = temp
+        for layer in self.modules():
+            if type(layer) == L0Linear:
+                layer.temp = temp
 
     @add_start_docstrings_to_model_forward(BERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(

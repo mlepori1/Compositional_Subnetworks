@@ -884,6 +884,7 @@ else:
     _import_structure["generation_utils"] = []
     _import_structure["modeling_outputs"] = []
     _import_structure["modeling_utils"] = ["PreTrainedModel"]
+    _import_structure["l0_layers"] = ["L0Linear"]
 
     # PyTorch models structure
     _import_structure["models.albert"].extend(
@@ -4032,6 +4033,7 @@ if TYPE_CHECKING:
             top_k_top_p_filtering,
         )
         from .modeling_utils import PreTrainedModel
+        from .l0_layers import L0Linear
 
         # PyTorch model imports
         from .models.albert import (

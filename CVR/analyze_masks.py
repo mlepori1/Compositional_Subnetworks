@@ -4,7 +4,7 @@ import sys
 import argparse
 import copy
 from models.resnet import L0Conv2d
-from models.decisionMLP import L0UnstructuredLinear
+from models.decisionMLP import L0Linear
 import torch
 import numpy as np
 import pandas as pd
