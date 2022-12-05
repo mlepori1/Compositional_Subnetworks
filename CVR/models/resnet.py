@@ -100,48 +100,6 @@ class L0Conv2d(nn.Module):
         out = F.conv2d(x, masked_weight, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=self.groups)   
         return out
 
-    @classmethod
-    def from_module(
-        self,
-        module,
-        mask_init_value: float = 0.0,
-        keep_weights: bool = True,
-    ) -> "L0Conv2d":
-        """Construct from a pretrained conv2d module.
-        IMPORTANT: the weights are conserved, but can be reinitialized
-        with `keep_weights = False`.
-        Parameters
-        ----------
-        module: Conv2d, L0Conv2d
-            A nn.Conv2d or L0Conv2d
-        mask_init_value : float, optional
-            Initialization value for the sigmoid .
-        Returns
-        -------
-        L0Conv2d
-            The input module with a CS mask introduced.
-        """
-        in_channels = module.in_channels
-        out_channels = module.out_channels
-        kernel_size = module.kernel_size
-        padding = module.padding
-        stride = module.stride        
-
-        bias = module.bias is not None
-        if hasattr(module, "mask_weight"):
-            mask = module.mask_weight
-        else:
-            mask = None
-        new_module = self(in_channels, out_channels, kernel_size, bias=bias, padding=padding, stride=stride, mask_init_value=mask_init_value)
-
-        if keep_weights:
-            new_module.weight.data = module.weight.data.clone()
-            if bias:
-                new_module.bias.data = module.bias.data.clone()
-            if mask:
-                new_module.mask_weight.data = module.mask_weight.data.clone()
-
-        return new_module
 
     def extra_repr(self):
         return '{}, {}, kernel_size={}, stride={}, padding={}'.format(
@@ -457,7 +415,8 @@ class ResNet(nn.Module):
         if self.isL0 == True:
             # Make sure that BN stats are frozen for all BN not in an L0 stage
             if "first" not in self.l0_stages:
-                self.bn1.train(False)
+                if type(self.bn1) == nn.BatchNorm2d:
+                    self.bn1.train(False)
             if "stage_1" not in self.l0_stages:
                 for layer in self.layer1.modules():
                     if type(layer) == nn.BatchNorm2d:
@@ -473,40 +432,7 @@ class ResNet(nn.Module):
             if "stage_4" not in self.l0_stages:
                 for layer in self.layer4.modules():
                     if type(layer) == nn.BatchNorm2d:
-                        layer.train(False)
-
-    def calibration_mode(self):
-        # Ensure that every learned parameter is frozen for BN calibration
-        for layer in self.modules():
-            if type(layer) == nn.BatchNorm2d or type(layer) == L0Conv2d:
-                if layer.weight != None:
-                    layer.weight.requires_grad = False
-                if layer.bias != None:
-                    layer.bias.requires_grad = False
-                if hasattr(layer, "mask_weight"):
-                    layer.mask_weight.requires_grad = False  
-
-        # Make sure that BN layers are in train mode for calibration
-        # Calculating running stats is done in the forward pass,
-        # so don't need to worry about training affine parameters
-        if "first" in self.l0_stages:
-            self.bn1.train(True)
-        if "stage_1" in self.l0_stages:
-            for layer in self.layer1.modules():
-                if type(layer) == nn.BatchNorm2d:
-                    layer.train(True)
-        if "stage_2" in self.l0_stages:
-            for layer in self.layer2.modules():
-                if type(layer) == nn.BatchNorm2d:
-                    layer.train(True)            
-        if "stage_3" in self.l0_stages:
-            for layer in self.layer3.modules():
-                if type(layer) == nn.BatchNorm2d:
-                    layer.train(True)
-        if "stage_4" in self.l0_stages:
-            for layer in self.layer4.modules():
-                if type(layer) == nn.BatchNorm2d:
-                    layer.train(True)          
+                        layer.train(False)        
 
 
 

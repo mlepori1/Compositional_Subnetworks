@@ -14,8 +14,8 @@ from models.scn import SCL
 from models.wren import WReN
 from models.lenet import LeNet
 from models.vgg11 import VGG11
-#from models.mlpEncoder import L0MLP, MLP
-from models.decisionMLP import MLP, L0MLP, L0UnstructuredLinear
+#from models.mlpEncoder import MLP
+from models.decisionMLP import MLP, L0UnstructuredLinear
 
 class Base(pl.LightningModule):
 
@@ -274,12 +274,13 @@ class CNN(Base):
             self.task_embedding.weight.requires_grad = False
 
         # Set up MLP
-        self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim)
-
         if self.l0_components["mlp"]:
             print("Constructing L0 MLP...")
-            self.mlp = L0MLP(self.mlp, kwargs["l0_init"], ablate_mask=self.ablate_mask)
+            self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim, isL0=True, mask_init_value=kwargs["l0_init"],  ablate_mask=self.ablate_mask)
             self.lamb = kwargs["l0_lambda"]
+        else:
+            self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim, isL0=False)
+
 
 
         if self.pretrained_weights["mlp"]:

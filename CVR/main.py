@@ -55,7 +55,6 @@ class MetricsCallback(Callback):
 class TemperatureCallback(Callback):
 
     def __init__(self, total_epochs, final_temp, masks):
-        # L0 MLP determines whether the MLP is getting trained or the backbone
         self.l0_masks = masks
         self.temp_increase = final_temp**(1./total_epochs)
 
