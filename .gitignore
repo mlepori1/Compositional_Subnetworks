@@ -4,8 +4,8 @@
 # notebook files
 .ipynb_checkpoints/
 
-CVR/lightning_logs
-CVR/lightning_logs/
+Vision/CVR/lightning_logs
+Vision/CVR/lightning_logs/
 cvrt_data/
 # Byte-compiled / optimized / DLL files
 __pycache__
@@ -13,13 +13,17 @@ __pycache__/
 */__pycache__/
 **/__pycache__/
 
-CVR/plots/
-CVR/dbs/
-CVR/err/
-CVR/out/
+Vision/CVR/plots/
+Vision/CVR/dbs/
+Vision/CVR/err/
+Vision/CVR/out/
 
-CVR/logs/
+Vision/CVR/logs/
 
+Language/SyntacticSubnetworks/err/
+Language/SyntacticSubnetworks/out/
+
+Language/SyntacticSubnetworks/logs/
 *.pyc
 
 # Jupyter Notebook

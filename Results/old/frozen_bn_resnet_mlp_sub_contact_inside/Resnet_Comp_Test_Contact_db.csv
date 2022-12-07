@@ -1,2 +1,0 @@
-,0_train,0_exp_name,0_exp_dir,0_model,0_seed,0_dataset,0_checkpoint,0_finetune,0_freeze_pretrained,1_task,1_n_samples,2_val_acc,2_best_epoch,3_max_epochs,3_backbone,3_batch_size,3_lr,3_wd,2_test_loss,2_test_acc,2_test_L0,5_test_loss_t_105,5_test_acc_t_105,5_test_L0_t_105
-0,0,Resnet_Comp_Test_Contact,../Subnetworks_db/resnet18/Resnet_Comp_Test_Contact,CNN,-1,CVRTDataModule,,0,0,105,10000,0.0,0.0,120,resnet18,64,0.0001,0.0,2.1107407,0.35058594,0.0,2.1107407,0.35058594,0.0

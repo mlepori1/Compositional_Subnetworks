@@ -1,0 +1,41 @@
+path_db: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside'
+model: 'CNN'
+dataset: 'CVRTDataModule'
+# trainer
+gpus: 1
+max_epochs: 120
+num_workers: 1
+seed: -1
+#arch
+backbone: 'L0resnet50'
+n_tasks: 0
+mlp_dim: 128
+mlp_hidden_dim: 256
+task_embedding: 0
+# data
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
+tasks: ['104', '105', '108', '109'] # Denotes multitask training
+batch_size: 64
+train_transform: null
+val_transform: null
+n_samples: 10000 # 5000, 1000
+test_set: ''
+exp_name: "L0_-01_stage4+mlp_test"
+exp_dir: '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-01_stage4+mlp_test'
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": True, "mlp": True}
+train_masks: {"backbone": False, "mlp": False}
+train_weights: {"backbone": False, "mlp": False, "embedding": False}
+pretrained_weights: { 
+  "backbone": '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-01_stage4+mlp/backbone.pt',
+  "mlp": '/gpfs/data/epavlick/mlepori/projects/Compositional_Subnetworks/Models/resnet50/Param_Sweep/Inside/L0_-01_stage4+mlp/mlp.pt',
+  "embedding": False
+  } # False for random initialization
+eval_only: True # This is derivable from train_masks and train_weights, but make it explicit with another variable
+l0_stages: ["stage_4"]
+ablation_strategies: ["zero", "random", "none"]
+# Unused at test
+l0_init: -0.1
+l0_lambda: .00000001
+max_temp: 300

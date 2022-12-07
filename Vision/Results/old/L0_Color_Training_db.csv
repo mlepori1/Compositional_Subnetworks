@@ -1,0 +1,2 @@
+,0_train,0_exp_name,0_exp_dir,0_model,0_seed,0_dataset,0_checkpoint,0_finetune,0_freeze_pretrained,1_task,1_n_samples,2_val_acc,2_best_epoch,3_max_epochs,3_backbone,3_batch_size,3_lr,3_wd,2_test_loss,2_test_acc,2_test_L0,5_test_loss_t_2,5_test_acc_t_2,5_test_L0_t_2
+0,0,L0_Color_Training,../Subnetworks_db/l0/L0_Color_Training,CNN,0,CVRTDataModule,,0,0,2,10000,0.9679999947547913,79,90,L0mlp,64,0.001,0.0,0.23768106,0.9607422,1359433.0,0.23768106,0.9607422,1359433.0
