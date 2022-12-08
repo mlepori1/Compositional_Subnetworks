@@ -18,12 +18,14 @@
 import collections.abc
 import math
 from typing import Dict, List, Optional, Set, Tuple, Union
+import functools
 
 import torch
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
+from ...l0_layers import L0Linear
 from ...activations import ACT2FN
 from ...modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling, ImageClassifierOutput, MaskedLMOutput
 from ...modeling_utils import PreTrainedModel
@@ -188,7 +190,7 @@ class ViTPatchEmbeddings(nn.Module):
 
 
 class ViTSelfAttention(nn.Module):
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
         if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
@@ -196,13 +198,20 @@ class ViTSelfAttention(nn.Module):
                 f"heads {config.num_attention_heads}."
             )
 
+        self.isL0 = isL0
+
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+
         self.num_attention_heads = config.num_attention_heads
         self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
+        self.query = linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
+        self.key = linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
+        self.value = linear(config.hidden_size, self.all_head_size, bias=config.qkv_bias)
 
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
 
@@ -253,9 +262,14 @@ class ViTSelfOutput(nn.Module):
     layernorm applied before each block.
     """
 
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
@@ -267,10 +281,11 @@ class ViTSelfOutput(nn.Module):
 
 
 class ViTAttention(nn.Module):
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
-        self.attention = ViTSelfAttention(config)
-        self.output = ViTSelfOutput(config)
+        self.isL0 = isL0
+        self.attention = ViTSelfAttention(config, isL0=self.isL0)
+        self.output = ViTSelfOutput(config, isL0=self.isL0)
         self.pruned_heads = set()
 
     def prune_heads(self, heads: Set[int]) -> None:
@@ -306,9 +321,14 @@ class ViTAttention(nn.Module):
 
 
 class ViTIntermediate(nn.Module):
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.intermediate_size)
         if isinstance(config.hidden_act, str):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -323,9 +343,14 @@ class ViTIntermediate(nn.Module):
 
 
 class ViTOutput(nn.Module):
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
+        self.isL0 = isL0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.intermediate_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
@@ -340,13 +365,14 @@ class ViTOutput(nn.Module):
 class ViTLayer(nn.Module):
     """This corresponds to the Block class in the timm implementation."""
 
-    def __init__(self, config: ViTConfig) -> None:
+    def __init__(self, config: ViTConfig, isL0=False) -> None:
         super().__init__()
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
-        self.attention = ViTAttention(config)
-        self.intermediate = ViTIntermediate(config)
-        self.output = ViTOutput(config)
+        self.isL0 = isL0
+        self.attention = ViTAttention(config, isL0=self.isL0)
+        self.intermediate = ViTIntermediate(config, isL0=self.isL0)
+        self.output = ViTOutput(config, isL0=self.isL0)
         self.layernorm_before = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.layernorm_after = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
@@ -383,7 +409,20 @@ class ViTEncoder(nn.Module):
     def __init__(self, config: ViTConfig) -> None:
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([ViTLayer(config) for _ in range(config.num_hidden_layers)])
+
+        ## CS addition: 
+        ## Config will now have an "l0" key, indicating whether the model is subject to continuous sparsification
+        ## It will also have an "l0_start" key, mapping to the first layer (0 indexed)
+        ## in the ViT encoder with continuous sparsification. Need to pass that into each ViTLayer
+        if not hasattr(self.config, "l0"):
+            self.config.l0 = False
+
+        if config.l0:
+            self.layerL0 = [i >= config.l0_start for i in range(config.num_hidden_layers)]
+        else:
+            self.layerL0 = [False for _ in range(config.num_hidden_layers)]
+
+        self.layer = nn.ModuleList([ViTLayer(config, self.layerL0[i]) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
@@ -448,9 +487,9 @@ class ViTPreTrainedModel(PreTrainedModel):
     supports_gradient_checkpointing = True
     _no_split_modules = []
 
-    def _init_weights(self, module: Union[nn.Linear, nn.Conv2d, nn.LayerNorm]) -> None:
+    def _init_weights(self, module: Union[nn.Linear, nn.Conv2d, nn.LayerNorm, L0Linear]) -> None:
         """Initialize the weights"""
-        if isinstance(module, (nn.Linear, nn.Conv2d)):
+        if isinstance(module, (nn.Linear, nn.Conv2d, L0Linear)):
             # Upcast the input in `fp32` and cast it back to desired `dtype` to avoid
             # `trunc_normal_cpu` not implemented in `half` issues
             module.weight.data = nn.init.trunc_normal_(
@@ -511,6 +550,8 @@ class ViTModel(ViTPreTrainedModel):
     def __init__(self, config: ViTConfig, add_pooling_layer: bool = True, use_mask_token: bool = False):
         super().__init__(config)
         self.config = config
+
+        self.temp = 1.# Addition for CS
 
         self.embeddings = ViTEmbeddings(config, use_mask_token=use_mask_token)
         self.encoder = ViTEncoder(config)
@@ -602,7 +643,12 @@ class ViTModel(ViTPreTrainedModel):
 class ViTPooler(nn.Module):
     def __init__(self, config: ViTConfig):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.isL0 = config.l0
+        if self.isL0:
+            linear = functools.partial(L0Linear, l0=True, mask_init_value=config.mask_init_value, ablate_mask=config.ablate_mask) 
+        else:
+            linear = functools.partial(L0Linear, l0=False)
+        self.dense = linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
 
     def forward(self, hidden_states):
