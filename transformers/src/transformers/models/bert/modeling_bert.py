@@ -496,10 +496,10 @@ class BertLayer(nn.Module):
         super().__init__()
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
+        self.isL0 = isL0
         self.attention = BertAttention(config, isL0=self.isL0)
         self.is_decoder = config.is_decoder
         self.add_cross_attention = config.add_cross_attention
-        self.isL0 = isL0
         if self.add_cross_attention:
             if not self.is_decoder:
                 raise ValueError(f"{self} should be used as a decoder model if cross attention is added")
@@ -582,10 +582,14 @@ class BertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
+
         ## CS addition: 
         ## bertConfig will now have an "l0" key, indicating whether the model is subject to continuous sparsification
         ## It will also have an "l0_start" key, mapping to the first layer (0 indexed)
         ## in the BERT encoder with continuous sparsification. Need to pass that into each BertLayer
+        if not hasattr(self.config, "l0"):
+            self.config.l0 = False
+
         if config.l0:
             self.layerL0 = [i >= config.l0_start for i in range(config.num_hidden_layers)]
         else:

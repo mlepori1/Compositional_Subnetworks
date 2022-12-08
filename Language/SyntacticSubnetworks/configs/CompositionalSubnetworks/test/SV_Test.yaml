@@ -2,7 +2,7 @@ model: 'BERT_small'
 dataset: 'SyntaxDataModule'
 # trainer
 gpus: 1
-max_epochs: 1
+max_epochs: 10
 num_workers: 1
 log_every_n_steps: 100
 ckpt_period: 1
@@ -13,12 +13,12 @@ es_patience: 30
 check_val_every_n_epoch: 1
 #arch
 backbone: 'BERT_small'
-lr_list: [0.01]
+lr_list: [0.0001]
 wd: 0.00
 # data 
-data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/'
-train_task: '0'
-test_tasks: ['0', '1', '2', '3', '4',]
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Language'
+train_task: '10'
+test_tasks: ['10', '11', '12', '13', '14']
 batch_size_list: [32, 64]
 train_transform: null
 val_transform: null
@@ -27,11 +27,11 @@ exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Languag
 results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/BERT/Test/'
 
 # Config variables introduced for mask identification
-l0_components: {"backbone": True}
-train_masks: {"backbone": True}
+l0_components: {"backbone": False}
+train_masks: {"backbone": False}
 train_weights: {"backbone": True}
 pretrained_weights: { 
-  "backbone": False,
+  "backbone": "prajjwal1/bert-small",
   } # False for random initialization
 l0_init_list: [-1]
 l0_lambda: -1
@@ -39,6 +39,7 @@ max_temp: -1
 l0_stage_list: [-1]
 ablation_strategies: ["None"]
 evaluation_type: "validate"
-freeze_until: 0
+LM_init: True # Denotes whether to initialize the model with pretrained LM parameters
+freeze_until: 3
 save_models: False
 use_last: False

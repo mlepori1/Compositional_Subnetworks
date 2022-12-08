@@ -16,7 +16,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 
-import model
+from model import BertClf
 import datasets
 
 from utils import parse_args, save_config, find_best_epoch, process_results
@@ -93,7 +93,7 @@ def cli_main():
     if args.model != "BERT_small":
         raise ValueError("Only supported model is BERT_small")
     else:
-        model_type = model.BertClf 
+        model_type = BertClf 
 
     parser = model_type.add_model_specific_args(parser)
 
@@ -106,6 +106,7 @@ def cli_main():
     base_pretrained_weights = copy.deepcopy(args.pretrained_weights)
     base_train_masks = copy.deepcopy(args.train_masks)
     base_train_weights = copy.deepcopy(args.train_weights)
+    base_LM_init = args.LM_init
 
     model_id = 0
     df = pd.DataFrame()
@@ -124,6 +125,7 @@ def cli_main():
                         args.pretrained_weights = copy.deepcopy(base_pretrained_weights)
                         args.train_masks = copy.deepcopy(base_train_masks)
                         args.train_weights = copy.deepcopy(base_train_weights)
+                        args.LM_init = base_LM_init
 
                         args.task = args.train_task
 
@@ -138,8 +140,8 @@ def cli_main():
                         args.l0_init = l0_init
 
                         # initializing the dataset and model
-                        datamodule = dataset_type(**args.__dict__)
                         model = model_type(**args.__dict__)
+                        datamodule = dataset_type(tokenizer=model.tokenizer, **args.__dict__)
 
                         print(model.hparams)
 
@@ -201,6 +203,8 @@ def cli_main():
                                 '0_model': args.model,
                                 '0_seed': args.seed,
                                 '0_dataset': args.dataset,
+                                '0_LM_init': args.LM_init,
+                                '0_freeze_until': args.freeze_until,
                                 '1_task': args.task,
                                 '2_val_acc': best_val_acc,
                                 '2_best_epoch': best_epoch,
@@ -220,6 +224,7 @@ def cli_main():
                         # Set pretrained_weights to create new models with different behavior
                         # using the weights we just trained
                         args.pretrained_weights = trained_weights
+                        args.LM_init = False
 
                         # When creating models, freeze model weights and mask weights
                         for key in args.train_masks.keys():
@@ -249,7 +254,7 @@ def cli_main():
                                 args.task = task
 
                                 # initializing the testing dataset
-                                eval_datamodule = dataset_type(**args.__dict__)
+                                eval_datamodule = dataset_type(tokenizer=test_model.tokenizer, **args.__dict__)
                             
                                 # During mask hparam search, only want to test on the validation sets
                                 # Only during final testing do we want to see performance on test split

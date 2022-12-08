@@ -14,12 +14,14 @@ class Base(pl.LightningModule):
 
     def shared_step(self, batch):
 
-        # batch = Batch of BatchEncoding objects
-        x_ipts = torch.stack(el["input_ids"] for el in batch) #input ids is dimension (4, max_seq_len) -> x_ipts is dimension (batch_size, 4, maxseqlen)
-        x_attn = torch.stack(el["attention_mask"] for el in batch) #attention_mask is dimension (4, max_seq_len) -> x_attn is dimension (batch_size, 4, maxseqlen) = same as x_ipts
+        # batch = Batch of tensors with shape [batch idx, 2 (ipt ids, attn mask), 4 (sentences per problem), max seq len]
+
+        x_ipts = batch[:, 0, :, :]
+        x_attn = batch[:, 1, :, :]
+
+        x_size = x_ipts.shape
 
         # creates artificial label
-        x_size = x_ipts.shape
         perms = torch.stack([torch.randperm(4, device=self.device) for _ in range(x_size[0])], 0) # Permute examples within a problem (a grouping of 4 sentences pertaining to one rule), so the fourth sentence isn't always the odd on out
         y = perms.argmax(1) # In the original order, the fourth element was always the odd one out, so here, the argmax corresponds to
                             # 4 for each problem, corresponding to the out one out
@@ -31,7 +33,7 @@ class Base(pl.LightningModule):
                                                                                             # Out -> Batch (Number of problems), 4 sentences per problem, max seq length
         x_attn = x_attn.reshape([x_size[0]*4, x_size[2]])[perms].reshape([x_size[0], 4, x_size[2]]) # Permute the sentence encodings within a problem, while keeping problems grouped together.
                                                                                             # Out -> Batch (Number of problems), 4 sentences per problem, max seq length
-        y_hat = self(input_ids=x_ipts, attention_mask=x_attn)
+        y_hat = self(x_ipts, x_attn)
 
         return y_hat, y
 
@@ -185,6 +187,7 @@ class BertClf(Base):
                     if hasattr(layer, "weight"):
                         if layer.weight != None:
                             layer.weight.requires_grad = False
+                    if hasattr(layer, "bias"):
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
 
@@ -243,6 +246,7 @@ class BertClf(Base):
                     if hasattr(layer, "weight"):
                         if layer.weight != None: # freeze all weights and biases
                             layer.weight.requires_grad = False
+                    if hasattr(layer, "bias"):
                         if layer.bias != None: 
                             layer.bias.requires_grad = False
 

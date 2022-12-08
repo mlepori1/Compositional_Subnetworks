@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 import torchvision
 from torchvision import transforms as tvt
+import torch
 
 from datasets.base_datamodules import DataModuleBase
 
@@ -201,16 +202,18 @@ class SyntaxData(Dataset):
         self.problem_encodings = []
         for problem in data:
             self.problem_encodings.append(self.tokenizer.batch_encode_plus(
-                problem, max_length=self.max_seq_length, pad_to_max_length=True, trucation=True
+                problem, max_length=self.max_seq_length, padding="max_length",
+                return_tensors="pt"
                 )
             )
         
     def __len__(self):
-        return len(self.tasks) * self.n_samples
+        return self.n_samples
 
     def __getitem__(self, idx):
         # Get the BatchEncoding object corresponding to the idx,
         # The odd one out will always be the final sentence in these batches
         sample = self.problem_encodings[idx]
+        sample = torch.stack([sample["input_ids"], sample["attention_mask"]])
         return sample
 

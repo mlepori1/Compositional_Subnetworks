@@ -33,3 +33,7 @@ Language/SyntacticSubnetworks/logs/
 profile_default/
 ipython_config.py
 .DS_Store
+
+Data/
+
+transformers/src/transformers.egg-info/
