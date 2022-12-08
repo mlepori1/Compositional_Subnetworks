@@ -223,7 +223,6 @@ class BertClf(Base):
 
             else: raise ArgumentError("backbone not recognized")
             
-            # @todo: make sure this works
            # If the pretrained weights path is not None, then load up pretrained weights!
             if self.pretrained_weights["backbone"] != False:
                 if self.LM_init:
@@ -233,7 +232,6 @@ class BertClf(Base):
                 else:
                     self.backbone.load_state_dict(torch.load(self.pretrained_weights["backbone"]), strict=False)
 
-            # @todo: make sure this works
             # If you don't want to train the L0 backbone mask, freeze the mask
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
