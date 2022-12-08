@@ -1934,3 +1934,514 @@ def sn_task_2_count(condition='c'):
     xy, size, shape = all_xy, all_size, all_shape
 
     return xy, size, shape, color
+
+
+# Each image contains sets of objects. Within each set, objects are in contact. The number of objects in each set is constant across images.
+def sn_task_3_contact_count(condition='c', odd_one_out = "all"):
+    """
+    The rule is that 3 images contain N objects, all in contact.
+
+    odd_one_out determines which type of rule breaking is occuring in the odd one out.
+    There are three types of breaking that can occur:
+        (no_count) N +/- 1 objects
+        (no_contact) N Objects, one not in contact
+        (no_contact_count) N +/- 1 objects, one not in contact
+    Option "all" randomly samples these instances for generating the odd one out
+    """
+
+    n_samples = 4
+
+    n_groups = 1 #Fix the number of groups to be one for this task
+    n_objects_samples = np.random.randint(2, 4, size=n_groups)
+    n_objects = n_objects_samples.sum()
+
+    s = Shape()
+    shape = [[s.clone() for j in range(n_objects + 1)] for i in range(n_samples)]
+
+    # Need to set the values of shape properties, depending on how many shapes used
+    max_size = 0.9/np.sqrt(n_objects*4)
+    min_size = max_size/2
+
+    # At maximum, there will be one extra object in these examples. 
+    # Just always generate one extra color, and one extra size, which will sometimes be used, sometimes not
+    if 'c' in condition:
+        color = sample_random_colors(n_samples)
+        color = [np.ones([n_objects + 1, 3]) * color[i:i+1] for i in range(n_samples)]
+
+        color = sample_random_colors(int(n_objects + 1) * n_samples)
+        color = [np.ones([3]) * color[i:i+1] for i in range(int((n_objects + 1) * n_samples))]
+        color = np.stack(color).reshape(4, -1, 3)
+
+    else:
+        color = sample_random_colors(1)
+        color = [np.ones([n_objects + 1, 3]) * color for i in range(n_samples)]
+
+    size = np.random.rand() * (max_size-min_size) + min_size
+    size = size * np.ones([n_samples, n_objects + 1])
+
+    xy = []
+    for i in range(n_samples - 1):
+        n_obj_s = n_objects_samples
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups): # always 1 group
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+
+    # Define which way we will break the rule to create the odd one out
+    if odd_one_out == "all":
+        odd_one_out = np.random.choice(["no_count", "no_contact", "no_contact_count"])
+
+    if odd_one_out == "no_count":
+        # Everything is shape is still in contact, but there is either one more or one less shapes
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0] + np.random.choice([-1, 1]) # get either one more or one less object 
+        if n_objects_samples_odd == 1: n_objects_samples_odd = 3 # ensure always have at least two objects in contact
+        n_obj_s[0] = n_objects_samples_odd
+
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups): # always 1 group
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    if odd_one_out == "no_contact":
+        # Same number of shapes, but one is not in contact with the others
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0]
+        n_obj_s[0] += -1 # get one less object for the main cluster
+        n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups + 1):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    if odd_one_out == "no_contact_count":
+        # Same number of shapes, but one is not in contact with the others
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0] + np.random.choice([-2, 0])
+        if n_objects_samples_odd == 0: n_objects_samples_odd = 2 # Always keep at least two shapes total to distinguish contact and count properties
+        n_obj_s[0] = n_objects_samples_odd # adding one object in second group, so either need to take away 2 or 0 to change total count
+        n_objects_samples_odd += 1 # Account for the other group
+        n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object to violate contact
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups + 1):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    n_objects_samples = n_objects_samples[0]
+
+    size= list(size)
+    color=list(color)
+    shape = list(shape)
+
+    for i in range(3):
+        size[i] = size[i][:n_objects_samples]
+        shape[i] = shape[i][:n_objects_samples]
+        color[i] = color[i][:n_objects_samples]
+
+    size[-1] = size[-1][:n_objects_samples_odd] 
+    shape[-1] = shape[-1][:n_objects_samples_odd]
+    color[-1] = color[-1][:n_objects_samples_odd]
+
+    return xy, size, shape, color
+
+# Each image contains sets of objects. Within each set, objects are in contact. 
+def sn_task_3_contact(condition='c'):
+    """
+    The rule is that 3 images contain objects that are all in contact.
+
+        (contact_count) N objects in contact (+)
+        (no_count) N +/- 1 objects contact(+), ensures at least 2 objects
+        (no_contact) N Objects, one not in contact (-)
+        (no_contact_count) N +/- 1 objects, one not in contact (-)
+
+    """
+
+    n_samples = 4
+
+    n_groups = 1 #Fix the number of groups to be one for this task
+    n_objects_samples = np.random.randint(2, 4, size=n_groups)
+    n_objects = n_objects_samples.sum()
+
+    s = Shape()
+    shape = [[s.clone() for j in range(n_objects + 1)] for i in range(n_samples)]
+
+    # Need to set the values of shape properties, depending on how many shapes used
+    max_size = 0.9/np.sqrt(n_objects*4)
+    min_size = max_size/2
+
+    # At maximum, there will be one extra object in these examples. 
+    # Just always generate one extra color, and one extra size, which will sometimes be used, sometimes not
+    if 'c' in condition:
+        color = sample_random_colors(n_samples)
+        color = [np.ones([n_objects + 1, 3]) * color[i:i+1] for i in range(n_samples)]
+
+        color = sample_random_colors(int(n_objects + 1) * n_samples)
+        color = [np.ones([3]) * color[i:i+1] for i in range(int((n_objects + 1) * n_samples))]
+        color = np.stack(color).reshape(4, -1, 3)
+
+    else:
+        color = sample_random_colors(1)
+        color = [np.ones([n_objects + 1, 3]) * color for i in range(n_samples)]
+
+    size = np.random.rand() * (max_size-min_size) + min_size
+    size = size * np.ones([n_samples, n_objects + 1])
+
+    xy = []
+    objects_per_image = [] # Track number of objects per image
+
+    for i in range(n_samples - 1):
+        condition = np.random.choice(["contact_count", "no_count"])
+        if condition == "contact_count":
+            n_obj_s = n_objects_samples
+            objects_per_image.append(n_obj_s[0])
+            xy_ = []
+            n = 0
+            positions_ = []
+            clump_size_ = []
+            for j in range(n_groups): # always 1 group
+                positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+                n = n + n_obj_s[j]
+
+                positions_.append(positions)
+                clump_size_.append(clump_size)
+
+            clump_size = np.stack(clump_size_, 0)*1.1
+            xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+            xy0 = xy0[0]
+            for j in range(n_groups):
+                xy_.append(positions_[j] + xy0[j:j+1,:])
+
+            xy.append(np.concatenate(xy_, 0))
+
+        if condition == "no_count":
+            # Everything is shape is still in contact, but there is either one more or one less shapes
+
+            n_obj_s = np.copy(n_objects_samples)
+            n_objects_samples_odd = n_obj_s[0] + np.random.choice([-1, 1]) # get either one more or one less object 
+            if n_objects_samples_odd == 1: n_objects_samples_odd = 3 # ensure always have at least two objects in contact
+            n_obj_s[0] = n_objects_samples_odd
+
+            objects_per_image.append(n_objects_samples_odd)
+            xy_ = []
+            n = 0
+            positions_ = []
+            clump_size_ = []
+            for j in range(n_groups): # always 1 group
+                positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+                n = n + n_obj_s[j]
+
+                positions_.append(positions)
+                clump_size_.append(clump_size)
+
+            clump_size = np.stack(clump_size_, 0)*1.1
+            xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+            xy0 = xy0[0]
+            for j in range(n_groups):
+                xy_.append(positions_[j] + xy0[j:j+1,:])
+
+            xy.append(np.concatenate(xy_, 0))
+
+    # Now do the odd one out
+    odd_one_out = np.random.choice(["no_contact", "no_contact_count"])
+    if odd_one_out == "no_contact":
+        # Same number of shapes, but one is not in contact with the others
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0]
+        n_obj_s[0] += -1 # get one less object for the main cluster
+        n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object
+        objects_per_image.append(n_objects_samples[0])
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups + 1):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    if odd_one_out == "no_contact_count":
+        # Same number of shapes, but one is not in contact with the others
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0] + np.random.choice([-2, 0])
+        if n_objects_samples_odd == 0: n_objects_samples_odd = 2 # Always keep at least two shapes total to distinguish contact and count properties
+        n_obj_s[0] = n_objects_samples_odd # adding one object in second group, so either need to take away 2 or 0 to change total count
+        n_objects_samples_odd += 1 # Account for the other group
+        n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object to violate contact
+
+        objects_per_image.append(n_objects_samples_odd)
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups + 1):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    n_objects_samples = n_objects_samples[0]
+
+    size= list(size)
+    color=list(color)
+    shape = list(shape)
+
+    for i in range(4):
+        size[i] = size[i][:objects_per_image[i]]
+        shape[i] = shape[i][:objects_per_image[i]]
+        color[i] = color[i][:objects_per_image[i]]
+
+
+    return xy, size, shape, color
+
+# Each image contains sets of objects. The number of objects in each set is constant across images.
+def sn_task_3_count(condition='c'):
+    """
+    The rule is that 3 images contain objects that are all in contact.
+
+        (contact_count) N objects in contact (+)
+        (no_count) N +/- 1 objects contact(-), ensures at least 2 objects
+        (no_contact) N Objects, one not in contact (+)
+        (no_contact_count) N +/- 1 objects, one not in contact (-)
+
+    """
+
+    n_samples = 4
+
+    n_groups = 1 #Fix the number of groups to be one for this task
+    n_objects_samples = np.random.randint(2, 4, size=n_groups)
+    n_objects = n_objects_samples.sum()
+
+    s = Shape()
+    shape = [[s.clone() for j in range(n_objects + 1)] for i in range(n_samples)]
+
+    # Need to set the values of shape properties, depending on how many shapes used
+    max_size = 0.9/np.sqrt(n_objects*4)
+    min_size = max_size/2
+
+    # At maximum, there will be one extra object in these examples. 
+    # Just always generate one extra color, and one extra size, which will sometimes be used, sometimes not
+    if 'c' in condition:
+        color = sample_random_colors(n_samples)
+        color = [np.ones([n_objects + 1, 3]) * color[i:i+1] for i in range(n_samples)]
+
+        color = sample_random_colors(int(n_objects + 1) * n_samples)
+        color = [np.ones([3]) * color[i:i+1] for i in range(int((n_objects + 1) * n_samples))]
+        color = np.stack(color).reshape(4, -1, 3)
+
+    else:
+        color = sample_random_colors(1)
+        color = [np.ones([n_objects + 1, 3]) * color for i in range(n_samples)]
+
+    size = np.random.rand() * (max_size-min_size) + min_size
+    size = size * np.ones([n_samples, n_objects + 1])
+
+    xy = []
+    objects_per_image = [] # Track number of objects per image
+
+    for i in range(n_samples - 1):
+        condition = np.random.choice(["contact_count", "no_contact"])
+        if condition == "contact_count":
+            n_obj_s = n_objects_samples
+            objects_per_image.append(n_obj_s[0])
+            xy_ = []
+            n = 0
+            positions_ = []
+            clump_size_ = []
+            for j in range(n_groups): # always 1 group
+                positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+                n = n + n_obj_s[j]
+
+                positions_.append(positions)
+                clump_size_.append(clump_size)
+
+            clump_size = np.stack(clump_size_, 0)*1.1
+            xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+            xy0 = xy0[0]
+            for j in range(n_groups):
+                xy_.append(positions_[j] + xy0[j:j+1,:])
+
+            xy.append(np.concatenate(xy_, 0))
+
+        if condition == "no_contact":
+            # Same number of shapes, but one is not in contact with the others
+
+            n_obj_s = np.copy(n_objects_samples)
+            n_objects_samples_odd = n_obj_s[0]
+            n_obj_s[0] += -1 # get one less object for the main cluster
+            n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object
+            objects_per_image.append(n_objects_samples[0])
+            xy_ = []
+            n = 0
+            positions_ = []
+            clump_size_ = []
+            for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+                positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+                n = n + n_obj_s[j]
+
+                positions_.append(positions)
+                clump_size_.append(clump_size)
+
+            clump_size = np.stack(clump_size_, 0)*1.1
+            xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+            xy0 = xy0[0]
+            for j in range(n_groups + 1):
+                xy_.append(positions_[j] + xy0[j:j+1,:])
+
+            xy.append(np.concatenate(xy_, 0))
+
+
+    # Now do the odd one out
+    odd_one_out = np.random.choice(["no_count", "no_contact_count"])
+
+    if odd_one_out == "no_count":
+        # Everything is shape is still in contact, but there is either one more or one less shapes
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0] + np.random.choice([-1, 1]) # get either one more or one less object 
+        if n_objects_samples_odd == 1: n_objects_samples_odd = 3 # ensure always have at least two objects in contact
+        n_obj_s[0] = n_objects_samples_odd
+
+        objects_per_image.append(n_objects_samples_odd)
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups): # always 1 group
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    if odd_one_out == "no_contact_count":
+        # Same number of shapes, but one is not in contact with the others
+
+        n_obj_s = np.copy(n_objects_samples)
+        n_objects_samples_odd = n_obj_s[0] + np.random.choice([-2, 0])
+        if n_objects_samples_odd == 0: n_objects_samples_odd = 2 # Always keep at least two shapes total to distinguish contact and count properties
+        n_obj_s[0] = n_objects_samples_odd # adding one object in second group, so either need to take away 2 or 0 to change total count
+        n_objects_samples_odd += 1 # Account for the other group
+        n_obj_s = np.append(n_obj_s, [1]) # add in a second group, with one object to violate contact
+
+        objects_per_image.append(n_objects_samples_odd)
+        xy_ = []
+        n = 0
+        positions_ = []
+        clump_size_ = []
+        for j in range(n_groups + 1): # n_groups is always 1, but now were adding a second
+            positions, clump_size = sample_contact_many(shape[i][n:n + n_obj_s[j]], size[i, n:n + n_obj_s[j]])
+            n = n + n_obj_s[j]
+
+            positions_.append(positions)
+            clump_size_.append(clump_size)
+
+        clump_size = np.stack(clump_size_, 0)*1.1
+        xy0 = sample_positions_bb(clump_size[None,:,:], n_sample_min=1)
+        xy0 = xy0[0]
+        for j in range(n_groups + 1):
+            xy_.append(positions_[j] + xy0[j:j+1,:])
+
+        xy.append(np.concatenate(xy_, 0))
+
+    n_objects_samples = n_objects_samples[0]
+
+    size= list(size)
+    color=list(color)
+    shape = list(shape)
+
+    for i in range(4):
+        size[i] = size[i][:objects_per_image[i]]
+        shape[i] = shape[i][:objects_per_image[i]]
+        color[i] = color[i][:objects_per_image[i]]
+
+
+    return xy, size, shape, color

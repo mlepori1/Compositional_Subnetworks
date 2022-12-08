@@ -180,7 +180,13 @@ TASKS={
     111: "sn_task_2_count",
     112: "sn_task_2_inside_count_both_ooo",
     113: "sn_task_2_inside_count_ablate_inside",
-    114: "sn_task_2_inside_count_ablate_count"
+    114: "sn_task_2_inside_count_ablate_count",
+    115: "sn_task_3_contact_count",
+    116: "sn_task_3_contact",
+    117: "sn_task_3_count",
+    118: "sn_task_3_contact_count_both_ooo",
+    119: "sn_task_3_contact_count_ablate_contact",
+    120: "sn_task_3_contact_count_ablate_count",
 }
 
 

@@ -232,7 +232,18 @@ TASKS=[
     ["sn_task_2_inside_count_ablate_inside", partial(sn_task_2_inside_count, odd_one_out="no_count")],
     #  "Same as inside count, with the odd one out always being outside. Ablating count should still achieve high perf."
     ["sn_task_2_inside_count_ablate_count", partial(sn_task_2_inside_count, odd_one_out="no_inside")],
-
+    # "3 images contain N objects, all in contact. OOO either has a diff number of shapes and/or one not in contact"
+    ["sn_task_3_contact_count", sn_task_3_contact_count],
+    #"3 images contain objects all in contact. OOO either has one not in contact"
+    ["sn_task_3_contact", sn_task_3_contact],
+    # "3 images contain N objects. OOO either has one not with != N objects"
+    ["sn_task_3_count", sn_task_3_count]
+    # Same as contact count, but the OOO examples always fail both conditions
+    ["sn_task_3_contact_count_both_ooo", partial(sn_task_3_contact_count, odd_one_out="no_contact_count")],
+    #  "Same as contact count, with the odd one out always having a different number of shapes. Ablating contact should still achieve high perf."
+    ["sn_task_3_contact_count_ablate_contact", partial(sn_task_3_contact_count, odd_one_out="no_count")],
+    #  "Same as contcct count, with the odd one out always having one shape not in contact. Ablating count should still achieve high perf."
+    ["sn_task_3_contact_count_ablate_count", partial(sn_task_3_contact_count, odd_one_out="no_contact")],
 ]
 
 
