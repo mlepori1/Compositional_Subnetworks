@@ -106,7 +106,7 @@ def cli_main():
     base_pretrained_weights = copy.deepcopy(args.pretrained_weights)
     base_train_masks = copy.deepcopy(args.train_masks)
     base_train_weights = copy.deepcopy(args.train_weights)
-    base_LM_init = args.LM_init
+    base_LM_init = copy.deepcopy(args.LM_init)
 
     model_id = 0
     df = pd.DataFrame()
@@ -145,8 +145,6 @@ def cli_main():
 
                         print(model.hparams)
 
-                        fit_kwargs = {}
-
                         os.makedirs(args.exp_dir, exist_ok=True)
                         os.makedirs(args.results_dir, exist_ok=True)
                         save_config(args.__dict__, os.path.join(args.exp_dir, 'config.yaml'))
@@ -175,7 +173,7 @@ def cli_main():
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
 
-                        trainer.fit(model, datamodule, **fit_kwargs)
+                        trainer.fit(model, datamodule)
 
                         # Load up best model if pretraining
                         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)

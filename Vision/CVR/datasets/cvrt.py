@@ -29,8 +29,6 @@ class CVRTDataModule(DataModuleBase):
                                                 batch_size,
         )
 
-        print("CVRTDATAMODULE")
-        print(task)
         transform = self._default_transforms()
 
         self.train_set = CVRT(data_dir, task, split='train', n_samples=n_samples, image_size=128, transform=transform)

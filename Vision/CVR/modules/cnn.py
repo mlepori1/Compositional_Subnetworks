@@ -8,13 +8,6 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 from models.resnet import *
-from models.vits import vit_small as vit_small_moco
-
-from models.scn import SCL
-from models.wren import WReN
-from models.lenet import LeNet
-from models.vgg11 import VGG11
-#from models.mlpEncoder import MLP
 from models.decisionMLP import MLP, L0Linear
 
 class Base(pl.LightningModule):
@@ -164,19 +157,11 @@ class CNN(Base):
         task_embedding: int = 0, #64
         **kwargs
     ):
-        """
-        Args:
-            input_height: height of the images
-            kl_coeff: coefficient for kl term of the loss
-            lr: learning rate for Adam
-        """
+
         self.save_hyperparameters()
 
         super(CNN, self).__init__()
 
-        feature_extract = True
-        num_classes = 1
-        use_pretrained = False
         self.mlp_hidden_dim = mlp_hidden_dim
         self.mlp_out_dim = mlp_dim
         self.l0_components = kwargs["l0_components"] # High level, are the backbone and mlp l0
@@ -229,8 +214,6 @@ class CNN(Base):
             if backbone == "L0resnet18": self.backbone = resnet18(isL0=True, mask_init_value=self.l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
             elif backbone == "L0resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
             elif backbone == "L0wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "L0vgg11": self.backbone = VGG11(isL0=True, mask_init_value=self.l0_init, embed_dim=8192, ablate_mask=self.ablate_mask) 
-            elif backbone == "L0lenet": self.backbone = LeNet(isL0=True, mask_init_value=self.l0_init, embed_dim=7680)
             else: raise ArgumentError("backbone not recognized")
             
             if self.pretrained_weights["backbone"] != False:
@@ -280,8 +263,6 @@ class CNN(Base):
         else:
             self.mlp = MLP(num_ftrs + task_embedding, self.mlp_hidden_dim, self.mlp_out_dim, isL0=False)
 
-
-
         if self.pretrained_weights["mlp"]:
             print("Loading MLP weights...")
             self.mlp.load_state_dict(torch.load(self.pretrained_weights["mlp"]), strict=False)
@@ -304,11 +285,6 @@ class CNN(Base):
     def init_networks(self):
         # define encoder, decoder, fc_mu and fc_var
         pass
-
-    def calibration_mode(self):
-        # Freeze every single weight, bias, and mask weight in an L0 model
-        self.backbone.calibration_mode()
-        self.mlp.calibration_mode()
 
     def forward(self, x, task_idx=None):
 

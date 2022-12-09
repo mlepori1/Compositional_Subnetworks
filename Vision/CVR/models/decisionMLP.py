@@ -6,7 +6,7 @@ import math
 import functools
 
 class L0Linear(nn.Module):
-    """The hard concrete equivalent of ``nn.Linear``.
+    """The continuous sparsification version of ``nn.Linear``.
         Pruning is unstructured, with weights masked at
         the individual parameter level, not neuron level
     """

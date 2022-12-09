@@ -141,8 +141,6 @@ def cli_main():
 
                         print(model.hparams)
 
-                        fit_kwargs = {}
-
                         os.makedirs(args.exp_dir, exist_ok=True)
                         os.makedirs(args.results_dir, exist_ok=True)
                         save_config(args.__dict__, os.path.join(args.exp_dir, 'config.yaml'))
@@ -171,7 +169,7 @@ def cli_main():
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
                         
 
-                        trainer.fit(model, datamodule, **fit_kwargs)
+                        trainer.fit(model, datamodule)
 
                         # Load up best model if pretraining
                         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
@@ -232,9 +230,6 @@ def cli_main():
                             args.train_weights[key] = False
 
                         for ablation in args.ablation_strategies:
-                            # Run BN calibration for each ablation type if using BatchNorm
-                            # Else, carry on to testing
-
                             if args.seed is not None:
                                 pl.seed_everything(args.seed)
 
@@ -257,6 +252,7 @@ def cli_main():
                                 eval_datamodule = dataset_type(**args.__dict__)
                             
                                 # During mask hparam search, only want to test on the validation sets
+                                # This is to allow us to find the right masking parameters.
                                 # Only during final testing do we want to see performance on test split
                                 if args.evaluation_type == "test":
                                     trainer.test(model=test_model, datamodule=eval_datamodule)

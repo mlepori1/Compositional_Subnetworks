@@ -239,7 +239,6 @@ if __name__=="__main__":
             "reflexives_across.pickle",
             "simple_reflexives.pickle"]
 
-            print(task)
             base_prefix = "singular_" if "3" in task else "plural_"
             flip_prefix = "plural_" if "3" in task else "singular_"
 
@@ -263,7 +262,7 @@ if __name__=="__main__":
             a_base_p_flip_sentences = np.array(a_base_p_flip_sentences)
             a_flip_p_base_sentences = np.array(a_flip_p_base_sentences)
 
-            # Do to small amonut of data, going to limit the train set to only 2500 examples, val to 200, and test to 200
+            # Due to small amonut of data, going to limit the train set to only 2500 examples, val to 200, and test to 200
      
             base_train_size = 2500
             base_val_size = 200

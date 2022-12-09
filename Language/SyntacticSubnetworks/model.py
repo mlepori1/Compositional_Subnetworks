@@ -131,12 +131,7 @@ class BertClf(Base):
         wd: float = 0,
         **kwargs
     ):
-        """
-        Args:
-            input_height: height of the images
-            kl_coeff: coefficient for kl term of the loss
-            lr: learning rate for Adam
-        """
+
         self.save_hyperparameters()
 
         super(BertClf, self).__init__()
@@ -249,8 +244,16 @@ class BertClf(Base):
                             layer.bias.requires_grad = False
 
             # If training the weights, but want to freeze early layers
+            # 0 indicates just loading embeddings
             if self.train_weights["backbone"] == True and self.freeze_until != -1:
-                modules = [self.backbone.embeddings, *self.backbone.encoder.layer[:self.freeze_until]]
+
+                if self.pretrained_weights["backbone"] == False: 
+                    raise ArgumentError("Freezing network without loading weights, this will freeze a random initialization!")
+                    
+                if self.freeze_until == 0:
+                    modules = [self.backbone.embeddings]
+                else:
+                    modules = [self.backbone.embeddings, *self.backbone.encoder.layer[:self.freeze_until]]
                 for module in modules:
                     for param in module.parameters():
                         param.requires_grad = False
