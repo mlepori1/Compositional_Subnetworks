@@ -1,0 +1,45 @@
+model: 'BERT_small'
+dataset: 'SyntaxDataModule'
+# trainer
+gpus: 1
+max_epochs: 90
+num_workers: 1
+log_every_n_steps: 100
+ckpt_period: 1
+seed_list: [1]
+early_stopping: 0
+refresh_rate: 10
+es_patience: 30
+check_val_every_n_epoch: 1
+#arch
+backbone: 'BERT_small'
+lr_list: [0.01, 0.0001]
+wd: 0.00
+# data 
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Language'
+train_task: None
+test_tasks: ['0', '1', '2', '3', '4']
+batch_size_list: [64]
+train_transform: null
+val_transform: null
+test_set: ''
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/BERT_Small/SVAgr_S_Experiments/'
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/BERT_Small/SVAgr_S_Experiments/'
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": True}
+train_masks: {"backbone": True}
+train_weights: {"backbone": False}
+pretrained_weights: { 
+  "backbone": False
+  } # Need to set these in script
+l0_init_list: None # Need to set these in script
+l0_lambda: .00000001 # From Continuous Sparsification Paper
+max_temp: 200 # From Continuous Sparsification Paper
+l0_stage_list: None # Need to set these in script
+ablation_strategies: ["zero", "random", "none"] # Include all ablation for tests, including no ablation
+evaluation_type: "validate"
+LM_init: False # Denotes whether to initialize the model with pretrained LM parameters
+freeze_until: -1
+save_models: False
+use_last: True

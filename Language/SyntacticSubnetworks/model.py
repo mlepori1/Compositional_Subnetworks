@@ -160,6 +160,8 @@ class BertClf(Base):
             if backbone == "BERT_small": 
                 bertConfig = BertConfig.from_pretrained("prajjwal1/bert-small")
                 bertConfig.l0 = False # added in for continuous sparsification
+                bertConfig.hidden_dropout_prob = 0.0
+                bertConfig.attention_probs_dropout_prob = 0.0
                 self.backbone = BertModel(config=bertConfig)
                 self.tokenizer = BertTokenizer.from_pretrained("prajjwal1/bert-small")
 
@@ -213,6 +215,8 @@ class BertClf(Base):
                 bertConfig.l0_start = self.l0_stages
                 bertConfig.mask_init_value = self.l0_init
                 bertConfig.ablate_mask = self.ablate_mask
+                bertConfig.hidden_dropout_prob = 0.0
+                bertConfig.attention_probs_dropout_prob = 0.0
                 self.backbone = BertModel(config=bertConfig)
                 self.tokenizer = BertTokenizer.from_pretrained("prajjwal1/bert-small")
 

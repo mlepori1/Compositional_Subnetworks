@@ -24,6 +24,8 @@ Language/SyntacticSubnetworks/err/
 Language/SyntacticSubnetworks/out/
 
 Language/SyntacticSubnetworks/logs/
+Language/Models
+
 *.pyc
 
 # Jupyter Notebook
