@@ -43,7 +43,7 @@ class Base(pl.LightningModule):
         masks = []
         if self.train_masks["backbone"]:
             for layer in self.backbone.modules():
-                if hasattr(layer, "mask"):
+                if hasattr(layer, "mask_weight"):
                     masks.append(layer.mask)
         l0_loss = sum(m.sum() for m in masks)
         return (error_loss + (self.lamb * l0_loss), l0_loss)  
@@ -52,7 +52,7 @@ class Base(pl.LightningModule):
     def get_l0_norm(self):
         masks = []
         for layer in self.backbone.modules():
-            if hasattr(layer, "mask"):
+            if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
         l0_norm = sum(m.sum() for m in masks)
         return l0_norm
@@ -234,7 +234,7 @@ class BertClf(Base):
             # If you don't want to train the L0 backbone mask, freeze the mask
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
-                    if hasattr(layer, "mask"):
+                    if hasattr(layer, "mask_weight"):
                         layer.mask_weight.requires_grad = False
             
             # If you don't want to train the backbone weights, freeze em
@@ -264,6 +264,17 @@ class BertClf(Base):
             
             if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:
                 self.backbone.train(False)
+
+
+    def prune(self):
+        self.backbone.train(False) # For computing hard masks
+        for layer in self.backbone.modules():
+            if hasattr(layer, "mask_weight"):
+                mask = layer.compute_mask()   
+                layer.weight.data = layer.weight * mask # Prune
+                layer.init_mask()  # Reinitialize mask
+
+        self.backbone.train(True) # Ready to continue training
 
 
     def init_networks(self):

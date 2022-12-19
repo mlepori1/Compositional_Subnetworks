@@ -91,7 +91,7 @@ class L0Conv2d(nn.Module):
             self.mask = self.compute_mask()
             if self.ablate_mask == "random":
                 masked_weight = self.weight * self.mask # This will give you the inverse weights, 0's for ablated weights
-                masked_weight += (~self.mask.bool()).float() * self.random_weight# Invert the mask to target the remaining weights, make them random
+                masked_weight += (~self.mask.bool()).float() * self.random_weight # Invert the mask to target the remaining weights, make them random
             else:
                 masked_weight = self.weight * self.mask
         else:

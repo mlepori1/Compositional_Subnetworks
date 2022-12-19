@@ -16,7 +16,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 
-import modules
+from models.model import Model
 import datasets
 
 from utils import parse_args, save_config, find_best_epoch, process_results
@@ -74,10 +74,8 @@ def cli_main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-c", "--config", default=None, help="where to load YAML configuration", metavar="FILE")
-
     parser.add_argument('--exp_dir', type=str, default='../experiments/', help='experiment output directory')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
-    parser.add_argument('--model', type=str, default='CNN_VAE', help='self supervised training method')
     parser.add_argument('--dataset', type=str, default='SVHNSupDataModule', help='dataset to use for training')
     parser.add_argument('--ckpt_period', type=int, default=3, help='save checkpoints every')
     parser.add_argument('--early_stopping', type=int, default=0, help='0 = no early stopping')
@@ -92,7 +90,7 @@ def cli_main():
     parser = pl.Trainer.add_argparse_args(parser)
 
     # model args
-    model_type = vars(modules)[args.model]
+    model_type = Model
     parser = model_type.add_model_specific_args(parser)
 
     # dataset args
@@ -155,10 +153,10 @@ def cli_main():
                             model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, monitor=None, save_last=True)
                             callbacks = [model_checkpoint]
                         else:
-                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
+                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_loss', every_n_epochs=args.ckpt_period, save_last=True)
                             callbacks = [model_checkpoint]
                         if args.early_stopping!=0:
-                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
+                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_loss', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
                             callbacks.append(early_stopping)
                         if args.train_masks["backbone"] or args.train_masks["mlp"]:
                             callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
@@ -189,9 +187,13 @@ def cli_main():
                         if args.use_last == True:
                             # Get the last validation accuracy if we're using the last model
                             best_val_acc = metrics['metrics/val_acc'][-1]
+                            best_val_loss = metrics['metrics/val_loss'][-1]
+
                         else:
-                            best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
-                        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+                            best_val_loss = np.nanmax(metrics['metrics/val_loss'] + [0])
+                            best_val_acc = metrics['metrics/val_acc'][np.nanargmax(metrics['metrics/val_loss']]
+
+                        best_epoch = (np.nanargmax(metrics['metrics/val_loss'] + [0])+1) * args.ckpt_period
 
                         output_dict = {
                                 '0_Model_ID': model_id,
@@ -202,8 +204,11 @@ def cli_main():
                                 '0_model': args.model,
                                 '0_seed': args.seed,
                                 '0_dataset': args.dataset,
+                                '0_LM_init': args.LM_init,
+                                '0_freeze_until': args.freeze_until,
                                 '1_task': args.task,
                                 '2_val_acc': best_val_acc,
+                                '2_val_loss': best_val_loss,
                                 '2_best_epoch': best_epoch,
                                 '2_used_last_model': args.use_last,
                                 '3_backbone': args.backbone,

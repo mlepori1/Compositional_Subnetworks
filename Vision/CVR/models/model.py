@@ -9,12 +9,12 @@ from torch.nn import functional as F
 
 from models.resnet import *
 from models.decisionMLP import MLP, L0Linear
+from transformers import ViTModel, ViTConfig
 
 class Base(pl.LightningModule):
 
     def load_finetune_weights(self, checkpoint):
         print("*"*10 + "load finetune weights ...")
-        # CNN.load_fron
         model_temp = self.__class__.load_from_checkpoint(checkpoint)
         # model.load_finetune_weights(model_temp)
         self.backbone.load_state_dict(model_temp.backbone.state_dict())
@@ -58,11 +58,11 @@ class Base(pl.LightningModule):
         masks = []
         if self.train_masks["mlp"]:
             for layer in self.mlp.modules():
-                if hasattr(layer, "mask"):
+                if hasattr(layer, "mask_weight"):
                     masks.append(layer.mask)
         if self.train_masks["backbone"]:
             for layer in self.backbone.modules():
-                if hasattr(layer, "mask"):
+                if hasattr(layer, "mask_weight"):
                     masks.append(layer.mask)
         l0_loss = sum(m.sum() for m in masks)
         return (error_loss + (self.lamb * l0_loss), l0_loss)  
@@ -71,10 +71,10 @@ class Base(pl.LightningModule):
     def get_l0_norm(self):
         masks = []
         for layer in self.mlp.modules():
-                if hasattr(layer, "mask"):
+                if hasattr(layer, "mask_weight"):
                     masks.append(layer.mask)
         for layer in self.backbone.modules():
-            if hasattr(layer, "mask"):
+            if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
         l0_norm = sum(m.sum() for m in masks)
         return l0_norm
@@ -144,7 +144,7 @@ class Base(pl.LightningModule):
 
 
 
-class CNN(Base):
+class Model(Base):
 
     def __init__(
         self,
@@ -160,7 +160,7 @@ class CNN(Base):
 
         self.save_hyperparameters()
 
-        super(CNN, self).__init__()
+        super(Model, self).__init__()
 
         self.mlp_hidden_dim = mlp_hidden_dim
         self.mlp_out_dim = mlp_dim
@@ -181,11 +181,18 @@ class CNN(Base):
 
         # set up model
         if self.l0_components["backbone"] == False:
-            if backbone == "resnet18": self.backbone = resnet18(isL0=False, mask_init_value=1, embed_dim=1024)
             elif backbone == "resnet50": self.backbone = resnet50(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d) # Note: Instance norm doesn't use affine transform or track running statistics
             elif backbone == "wideresnet50": self.backbone = wide_resnet50_2(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "vgg11": self.backbone = VGG11(isL0=False, mask_init_value=1, embed_dim=8192)
-            elif backbone == "lenet": self.backbone = LeNet(isL0=False, mask_init_value=1, embed_dim=7680)
+            elif backbone == "vit": 
+                # Set up ViT config
+                config = ViTConfig(num_hidden_layers=6, hidden_dropout_prob=0, attention_probs_dropout_prob=0)
+                config.l0 = False
+                config.layerL0 = -1
+                config.mask_init_value=-1
+                config.ablate_mask=None
+
+                self.backbone = ViTModel(config)
+                self.backbone.embed_dim = config.hidden_size
             else: raise ArgumentError("backbone not recognized")
 
             num_ftrs = self.backbone.embed_dim
@@ -199,10 +206,9 @@ class CNN(Base):
                 self.backbone.train(False)
 
                 for layer in self.backbone.modules():
-                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
-                        if layer.weight != None:
-                            layer.weight.requires_grad = False
-                        if layer.bias != None: 
+                    if hasattr(layer, "weight") and layer.weight != None:
+                        layer.weight.requires_grad = False
+                    if hasattr(layer, "bias") and layer.bias != None: 
                             layer.bias.requires_grad = False
 
         elif self.l0_components["backbone"] == True:
@@ -211,9 +217,20 @@ class CNN(Base):
             self.l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            if backbone == "L0resnet18": self.backbone = resnet18(isL0=True, mask_init_value=self.l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
-            elif backbone == "L0resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "L0wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
+            if backbone == "resnet18": self.backbone = resnet18(isL0=True, mask_init_value=self.l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
+            elif backbone == "resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
+            elif backbone == "wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
+            elif backbone == "vit": 
+                # Set up ViT config
+                config = ViTConfig(num_hidden_layers=6, hidden_dropout_prob=0, attention_probs_dropout_prob=0)
+                config.l0 = False
+                config.layerL0 = l0_stages
+                config.mask_init_value=self.l0_init
+                config.ablate_mask=self.ablate_mask
+
+                self.backbone = ViTModel(config)
+                self.backbone.embed_dim = config.hidden_size
+
             else: raise ArgumentError("backbone not recognized")
             
             if self.pretrained_weights["backbone"] != False:
@@ -222,17 +239,15 @@ class CNN(Base):
             # If you don't want to train the L0 backbone mask, freeze the mask
             if self.train_masks["backbone"] == False:
                 for layer in self.backbone.modules():
-                    if type(layer) == L0Conv2d: # freeze conv layers
-                        if layer.l0 == True: # Only decision is whether to freeze mask
-                            layer.mask_weight.requires_grad = False
+                    if hasattr(layer,"l0") and layer.l0 == True: # freeze l0 layers
+                        layer.mask_weight.requires_grad = False
             
             # If you don't want to train the backbone weights, freeze em
             if self.train_weights["backbone"] == False:
                 for layer in self.backbone.modules():
-                    if type(layer) == L0Conv2d or type(layer) == nn.BatchNorm2d:
-                        if layer.weight != None: # freeze all weights and biases
-                            layer.weight.requires_grad = False
-                        if layer.bias != None: 
+                    if hasattr(layer, "weight") and layer.weight != None:
+                        layer.weight.requires_grad = False
+                    if hasattr(layer, "bias") and layer.bias != None: 
                             layer.bias.requires_grad = False
             
             if self.train_masks["backbone"] == False and self.train_weights["backbone"] == False:

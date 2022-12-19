@@ -3,7 +3,7 @@ import sys
 import yaml
 import argparse
 
-def parse_args(parser, argv=None):
+def parse_args(parser, argv=None, config=None):
 
     if argv is None:
         argv = sys.argv[1:]
@@ -12,6 +12,9 @@ def parse_args(parser, argv=None):
     # args = parser.parse_args(argv)
     
     config_vars = {}
+    
+    if config is not None:
+        args.config = config
     
     if args.config is not None:
         with open(args.config, 'r') as stream:

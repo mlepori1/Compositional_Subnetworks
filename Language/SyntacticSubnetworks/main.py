@@ -159,10 +159,10 @@ def cli_main():
                             model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, monitor=None, save_last=True)
                             callbacks = [model_checkpoint]
                         else:
-                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_acc', every_n_epochs=args.ckpt_period, save_last=True)
+                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_loss', every_n_epochs=args.ckpt_period, save_last=True)
                             callbacks = [model_checkpoint]
                         if args.early_stopping!=0:
-                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_acc', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
+                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_loss', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
                             callbacks.append(early_stopping)
                         if args.train_masks["backbone"]:
                             callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
@@ -188,9 +188,13 @@ def cli_main():
                         if args.use_last == True:
                             # Get the last validation accuracy if we're using the last model
                             best_val_acc = metrics['metrics/val_acc'][-1]
+                            best_val_loss = metrics['metrics/val_loss'][-1]
+
                         else:
-                            best_val_acc = np.nanmax(metrics['metrics/val_acc'] + [0])
-                        best_epoch = (np.nanargmax(metrics['metrics/val_acc'] + [0])+1) * args.ckpt_period
+                            best_val_loss = np.nanmax(metrics['metrics/val_loss'] + [0])
+                            best_val_acc = metrics['metrics/val_acc'][np.nanargmax(metrics['metrics/val_loss']]
+
+                        best_epoch = (np.nanargmax(metrics['metrics/val_loss'] + [0])+1) * args.ckpt_period
 
                         output_dict = {
                                 '0_Model_ID': model_id,
@@ -205,6 +209,7 @@ def cli_main():
                                 '0_freeze_until': args.freeze_until,
                                 '1_task': args.task,
                                 '2_val_acc': best_val_acc,
+                                '2_val_loss': best_val_loss,
                                 '2_best_epoch': best_epoch,
                                 '2_used_last_model': args.use_last,
                                 '3_backbone': args.backbone,
