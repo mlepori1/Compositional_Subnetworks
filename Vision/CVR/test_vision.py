@@ -17,7 +17,7 @@ from pytorch_lightning.callbacks import TQDMProgressBar
 from main import MetricsCallback, TemperatureCallback
 
 
-import models.model import Model
+from models.model import Model
 import datasets
 
 from utils import parse_args, save_config, find_best_epoch, process_results
@@ -39,7 +39,8 @@ def setup_args(config):
     dataset_type = vars(datasets)[args.dataset]
     parser = dataset_type.add_dataset_specific_args(parser)
 
-    args = parse_args(parser, argv)
+    args = parse_args(parser, config=config)
+
     return args, dataset_type, model_type
 
 def setup_training(args, dataset_type, model_type):
@@ -54,8 +55,6 @@ def setup_training(args, dataset_type, model_type):
                     for l0_init in args.l0_init_list:
 
                         # Increment model ID for next training
-                        model_id += 1
-
                         args.task = args.train_task
 
                         args.lr = lr
@@ -97,7 +96,7 @@ def setup_training(args, dataset_type, model_type):
                         callbacks.append(metrics_callback)
 
                         trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
-                        return model, trainer, datamodule
+                        return model, trainer, datamodule, model_checkpoint
 
 def setup_test_model(args, best_model, ablation):
     trained_weights = {
@@ -135,13 +134,12 @@ def test_training():
     # Ensure that weights change while training, and that no mask_weights exist
     config = "configs/tests/test_weight_train.yaml"
 
-
-    for backbone_model in ["resnet50", "wideresnet50", "ViT"]:
-
+    for backbone_model in ["resnet50", "wideresnet50", "vit"]:
+        
         args, dataset_type, model_type = setup_args(config)
         args.backbone = backbone_model
 
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
     
         ### TEST: No masks initialized in the networks
         for layer in model.backbone.modules():
@@ -154,17 +152,18 @@ def test_training():
         mlp_weight = copy.deepcopy(model.mlp.model[0].weight.data)
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
             bb_weight = copy.deepcopy(model.backbone.conv1.weight.data)
-        elif args.backbone == "ViT":
+        elif args.backbone == "vit":
             bb_weight = copy.deepcopy(model.backbone.encoder.layer[0].intermediate.dense.weight.data)
 
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-        assert mlp_weight != best_model.mlp.model[0].weight.data
+        # Make sure at least 50% of weights have changed after training
+        assert torch.sum(mlp_weight != best_model.mlp.model[0].weight.data) > len(mlp_weight.reshape(-1)) * .5
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            assert bb_weight != best_model.backbone.conv1.weight.data
-        elif args.backbone == "ViT":
-            assert bb_weight != best_model.backbone.encoder.layer[0].intermediate.dense.weight.data
+            assert torch.sum(bb_weight != best_model.backbone.conv1.weight.data) > len(bb_weight.reshape(-1)) * .5
+        elif args.backbone == "vit":
+            assert torch.sum(bb_weight != best_model.backbone.encoder.layer[0].intermediate.dense.weight.data) > len(bb_weight.reshape(-1)) * .5
 
         ablation = "none"
 
@@ -173,24 +172,23 @@ def test_training():
         test_model = model_type(**args.__dict__)
 
         ## Test test_model intialization
-        assert test_model.mlp.model[0].weight.data == best_model.mlp.model[0].weight.data
+        
+        assert torch.all(test_model.mlp.model[0].weight.data == best_model.mlp.model[0].weight.data)
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            assert test_model.backbone.conv1.weight.data == best_model.backbone.conv1.weight.data
-        elif args.backbone == "ViT":
-            assert test_model.backbone.encoder.layer[0].intermediate.dense.weight.data == best_model.backbone.encoder.layer[0].intermediate.dense.weight.data
+            assert torch.all(test_model.backbone.conv1.weight.data == best_model.backbone.conv1.weight.data)
+        elif args.backbone == "vit":
+            assert torch.all(test_model.backbone.encoder.layer[0].intermediate.dense.weight.data == best_model.backbone.encoder.layer[0].intermediate.dense.weight.data)
 
 def test_resnet_mask_training():
     # Ensure that mask weights change during training, and that regular weights don't
     config = "configs/tests/RN_test_mask_train.yaml"
-
-    args = parse_args(parser, config=config) # Here is where variables from the config file override command line args
     
     for backbone_model in ["resnet50", "wideresnet50"]:
         args, dataset_type, model_type = setup_args(config)
 
         args.backbone = backbone_model
 
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
                             
         ## TEST: Weights stay the same after training, Mask weights change
         mlp_weight = copy.deepcopy(model.mlp.model[0].weight.data)
@@ -203,20 +201,20 @@ def test_resnet_mask_training():
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-        assert mlp_weight == best_model.mlp.model[0].weight.data
+        assert torch.all(mlp_weight == best_model.mlp.model[0].weight.data)
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            assert bb_weight == best_model.backbone.conv1.weight.data
-        assert mlp_mask != best_model.mlp.model[0].mask_weight.data
+            assert torch.all(bb_weight == best_model.backbone.conv1.weight.data)
+        assert torch.sum(mlp_mask != best_model.mlp.model[0].mask_weight.data) > len(mlp_mask.reshape(-1)) * .5
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            assert bb_mask != best_model.backbone.conv1.mask_weight.data
+            assert torch.sum(bb_mask != best_model.backbone.conv1.mask_weight.data) > len(bb_mask.reshape(-1)) * .5
 
 def test_vit_mask_training():
-        # Ensure that weights change while training, and that no mask_weights exist
+    # Ensure that weights change while training, and that no mask_weights exist
     config = "configs/tests/ViT_test_mask_train.yaml"
  
     args, dataset_type, model_type = setup_args(config)
 
-    model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+    model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
                         
     ## TEST: Weights stay the same after training, Mask weights change
     mlp_weight = copy.deepcopy(model.mlp.model[0].weight.data)
@@ -228,11 +226,11 @@ def test_vit_mask_training():
     trainer.fit(model, datamodule)
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-    assert mlp_weight == best_model.mlp.model[0].weight.data
-    assert mlp_mask != best_model.mlp.model[0].mask_weight.data
+    assert torch.all(mlp_weight == best_model.mlp.model[0].weight.data)
+    assert torch.sum(mlp_mask != best_model.mlp.model[0].mask_weight.data) > len(mlp_mask.reshape(-1)) * .5
 
-    assert bb_weight == best_model.backbone.encoder.layer[0].intermediate.dense.weight.data
-    assert bb_mask != best_model.backbone.encoder.layer[0].intermediate.dense.mask_weight.data
+    assert torch.all(bb_weight == best_model.backbone.encoder.layer[0].intermediate.dense.weight.data)
+    assert torch.sum(bb_mask != best_model.backbone.encoder.layer[0].intermediate.dense.mask_weight.data) > len(bb_mask.reshape(-1)) * .5
 
 def test_resnet_mask_configuration():
     # Test L0 configurations
@@ -246,7 +244,7 @@ def test_resnet_mask_configuration():
 
         args.backbone = backbone_model
 
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
 
         ## TEST: Stage 3 is static, stage 4 masks change
         for layer in model.backbone.layer3.modules():
@@ -259,9 +257,9 @@ def test_resnet_mask_configuration():
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
 
-        assert bb_weight_3 == best_model.backbone.layer3[0].conv1.weight.data
-        assert bb_mask_4 != best_model.backbone.layer4[0].conv1.mask_weight.data
-        assert bb_weight_4 == best_model.backbone.layer4[0].conv1.weight.data
+        assert torch.all(bb_weight_3 == best_model.backbone.layer3[0].conv1.weight.data)
+        assert torch.sum(bb_mask_4 != best_model.backbone.layer4[0].conv1.mask_weight.data) > len(bb_mask_4.reshape(-1)) * .5
+        assert torch.all(bb_weight_4 == best_model.backbone.layer4[0].conv1.weight.data)
 
 def test_vit_mask_configuration():
     # Test L0 configurations
@@ -272,10 +270,10 @@ def test_vit_mask_configuration():
 
     args, dataset_type, model_type = setup_args(config)
 
-    model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+    model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
 
     ## TEST: Layer 3 is static, Layer 4 masks change
-    for layer in model.backbone.encoder.layer[3].modules():
+    for layer in model.backbone.encoder.layer[2].modules():
         assert hasattr(layer, "mask_weight") == False
     
     bb_weight_3 = copy.deepcopy(model.backbone.encoder.layer[2].attention.attention.query.weight.data)
@@ -285,22 +283,25 @@ def test_vit_mask_configuration():
     trainer.fit(model, datamodule)
     best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
     
-    assert bb_weight_3 == best_model.backbone.encoder.layer[2].attention.attention.query.weight.data
-    assert bb_weight_4 == best_model.backbone.encoder.layer[3].attention.attention.query.weight.data
-    assert bb_mask_4 != best_model.backbone.encoder.layer[3].attention.attention.query.mask_weight.data
+    assert torch.all(bb_weight_3 == best_model.backbone.encoder.layer[2].attention.attention.query.weight.data)
+    assert torch.all(bb_weight_4 == best_model.backbone.encoder.layer[3].attention.attention.query.weight.data)
+    assert torch.sum(bb_mask_4 != best_model.backbone.encoder.layer[3].attention.attention.query.mask_weight.data) > len(bb_mask_4.reshape(-1)) * .5
 
 def test_subnetwork_test_config_mask():
     # Test that hard mask results in binary mask
-    config = "configs/tests/test_weight_train.yaml"
+    config = "configs/tests/test_ablations.yaml"
 
-    for backbone_model in ["resnet50", "wideresnet50", "L0vit"]:
+    for backbone_model in ["resnet50", "wideresnet50", "vit"]:
         args, dataset_type, model_type = setup_args(config)
 
         args.backbone = backbone_model
 
-        model_id = 0
-        
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        if backbone_model == "vit":
+            args.l0_stage_list = [-1]
+        else:
+            args.l0_stage_list = [["first", "stage_1", "stage_2", "stage_3", "stage_4"]]
+
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
 
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
@@ -336,16 +337,19 @@ def test_subnetwork_test_config_mask():
 
 def test_zero_ablation_mask():
     # Test that zero ablation results in inverse hard mask
-    config = "configs/tests/test_weight_train.yaml"
+    config = "configs/tests/test_ablations.yaml"
 
-    for backbone_model in ["resnet50", "wideresnet50", "L0vit"]:
+    for backbone_model in ["resnet50", "wideresnet50", "vit"]:
         args, dataset_type, model_type = setup_args(config)
 
         args.backbone = backbone_model
 
-        model_id = 0
+        if backbone_model == "vit":
+            args.l0_stage_list = [-1]
+        else:
+            args.l0_stage_list = [["first", "stage_1", "stage_2", "stage_3", "stage_4"]]
 
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
 
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
@@ -362,29 +366,32 @@ def test_zero_ablation_mask():
 
         ## TEST: Assert that zero ablation is inverse of no ablation
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            none_mask = none_model.bacbone.layer3[0].conv1.compute_mask()
+            none_mask = none_model.backbone.layer3[0].conv1.compute_mask()
             ablate_mask = ablate_model.backbone.layer3[0].conv1.compute_mask()
-            assert (none_mask == 1) == (ablate_mask == 0)
-            assert (none_mask == 0) == (ablate_mask == 1)
+            assert torch.all((none_mask == 1) == (ablate_mask == 0))
+            assert torch.all((none_mask == 0) == (ablate_mask == 1))
 
-        if args.backbone == "L0vit":
+        if args.backbone == "vit":
             none_mask = none_model.backbone.encoder.layer[2].attention.attention.query.compute_mask()
             ablate_mask = ablate_model.backbone.encoder.layer[2].attention.attention.query.compute_mask()
-            assert (none_mask == 1) == (ablate_mask == 0)
-            assert (none_mask == 0) == (ablate_mask == 1)
+            assert torch.all((none_mask == 1) == (ablate_mask == 0))
+            assert torch.all((none_mask == 0) == (ablate_mask == 1))
 
 def test_random_ablation_mask():
     # Test that random mask results in inverse hard mask, then random values
-    config = "configs/tests/test_weight_train.yaml"
+    config = "configs/tests/test_ablations.yaml"
 
-    for backbone_model in ["resnet50", "wideresnet50", "L0vit"]:
+    for backbone_model in ["resnet50", "wideresnet50", "vit"]:
         args, dataset_type, model_type = setup_args(config)
 
         args.backbone = backbone_model
 
-        model_id = 0
+        if backbone_model == "vit":
+            args.l0_stage_list = [-1]
+        else:
+            args.l0_stage_list = [["first", "stage_1", "stage_2", "stage_3", "stage_4"]]
 
-        model, trainer, datamodule = setup_training(args, dataset_type, model_type)
+        model, trainer, datamodule, model_checkpoint = setup_training(args, dataset_type, model_type)
 
         trainer.fit(model, datamodule)
         best_model = model if model_checkpoint.best_model_path == "" else model_type.load_from_checkpoint(checkpoint_path=model_checkpoint.best_model_path)
@@ -400,40 +407,38 @@ def test_random_ablation_mask():
 
 
         ## TEST: assert that all masked layers have random weight too
-        for layer in ablate_mask.modules():
+        for layer in ablate_model.modules():
             if hasattr(layer, "mask_weight"):
                 assert hasattr(layer, "random_weight")
 
         ## TEST: Assert that random ablation mask is inverse of no ablation
         if args.backbone == "resnet50" or args.backbone == "wideresnet50":
-            none_mask = none_model.bacbone.layer3[0].conv1.compute_mask()
+            none_mask = none_model.backbone.layer3[0].conv1.compute_mask()
             ablate_mask = ablate_model.backbone.layer3[0].conv1.compute_mask()
-            assert (none_mask == 1) == (ablate_mask == 0)
-            assert (none_mask == 0) == (ablate_mask == 1)
+            assert torch.all((none_mask == 1) == (ablate_mask == 0))
+            assert torch.all((none_mask == 0) == (ablate_mask == 1))
             
             ablate_layer = ablate_model.backbone.layer3[0].conv1
-            masked_weight = ablate_layer.weight * ablate_layer.mask # This will give you the inverse weights, 0's for ablated weights
+            masked_weight = ablate_layer.weight * ablate_mask # This will give you the inverse weights, 0's for ablated weights
 
             ## TEST: Assert that adding in random values is done correctly
-            assert ablate_mask == masked_weight
             before_random = copy.deepcopy(masked_weight)
-            masked_weight += (~ablate_layer.mask.bool()).float() * ablate_layer.random_weight # Invert the mask to target the remaining weights, make them random
-            assert masked_weight * ablate_mask == before_random # Don't change any values except those in the subnetwork
-            assert len(torch.nonzero(masked_weight)) == 0 # No 0 values now
+            masked_weight += (~ablate_mask.bool()).float() * ablate_layer.random_weight # Invert the mask to target the remaining weights, make them random
+            assert torch.all(masked_weight * ablate_mask == before_random) # Don't change any values except those in the subnetwork
+            assert len(torch.nonzero(masked_weight)) == len(masked_weight.reshape(-1)) # No 0 values now
 
 
-        if args.backbone == "L0vit":
+        if args.backbone == "vit":
             none_mask = none_model.backbone.encoder.layer[2].attention.attention.query.compute_mask()
             ablate_mask = ablate_model.backbone.encoder.layer[2].attention.attention.query.compute_mask()
-            assert (none_mask == 1) == (ablate_mask == 0)
-            assert (none_mask == 0) == (ablate_mask == 1)
+            assert torch.all((none_mask == 1) == (ablate_mask == 0))
+            assert torch.all((none_mask == 0) == (ablate_mask == 1))
 
             ablate_layer = ablate_model.backbone.encoder.layer[2].attention.attention.query
-            masked_weight = ablate_layer.weight * ablate_layer.mask # This will give you the inverse weights, 0's for ablated weights
+            masked_weight = ablate_layer.weight * ablate_mask # This will give you the inverse weights, 0's for ablated weights
 
             ## TEST: Assert that adding in random values is done correctly
-            assert ablate_mask == masked_weight
             before_random = copy.deepcopy(masked_weight)
-            masked_weight += (~ablate_layer.mask.bool()).float() * ablate_layer.random_weight # Invert the mask to target the remaining weights, make them random
-            assert masked_weight * ablate_mask == before_random # Don't change any values except those in the subnetwork
-            assert len(torch.nonzero(masked_weight)) == 0 # No exactly 0 values now
+            masked_weight += (~ablate_mask.bool()).float() * ablate_layer.random_weight # Invert the mask to target the remaining weights, make them random
+            assert torch.all(masked_weight * ablate_mask == before_random) # Don't change any values except those in the subnetwork
+            assert len(torch.nonzero(masked_weight)) == len(masked_weight.reshape(-1)) # No exactly 0 values now

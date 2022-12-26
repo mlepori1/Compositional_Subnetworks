@@ -8,6 +8,7 @@ import torch
 import numpy as np
 import pandas as pd
 import copy
+import uuid
 
 import pytorch_lightning as pl
 
@@ -103,7 +104,6 @@ def cli_main():
     base_train_masks = copy.deepcopy(args.train_masks)
     base_train_weights = copy.deepcopy(args.train_weights)
 
-    model_id = 0
     df = pd.DataFrame()
 
     # Iterate through all training hyperparameters
@@ -113,8 +113,8 @@ def cli_main():
                 for l0_stages in args.l0_stage_list:
                     for l0_init in args.l0_init_list:
 
-                        # Increment model ID for next training
-                        model_id += 1
+                        # Create new model ID
+                        model_id = str(uuid.uuid4())
 
                         # Reset pretrained weights, train weights and train mask from testing
                         args.pretrained_weights = copy.deepcopy(base_pretrained_weights)
@@ -153,10 +153,10 @@ def cli_main():
                             model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, monitor=None, save_last=True)
                             callbacks = [model_checkpoint]
                         else:
-                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='max', monitor='metrics/val_loss', every_n_epochs=args.ckpt_period, save_last=True)
+                            model_checkpoint = pl.callbacks.ModelCheckpoint(dirpath=args.exp_dir, save_top_k=1, mode='min', monitor='metrics/val_loss', every_n_epochs=args.ckpt_period, save_last=True)
                             callbacks = [model_checkpoint]
                         if args.early_stopping!=0:
-                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_loss', mode='max', patience=args.es_patience, stopping_threshold=1.0, strict=False) #0.99
+                            early_stopping = pl.callbacks.EarlyStopping(monitor='metrics/val_loss', mode='min', patience=args.es_patience) #0.99
                             callbacks.append(early_stopping)
                         if args.train_masks["backbone"] or args.train_masks["mlp"]:
                             callbacks.append(TemperatureCallback(args.max_epochs, args.max_temp, args.train_masks))
@@ -184,16 +184,17 @@ def cli_main():
                             torch.save(best_model.task_embedding.state_dict(), os.path.join(args.exp_dir, str(model_id) + '_embedding.pt'))
 
                         metrics = metrics_callback.get_all()
+
                         if args.use_last == True:
                             # Get the last validation accuracy if we're using the last model
                             best_val_acc = metrics['metrics/val_acc'][-1]
                             best_val_loss = metrics['metrics/val_loss'][-1]
 
                         else:
-                            best_val_loss = np.nanmax(metrics['metrics/val_loss'] + [0])
-                            best_val_acc = metrics['metrics/val_acc'][np.nanargmax(metrics['metrics/val_loss']]
+                            best_val_loss = np.nanmin(metrics['metrics/val_loss'])
+                            best_val_acc = metrics['metrics/val_acc'][np.nanargmin(metrics['metrics/val_loss'])]
 
-                        best_epoch = (np.nanargmax(metrics['metrics/val_loss'] + [0])+1) * args.ckpt_period
+                        best_epoch = (np.nanargmin(metrics['metrics/val_loss'])+1) * args.ckpt_period
 
                         output_dict = {
                                 '0_Model_ID': model_id,
@@ -201,11 +202,8 @@ def cli_main():
                                 '0_train_task': args.train_task,
                                 '0_ablation': '',
                                 '0_exp_dir': args.exp_dir,
-                                '0_model': args.model,
                                 '0_seed': args.seed,
                                 '0_dataset': args.dataset,
-                                '0_LM_init': args.LM_init,
-                                '0_freeze_until': args.freeze_until,
                                 '1_task': args.task,
                                 '2_val_acc': best_val_acc,
                                 '2_val_loss': best_val_loss,
@@ -276,7 +274,6 @@ def cli_main():
                                         '0_train_task': args.train_task,
                                         '0_ablation': args.ablate_mask,
                                         '0_exp_dir': args.exp_dir,
-                                        '0_model': args.model,
                                         '0_seed': args.seed,
                                         '0_dataset': args.dataset,
                                         '0_eval_type': args.evaluation_type,

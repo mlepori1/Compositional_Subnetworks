@@ -77,7 +77,8 @@ class Base(pl.LightningModule):
             if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
         l0_norm = sum(m.sum() for m in masks)
-        return l0_norm
+        l0_max = sum(len(m.reshape(-1) for m in masks))
+        return l0_norm, l0_max
 
     def step(self, batch, batch_idx):
 
@@ -118,16 +119,19 @@ class Base(pl.LightningModule):
         else:
             loss = F.cross_entropy(y_hat, y)
             if self.l0_components["backbone"] or self.l0_components["mlp"]:
-                l0_norm = self.get_l0_norm()
+                l0_norm, l0_max = self.get_l0_norm()
             else:
                 l0_norm = torch.Tensor([0])
+                l0_max = torch.Tensor([0])
+
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
             "loss": loss.reshape(1),
             "acc": acc.reshape(1),
-            "L0": l0_norm.reshape(1)
+            "L0": l0_norm.reshape(1),
+            "L0_Max": l0_max.reshape(1)
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
@@ -168,6 +172,7 @@ class Model(Base):
         self.train_masks = kwargs["train_masks"]
         self.train_weights = kwargs["train_weights"]
         self.pretrained_weights = kwargs["pretrained_weights"]
+        self.backbone_type = backbone
         
         if "ablate_mask" in kwargs:
             self.ablate_mask = kwargs["ablate_mask"]
@@ -181,13 +186,14 @@ class Model(Base):
 
         # set up model
         if self.l0_components["backbone"] == False:
-            elif backbone == "resnet50": self.backbone = resnet50(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d) # Note: Instance norm doesn't use affine transform or track running statistics
-            elif backbone == "wideresnet50": self.backbone = wide_resnet50_2(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "vit": 
+            # Note: Instance norm doesn't use affine transform or track running statistics
+            if self.backbone_type == "resnet50": self.backbone = resnet50(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d)
+            elif self.backbone_type == "wideresnet50": self.backbone = wide_resnet50_2(isL0=False, embed_dim=2048, norm_layer=nn.InstanceNorm2d)
+            elif self.backbone_type == "vit": 
                 # Set up ViT config
-                config = ViTConfig(num_hidden_layers=6, hidden_dropout_prob=0, attention_probs_dropout_prob=0)
+                config = ViTConfig(num_hidden_layers=12, hidden_dropout_prob=0, attention_probs_dropout_prob=0, image_size=128)
                 config.l0 = False
-                config.layerL0 = -1
+                config.l0_start = -1
                 config.mask_init_value=-1
                 config.ablate_mask=None
 
@@ -217,14 +223,13 @@ class Model(Base):
             self.l0_init = kwargs["l0_init"]
             self.lamb = kwargs["l0_lambda"]
 
-            if backbone == "resnet18": self.backbone = resnet18(isL0=True, mask_init_value=self.l0_init, embed_dim=1024, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages)
-            elif backbone == "resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
-            elif backbone == "vit": 
+            if self.backbone_type == "resnet50": self.backbone = resnet50(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
+            elif self.backbone_type == "wideresnet50": self.backbone = wide_resnet50_2(isL0=True, embed_dim=2048, mask_init_value=self.l0_init, ablate_mask=self.ablate_mask, l0_stages=self.l0_stages, norm_layer=nn.InstanceNorm2d)
+            elif self.backbone_type == "vit": 
                 # Set up ViT config
-                config = ViTConfig(num_hidden_layers=6, hidden_dropout_prob=0, attention_probs_dropout_prob=0)
-                config.l0 = False
-                config.layerL0 = l0_stages
+                config = ViTConfig(num_hidden_layers=12, hidden_dropout_prob=0, attention_probs_dropout_prob=0, image_size=128)
+                config.l0 = True
+                config.l0_start = self.l0_stages
                 config.mask_init_value=self.l0_init
                 config.ablate_mask=self.ablate_mask
 
@@ -286,15 +291,16 @@ class Model(Base):
             # Freeze weights except for mask weight
             print("Freezing MLP weights...")
             for layer in self.mlp.model.children():
-                if isinstance(layer, L0Linear) or isinstance(layer, nn.Linear):
-                    layer.bias.requires_grad = False
+                if hasattr(layer, "weight"):
                     layer.weight.requires_grad = False
+                if hasattr(layer, "bias"):
+                    layer.bias.requires_grad = False
 
         if not self.train_masks["mlp"]:
             # Freeze mask weight
             print("Freezing MLP mask weights...")
             for layer in self.mlp.model.children():
-                if isinstance(layer, L0Linear):
+                if hasattr(layer, "mask_weight"):
                     layer.mask_weight.requires_grad = False
 
     def init_networks(self):
@@ -306,6 +312,9 @@ class Model(Base):
         x_size = x.shape
         x = x.reshape([x_size[0]*4, x_size[2], x_size[3], x_size[4]]) # Unpack each problem. [N problems, 4 images, rgb, height, width] -> [N*4 images, rgb, height, width]
         x = self.backbone(x) # Get representation for each image
+        if self.backbone_type == "vit":
+            x = x.last_hidden_state[:, 0, :] # Get first token from last layer
+
         if task_idx is not None:
             x_task = self.task_embedding(task_idx.repeat_interleave(4)) # Repeat_interleave repeats tensor values N times [1, 2].repeat_interleave(2) = [1, 1, 2, 2]
                                                                         # Because images for a problem are still grouped together, this gives the correct task idx for every image in a problem,

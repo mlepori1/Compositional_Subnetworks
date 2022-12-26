@@ -23,15 +23,15 @@ batch_size_list: [32, 64]
 train_transform: null
 val_transform: null
 test_set: ''
-exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/BERT_Small/Hparam_Sweep/'
-results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/BERT_Small/Hparam_Sweep/'
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/SV_Agr_Singular/BERT_Small_LM/Model_Hyperparameters'
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Singular/BERT_Small_LM/Model_Hyperparameters'
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": False}
 train_masks: {"backbone": False}
 train_weights: {"backbone": True}
 pretrained_weights: { 
-  "backbone": False,
+  "backbone": "prajjwal1/bert-small",
   } # False for random initialization
 l0_init_list: [-1]
 l0_lambda: -1
@@ -39,7 +39,7 @@ max_temp: -1
 l0_stage_list: [-1]
 ablation_strategies: ["None"]
 evaluation_type: "validate"
-LM_init: False # Denotes whether to initialize the model with pretrained LM parameters
+LM_init: True # Denotes whether to initialize the model with pretrained LM parameters
 freeze_until: -1
 save_models: False
 use_last: False

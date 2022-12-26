@@ -55,7 +55,8 @@ class Base(pl.LightningModule):
             if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
         l0_norm = sum(m.sum() for m in masks)
-        return l0_norm
+        l0_max = sum(len(m.reshape(-1) for m in masks))
+        return l0_norm, l0_max
 
     def step(self, batch, batch_idx):
 
@@ -96,16 +97,18 @@ class Base(pl.LightningModule):
         else:
             loss = F.cross_entropy(y_hat, y)
             if self.l0_components["backbone"]:
-                l0_norm = self.get_l0_norm()
+                l0_norm, l0_max = self.get_l0_norm()
             else:
                 l0_norm = torch.Tensor([0])
+                l0_max = torch.Tensor([0])
 
         acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
 
         logs = {
             "loss": loss.reshape(1),
             "acc": acc.reshape(1),
-            "L0": l0_norm.reshape(1)
+            "L0": l0_norm.reshape(1),
+            "L0_Max": l0_max.reshape(1)
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
@@ -165,7 +168,7 @@ class BertClf(Base):
                 self.backbone = BertModel(config=bertConfig)
                 self.tokenizer = BertTokenizer.from_pretrained("prajjwal1/bert-small")
 
-            else: raise ArgumentError("backbone not recognized")
+            else: raise ValueError("backbone not recognized")
 
            # If the pretrained weights path is not None, then load up pretrained weights!
             if self.pretrained_weights["backbone"] != False:

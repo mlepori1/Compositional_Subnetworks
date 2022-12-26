@@ -1,0 +1,43 @@
+dataset: 'SyntaxDataModule'
+# trainer
+gpus: 1
+max_epochs: 1 # From Continuous Sparsification Paper
+num_workers: 1
+log_every_n_steps: 100
+ckpt_period: 1
+seed_list: [1] # For calculating statistics on results
+early_stopping: 0 # No early stopping when training masks
+refresh_rate: 10
+es_patience: 0
+check_val_every_n_epoch: 1
+#arch
+backbone: "BERT_small" 
+lr_list: [0.01] 
+wd: 0.00
+# data 
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Language/'
+train_task: '0' # Set in script
+test_tasks: null # Irrelevant
+batch_size_list: [64] # Stick with Batch size of 64 from initial results
+train_transform: null
+val_transform: null
+n_samples: 1000
+test_set: ''
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/tests/test_train_weights/' # Append to in script
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/tests/test_train_weights/' # Append to in script
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": False}
+train_masks: {"backbone": False} 
+train_weights: {"backbone": True}
+pretrained_weights: {"backbone": "prajjwal1/bert-small"} 
+l0_init_list: [null] 
+l0_lambda: -1 
+max_temp: -1 
+l0_stage_list: [null]
+ablation_strategies: []
+use_last: False # Used for determining whether to load best model or final model
+save_models: False
+evaluation_type: "test"
+LM_init: True # Denotes whether to initialize the model with pretrained LM parameters
+freeze_until: 3

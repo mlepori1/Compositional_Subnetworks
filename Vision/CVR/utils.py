@@ -15,7 +15,10 @@ def parse_args(parser, argv=None, config=None):
     
     if config is not None:
         args.config = config
-    
+
+    if not hasattr(args, "config"):
+        args.config = None
+        
     if args.config is not None:
         with open(args.config, 'r') as stream:
             config_vars = yaml.load(stream, Loader=yaml.FullLoader)

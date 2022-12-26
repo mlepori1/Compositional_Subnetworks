@@ -573,6 +573,17 @@ class ViTModel(ViTPreTrainedModel):
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
 
+    def get_temp(self):
+        # Added for continuous sparsification
+        return self.temp
+
+    def set_temp(self, temp):
+        # Used for continuous sparsification callback
+        self.temp = temp
+        for layer in self.modules():
+            if type(layer) == L0Linear:
+                layer.temp = temp
+
     @add_start_docstrings_to_model_forward(VIT_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
         processor_class=_FEAT_EXTRACTOR_FOR_DOC,
