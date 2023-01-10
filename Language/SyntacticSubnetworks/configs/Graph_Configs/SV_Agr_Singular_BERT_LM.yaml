@@ -1,0 +1,12 @@
+base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Singular/BERT_Small_LM/Mask_Training'
+hypothesized_performance: {
+  '1' : {
+    'high_after_ablation' : '3',
+    'low_after_ablation' : '4'
+  },
+  '2' : {
+    'high_after_ablation' : '4',
+    'low_after_ablation' : '3'
+  }
+}
+model: "BERT Small LM"

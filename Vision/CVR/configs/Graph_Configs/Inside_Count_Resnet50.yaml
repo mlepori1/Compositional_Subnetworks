@@ -1,0 +1,12 @@
+base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Count/Resnet50/Mask_Training'
+hypothesized_performance: {
+  '110' : {
+    'high_after_ablation' : '113',
+    'low_after_ablation' : '114'
+  },
+  '111' : {
+    'high_after_ablation' : '114',
+    'low_after_ablation' : '113'
+  }
+}
+model: "Resnet50"

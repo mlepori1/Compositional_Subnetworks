@@ -1,0 +1,3 @@
+base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Plural/BERT_Small/Model_Training'
+task: '15'
+model: "BERT Small"

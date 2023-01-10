@@ -1,0 +1,62 @@
+ablation_strategies:
+- ''
+backbone: wideresnet50
+batch_size_list:
+- 32
+check_val_every_n_epoch: 1
+ckpt_period: 1
+data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision
+dataset: CVRTDataModule
+early_stopping: 1
+es_patience: 75
+evaluation_type: test
+exp_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/WideResnet50/Model_Reporting/417b063b-b655-4e44-9806-0834e94ab98a
+gpus: 1
+l0_components:
+  backbone: false
+  mlp: false
+l0_init_list:
+- -1
+l0_lambda: -1
+l0_stage_list:
+- None
+log_every_n_steps: 100
+lr_list:
+- 0.0001
+max_epochs: 0
+max_temp: -1
+mlp_dim: 128
+mlp_hidden_dim: 2048
+n_samples: 10000
+n_tasks: 1
+num_workers: 1
+pretrained_weights:
+  backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/WideResnet50/Model_Training/417b063b-b655-4e44-9806-0834e94ab98a_backbone.pt
+  embedding: false
+  mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/WideResnet50/Model_Training/417b063b-b655-4e44-9806-0834e94ab98a_mlp.pt
+refresh_rate: 10
+results_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/WideResnet50/Model_Reporting/417b063b-b655-4e44-9806-0834e94ab98a
+save_models: false
+seed_list:
+- 0
+task_embedding: 0
+test_set: ''
+test_tasks:
+- '103'
+- '104'
+- '105'
+- '106'
+- '107'
+- '108'
+train_masks:
+  backbone: false
+  mlp: false
+train_task: '103'
+train_transform: null
+train_weights:
+  backbone: false
+  embedding: false
+  mlp: false
+use_last: false
+val_transform: null
+wd: 0.0

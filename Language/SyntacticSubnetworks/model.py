@@ -37,8 +37,12 @@ class Base(pl.LightningModule):
 
         return y_hat, y
 
-    def l0_loss(self, y_hat, y):
-        error_loss = F.cross_entropy(y_hat, y)
+    def l0_loss(self, y_hat, y, test_mode=False):
+        if test_mode:
+            error_loss = F.cross_entropy(y_hat, y, reduction="none")
+        else:
+            error_loss = F.cross_entropy(y_hat, y)
+
         l0_loss = 0.0
         masks = []
         if self.train_masks["backbone"]:
@@ -55,7 +59,7 @@ class Base(pl.LightningModule):
             if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
         l0_norm = sum(m.sum() for m in masks)
-        l0_max = sum(len(m.reshape(-1) for m in masks))
+        l0_max = torch.Tensor([sum([len(m.reshape(-1)) for m in masks])])
         return l0_norm, l0_max
 
     def step(self, batch, batch_idx):
@@ -95,20 +99,21 @@ class Base(pl.LightningModule):
         if self.train_masks["backbone"]:
             loss, l0_norm = self.l0_loss(y_hat, y)
         else:
-            loss = F.cross_entropy(y_hat, y)
+            loss = F.cross_entropy(y_hat, y, reduction="none")
             if self.l0_components["backbone"]:
                 l0_norm, l0_max = self.get_l0_norm()
             else:
                 l0_norm = torch.Tensor([0])
                 l0_max = torch.Tensor([0])
 
-        acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
+        #acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
+        acc = (y == torch.argmax(y_hat, dim=1)) * 1.
 
         logs = {
-            "loss": loss.reshape(1),
-            "acc": acc.reshape(1),
-            "L0": l0_norm.reshape(1),
-            "L0_Max": l0_max.reshape(1)
+            "loss": loss.reshape(-1),
+            "acc": acc.reshape(-1),
+            "L0": l0_norm.reshape(1), # Always the same during test
+            "L0_Max": l0_max.reshape(1) # Always the same during test
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}

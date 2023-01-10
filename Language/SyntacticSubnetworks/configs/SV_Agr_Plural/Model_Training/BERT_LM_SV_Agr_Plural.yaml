@@ -6,7 +6,7 @@ max_epochs: 100
 num_workers: 1
 log_every_n_steps: 100
 ckpt_period: 1
-seed_list: [0]
+seed_list: [0, 1, 2]
 early_stopping: 1
 refresh_rate: 10
 es_patience: 30

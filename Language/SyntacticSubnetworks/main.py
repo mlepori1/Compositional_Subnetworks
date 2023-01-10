@@ -185,42 +185,45 @@ def cli_main():
                         torch.save(best_model.backbone.state_dict(), trained_weights["backbone"])
 
                         metrics = metrics_callback.get_all()
-                        if args.use_last == True:
-                            # Get the last validation accuracy if we're using the last model
-                            best_val_acc = metrics['metrics/val_acc'][-1]
-                            best_val_loss = metrics['metrics/val_loss'][-1]
+                        
+                        # If training, then report training performance
+                        if args.max_epochs != 0:
+                            if args.use_last == True:
+                                # Get the last validation accuracy if we're using the last model
+                                best_val_acc = metrics['metrics/val_acc'][-1]
+                                best_val_loss = metrics['metrics/val_loss'][-1]
 
-                        else:
-                            best_val_loss = np.nanmin(metrics['metrics/val_loss'])
-                            best_val_acc = metrics['metrics/val_acc'][np.nanargmin(metrics['metrics/val_loss'])]
+                            else:
+                                best_val_loss = np.nanmin(metrics['metrics/val_loss'])
+                                best_val_acc = metrics['metrics/val_acc'][np.nanargmin(metrics['metrics/val_loss'])]
 
-                        best_epoch = (np.nanargmin(metrics['metrics/val_loss'])+1) * args.ckpt_period
+                            best_epoch = (np.nanargmin(metrics['metrics/val_loss'])+1) * args.ckpt_period
 
-                        output_dict = {
-                                '0_Model_ID': model_id,
-                                '0_train': 1,
-                                '0_train_task': args.train_task,
-                                '0_ablation': '',
-                                '0_exp_dir': args.exp_dir,
-                                '0_model': args.model,
-                                '0_seed': args.seed,
-                                '0_dataset': args.dataset,
-                                '0_LM_init': args.LM_init,
-                                '0_freeze_until': args.freeze_until,
-                                '1_task': args.task,
-                                '2_val_acc': best_val_acc,
-                                '2_val_loss': best_val_loss,
-                                '2_best_epoch': best_epoch,
-                                '2_used_last_model': args.use_last,
-                                '3_backbone': args.backbone,
-                                '3_batch_size': args.batch_size,
-                                '3_lr': args.lr,
-                                '3_l0_init': l0_init,
-                                '3_l0_stages': l0_stages
-                            }
+                            output_dict = {
+                                    '0_Model_ID': model_id,
+                                    '0_train': 1,
+                                    '0_train_task': args.train_task,
+                                    '0_ablation': '',
+                                    '0_exp_dir': args.exp_dir,
+                                    '0_model': args.model,
+                                    '0_seed': args.seed,
+                                    '0_dataset': args.dataset,
+                                    '0_LM_init': args.LM_init,
+                                    '0_freeze_until': args.freeze_until,
+                                    '1_task': args.task,
+                                    '2_val_acc': best_val_acc,
+                                    '2_val_loss': best_val_loss,
+                                    '2_best_epoch': best_epoch,
+                                    '2_used_last_model': args.use_last,
+                                    '3_backbone': args.backbone,
+                                    '3_batch_size': args.batch_size,
+                                    '3_lr': args.lr,
+                                    '3_l0_init': l0_init,
+                                    '3_l0_stages': l0_stages
+                                }
 
-                        # Append results on val set
-                        df = df.append(output_dict, ignore_index=True)
+                            # Append results on val set
+                            df = df.append(output_dict, ignore_index=True)
 
                         # Test in a variety of configurations
 

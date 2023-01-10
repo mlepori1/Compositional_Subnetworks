@@ -1,0 +1,13 @@
+# trainer
+gpus: 1
+max_epochs: 100
+num_workers: 1
+seed: 0
+#arch
+lr: .0005
+mlp_dim: 128
+mlp_hidden_dim: 2048
+# data 
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision'
+batch_size: 128
+checkpoint_path: "/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/SimCLR"

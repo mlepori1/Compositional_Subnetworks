@@ -1,0 +1,56 @@
+LM_init: false
+ablation_strategies:
+- zero
+- random
+- none
+backbone: BERT_small
+batch_size_list:
+- 64
+check_val_every_n_epoch: 1
+ckpt_period: 1
+data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Language
+dataset: SyntaxDataModule
+early_stopping: 0
+es_patience: 0
+evaluation_type: validate
+exp_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/Anaphora_Plural/BERT_Small_LM/Mask_Parameters/c2ede735-a80d-4d31-b3a9-b6502142a2e3/16/T16_0.1_2stage
+freeze_until: -1
+gpus: 1
+l0_components:
+  backbone: true
+l0_init_list:
+- 0.1
+l0_lambda: 1.0e-08
+l0_stage_list:
+- 2
+log_every_n_steps: 100
+lr_list:
+- 0.01
+- 0.0001
+max_epochs: 90
+max_temp: 200
+model: BERT_small
+num_workers: 1
+pretrained_weights:
+  backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/Anaphora_Plural/BERT_Small_LM/Model_Training/c2ede735-a80d-4d31-b3a9-b6502142a2e3_backbone.pt
+refresh_rate: 10
+results_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Plural/BERT_Small_LM/Mask_Parameters/c2ede735-a80d-4d31-b3a9-b6502142a2e3/16/T16_0.1_2stage
+save_models: false
+seed_list:
+- 0
+test_set: ''
+test_tasks:
+- '15'
+- '16'
+- '17'
+- '18'
+- '19'
+train_masks:
+  backbone: true
+train_task: '16'
+train_transform: null
+train_weights:
+  backbone: false
+use_last: true
+val_transform: null
+wd: 0.0

@@ -1,0 +1,12 @@
+base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Count_Contact/Resnet50/Random_Training'
+hypothesized_performance: {
+  '116' : {
+    'high_after_ablation' : '119',
+    'low_after_ablation' : '120'
+  },
+  '117' : {
+    'high_after_ablation' : '120',
+    'low_after_ablation' : '119'
+  }
+}
+model: "Resnet50"

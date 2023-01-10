@@ -1,0 +1,69 @@
+ablation_strategies:
+- zero
+- random
+- none
+backbone: wideresnet50
+batch_size_list:
+- 64
+check_val_every_n_epoch: 1
+ckpt_period: 1
+data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision/
+dataset: CVRTDataModule
+early_stopping: 0
+es_patience: 0
+evaluation_type: validate
+exp_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Count_Contact/WideResnet50/Mask_Parameters/40892c97-5848-46cc-9cca-878a47792f3a/116/T116_0.05_5stage
+gpus: 1
+l0_components:
+  backbone: true
+  mlp: true
+l0_init_list:
+- 0.05
+l0_lambda: 1.0e-08
+l0_stage_list:
+- - first
+  - stage_1
+  - stage_2
+  - stage_3
+  - stage_4
+log_every_n_steps: 100
+lr_list:
+- 0.01
+- 0.0001
+max_epochs: 90
+max_temp: 200
+mlp_dim: 128
+mlp_hidden_dim: 2048
+n_samples: 10000
+n_tasks: 1
+num_workers: 1
+pretrained_weights:
+  backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Count_Contact/WideResnet50/Model_Training/40892c97-5848-46cc-9cca-878a47792f3a_backbone.pt
+  embedding: false
+  mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Count_Contact/WideResnet50/Model_Training/40892c97-5848-46cc-9cca-878a47792f3a_mlp.pt
+refresh_rate: 10
+results_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Count_Contact/WideResnet50/Mask_Parameters/40892c97-5848-46cc-9cca-878a47792f3a/116/T116_0.05_5stage
+save_models: false
+seed_list:
+- 0
+task_embedding: 0
+test_set: ''
+test_tasks:
+- '115'
+- '116'
+- '117'
+- '118'
+- '119'
+- '120'
+train_masks:
+  backbone: true
+  mlp: true
+train_task: '116'
+train_transform: null
+train_weights:
+  backbone: false
+  embedding: false
+  mlp: false
+use_last: true
+val_transform: null
+wd: 0.0

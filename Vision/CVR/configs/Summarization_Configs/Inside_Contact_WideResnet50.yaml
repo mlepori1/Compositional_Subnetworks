@@ -1,0 +1,11 @@
+base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/WideResnet50/Mask_Parameters'
+hypothesized_performance: {
+  '104' : {
+    'high_after_ablation' : '108',
+    'low_after_ablation' : '107'
+  },
+  '105' : {
+    'high_after_ablation' : '107',
+    'low_after_ablation' : '108'
+  }
+}

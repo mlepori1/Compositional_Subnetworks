@@ -12,7 +12,7 @@ es_patience: 75
 check_val_every_n_epoch: 1
 #arch
 backbone: 'resnet50'
-lr_list: [0.001]
+lr_list: [0.0001]
 wd: 0.00
 n_tasks: 1
 mlp_dim: 128
@@ -21,8 +21,8 @@ task_embedding: 0
 # data 
 data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision'
 train_task: '103'
-test_tasks: ['103', '104, '105', '106', '107', '108']
-batch_size_list: [64]
+test_tasks: ['103', '104', '105', '106', '107', '108']
+batch_size_list: [32]
 train_transform: null
 val_transform: null
 n_samples: 10000 # 5000, 1000
