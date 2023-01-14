@@ -1,0 +1,49 @@
+dataset: 'CVRTDataModule'
+# trainer
+gpus: 1
+max_epochs: 100
+num_workers: 1
+log_every_n_steps: 100
+ckpt_period: 1
+seed_list: [0, 1, 2]
+early_stopping: 1
+refresh_rate: 10
+es_patience: 75
+check_val_every_n_epoch: 1
+#arch
+backbone: 'resnet50'
+lr_list: [0.0001]
+wd: 0.00
+n_tasks: 1
+mlp_dim: 128
+mlp_hidden_dim: 2048
+task_embedding: 0
+# data 
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision'
+train_task: '115'
+test_tasks: ['115']
+batch_size_list: [64]
+train_transform: null
+val_transform: null
+n_samples: 10000 # 5000, 1000
+test_set: ''
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Count_Contact/Resnet50_SimCLR/Model_Training'
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Count_Contact/Resnet50_SimCLR/Model_Training'
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": False, "mlp": False}
+train_masks: {"backbone": False, "mlp": False}
+train_weights: {"backbone": True, "mlp": True, "embedding": False}
+pretrained_weights: { 
+  "backbone": "/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/SimCLR/backbone.pt",
+  "mlp": False,
+  "embedding": False
+  } # False for random initialization
+l0_init_list: [-1]
+l0_lambda: -1
+max_temp: -1
+l0_stage_list: ["None"]
+ablation_strategies: [""]
+save_models: True
+use_last: False
+evaluation_type: "test"

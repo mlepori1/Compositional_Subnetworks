@@ -10,3 +10,4 @@ hypothesized_performance: {
   }
 }
 model: "BERT Small LM"
+failed_models: [1, 2]

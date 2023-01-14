@@ -10,3 +10,4 @@ hypothesized_performance: {
   }
 }
 model: "Resnet50"
+failed_models: [2]

@@ -37,7 +37,9 @@ result_dirs = os.listdir(config["base_dir"])
 
 # Model number determined by alph order of model name, totally arbitrary anyway
 output_dir = config['base_dir']
-
+ids = os.listdir(config['base_dir'])
+ids.sort()
+print(ids)
 data = pd.read_csv(os.path.join(output_dir, "results.csv"))
 ids = list(data["0_Model_ID"].unique())
 ids.sort()
