@@ -1,0 +1,51 @@
+an_sing_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Singular/BERT_Small/Mask_Training'
+an_pl_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Plural/BERT_Small/Mask_Training'
+sv_sing_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Singular/BERT_Small/Mask_Training'
+sv_pl_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Plural/BERT_Small/Mask_Training'
+
+outdir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/'
+
+hypothesized_performance_an_sing: {
+  '11' : {
+    'high_after_ablation' : '13',
+    'low_after_ablation' : '14'
+  },
+  '12' : {
+    'high_after_ablation' : '14',
+    'low_after_ablation' : '13'
+  }
+}
+
+hypothesized_performance_an_pl: {
+  '16' : {
+    'high_after_ablation' : '18',
+    'low_after_ablation' : '19'
+  },
+  '17' : {
+    'high_after_ablation' : '19',
+    'low_after_ablation' : '18'
+  }
+}
+
+hypothesized_performance_sv_sing: {
+  '1' : {
+    'high_after_ablation' : '3',
+    'low_after_ablation' : '4'
+  },
+  '2' : {
+    'high_after_ablation' : '4',
+    'low_after_ablation' : '3'
+  }
+}
+
+hypothesized_performance_sv_pl: {
+  '6' : {
+    'high_after_ablation' : '8',
+    'low_after_ablation' : '9'
+  },
+  '7' : {
+    'high_after_ablation' : '9',
+    'low_after_ablation' : '8'
+  }
+}
+model: "BERT Small"

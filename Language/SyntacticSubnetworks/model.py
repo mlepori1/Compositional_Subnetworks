@@ -58,8 +58,9 @@ class Base(pl.LightningModule):
         for layer in self.backbone.modules():
             if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
-        l0_norm = sum(m.sum() for m in masks)
-        l0_max = torch.Tensor([sum([len(m.reshape(-1)) for m in masks])])
+        l0_norm = sum((m.bool()).float().sum().item() for m in masks)
+        l0_norm = torch.tensor(int(l0_norm))
+        l0_max = torch.tensor(int(sum([len(m.reshape(-1)) for m in masks])))
         return l0_norm, l0_max
 
     def step(self, batch, batch_idx):

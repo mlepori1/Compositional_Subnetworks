@@ -1,5 +1,5 @@
 export PROJECT_DIR=/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language
-export CONFIG_DIR=configs/Anaphora_Singular/BERT_Small/Mask_Training/Random_Configs
+export CONFIG_DIR=configs/SV_Agr_Singular/BERT_Small_LM/Mask_Training/Sparsity_Configs
 for file in ${CONFIG_DIR}/*;
 do
     echo "$file"

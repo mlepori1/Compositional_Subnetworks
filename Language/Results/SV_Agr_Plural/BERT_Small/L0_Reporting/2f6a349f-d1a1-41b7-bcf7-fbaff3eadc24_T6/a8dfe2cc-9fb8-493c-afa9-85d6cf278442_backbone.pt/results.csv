@@ -1,0 +1,2 @@
+,0_Model_ID,0_train,0_train_task,0_ablation,0_exp_dir,0_model,0_seed,0_dataset,0_eval_type,1_task,3_backbone,3_batch_size,3_lr,3_l0_init,3_l0_stages,2_test_loss,2_test_acc,2_test_L0,2_test_L0_Max
+0,eaf356ba-2820-4201-8633-86f52d14127a,0,6,,/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Models/SV_Agr_Plural/BERT_Small/L0_Reporting/2f6a349f-d1a1-41b7-bcf7-fbaff3eadc24_T6,BERT_small,0,SyntaxDataModule,test,1,BERT_small,64,0.01,0.05,0,0.05352347,1.0,68641.0,12845056.0

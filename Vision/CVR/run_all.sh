@@ -1,5 +1,5 @@
 export PROJECT_DIR=/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision
-export CONFIG_DIR=configs/Inside_Contact/ViT12/Model_Hyperparameters
+export CONFIG_DIR=configs/Inside_Count/Resnet50_SimCLR/Mask_Training/Sparsity_Configs
 for file in ${CONFIG_DIR}/*;
 do
     echo "$file"

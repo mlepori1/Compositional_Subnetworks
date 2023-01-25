@@ -1,0 +1,2 @@
+,0_Model_ID,0_train,0_train_task,0_ablation,0_exp_dir,0_seed,0_dataset,0_eval_type,1_task,3_backbone,3_batch_size,3_lr,3_l0_init,3_l0_stages,2_test_loss,2_test_acc,2_test_L0,2_test_L0_Max
+0,942c8346-6191-473d-b4ed-3d94d7911357,0,116,,/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Count_Contact/Resnet50/L0_Reporting/49995cc4-ab6b-47f3-99a4-9c2de616c7e9_T116,0,CVRTDataModule,test,115,resnet50,64,0.0001,0.1,['stage_4'],1.3731663,0.834,8199621.0,19398656.0

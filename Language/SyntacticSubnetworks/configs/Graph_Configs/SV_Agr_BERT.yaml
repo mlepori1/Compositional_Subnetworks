@@ -1,0 +1,26 @@
+sing_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Singular/BERT_Small/Mask_Training'
+pl_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Plural/BERT_Small/Mask_Training'
+outdir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/SV_Agr_Plural/BERT_Small/Mask_Figs'
+
+hypothesized_performance_sing: {
+  '1' : {
+    'high_after_ablation' : '3',
+    'low_after_ablation' : '4'
+  },
+  '2' : {
+    'high_after_ablation' : '4',
+    'low_after_ablation' : '3'
+  }
+}
+
+hypothesized_performance_pl: {
+  '6' : {
+    'high_after_ablation' : '8',
+    'low_after_ablation' : '9'
+  },
+  '7' : {
+    'high_after_ablation' : '9',
+    'low_after_ablation' : '8'
+  }
+}
+model: "BERT Small"

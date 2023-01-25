@@ -6,7 +6,7 @@ import pandas as pd
 with open("Base.yaml", 'r') as stream:
     base = yaml.load(stream, Loader=yaml.FullLoader)
 
-summary = pd.read_csv("../../../../../Results/Count_Contact/Resnet50/Mask_Parameters/summary.csv")
+summary = pd.read_csv("../../../../../Results/Count_Contact/Resnet50_SimCLR/Mask_Parameters/summary.csv")
 
 os.makedirs("Mask_Configs", exist_ok=True)
 

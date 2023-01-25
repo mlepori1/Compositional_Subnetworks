@@ -30,8 +30,8 @@ train_transform: null
 val_transform: null
 n_samples: 10000
 test_set: ''
-exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50/Mask_Parameters' # Append to in script
-results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50/Mask_Parameters' # Append to in script
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50_SimCLR/Mask_Parameters' # Append to in script
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50_SimCLR/Mask_Parameters' # Append to in script
 
 # Config variables introduced for mask identification
 l0_components: {"backbone": True, "mlp": True}

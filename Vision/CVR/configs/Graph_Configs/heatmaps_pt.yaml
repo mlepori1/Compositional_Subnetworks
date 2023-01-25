@@ -1,0 +1,38 @@
+contact_number_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Count_Contact/Resnet50_SimCLR/Mask_Training'
+hypothesized_performance_contact_number: {
+  '116' : {
+    'high_after_ablation' : '119',
+    'low_after_ablation' : '120'
+  },
+  '117' : {
+    'high_after_ablation' : '120',
+    'low_after_ablation' : '119'
+  }
+}
+
+inside_contact_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50_SimCLR/Mask_Training'
+hypothesized_performance_inside_contact: {
+  '104' : {
+    'high_after_ablation' : '108',
+    'low_after_ablation' : '107'
+  },
+  '105' : {
+    'high_after_ablation' : '107',
+    'low_after_ablation' : '108'
+  }
+}
+failed_models_inside_contact: [2]
+
+inside_number_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Count/Resnet50_SimCLR/Mask_Training'
+hypothesized_performance_inside_number: {
+  '110' : {
+    'high_after_ablation' : '113',
+    'low_after_ablation' : '114'
+  },
+  '111' : {
+    'high_after_ablation' : '114',
+    'low_after_ablation' : '113'
+  }
+}
+
+outdir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/'

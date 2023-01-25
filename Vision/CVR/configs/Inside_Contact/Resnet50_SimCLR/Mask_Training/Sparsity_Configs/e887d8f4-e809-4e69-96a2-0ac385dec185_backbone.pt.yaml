@@ -1,0 +1,58 @@
+ablation_strategies:
+- none
+- zero
+backbone: resnet50
+batch_size_list:
+- 64
+check_val_every_n_epoch: 1
+ckpt_period: 1
+data_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision/
+dataset: CVRTDataModule
+early_stopping: 0
+es_patience: 0
+evaluation_type: test
+exp_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50_SimCLR/L0_Reporting/42ef1a92-988d-436b-a9cd-e4ff7bb9d7fe_T105
+gpus: 1
+l0_components:
+  backbone: true
+  mlp: true
+l0_init_list:
+- 0.1
+l0_lambda: 1.0e-08
+l0_stage_list:
+- - stage_4
+log_every_n_steps: 100
+lr_list:
+- 0.01
+max_epochs: 0
+max_temp: 200
+mlp_dim: 128
+mlp_hidden_dim: 2048
+n_samples: 10000
+n_tasks: 1
+num_workers: 1
+pretrained_weights:
+  backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50_SimCLR/Mask_Training/42ef1a92-988d-436b-a9cd-e4ff7bb9d7fe_T105/e887d8f4-e809-4e69-96a2-0ac385dec185_backbone.pt
+  embedding: false
+  mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50_SimCLR/Mask_Training/42ef1a92-988d-436b-a9cd-e4ff7bb9d7fe_T105/e887d8f4-e809-4e69-96a2-0ac385dec185_mlp.pt
+refresh_rate: 10
+results_dir: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50_SimCLR/L0_Reporting/42ef1a92-988d-436b-a9cd-e4ff7bb9d7fe_T105/e887d8f4-e809-4e69-96a2-0ac385dec185_backbone.pt
+save_models: false
+seed_list:
+- 0
+task_embedding: 0
+test_set: ''
+test_tasks:
+- '115'
+train_masks:
+  backbone: false
+  mlp: false
+train_task: '105'
+train_transform: null
+train_weights:
+  backbone: false
+  embedding: false
+  mlp: false
+use_last: true
+val_transform: null
+wd: 0.0

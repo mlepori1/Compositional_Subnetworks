@@ -10,8 +10,8 @@ os.makedirs("Mask_Configs", exist_ok=True)
 l0_inits = [0.1, 0.05, 0.0, -0.05] # Search
 train_tasks = ['104', '105'] 
 
-pretrained_models_dir = "/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50/Model_Training"
-pretrained_models = ["b80c24dc-266d-4c4d-9967-ee59215ca185", "2b96162d-4c11-4eaa-822c-c0075d8337fb", "1d366e8a-e3b4-4453-80ed-640f69fdb3af"]
+pretrained_models_dir = "/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50_SimCLR/Model_Training"
+pretrained_models = ["42ef1a92-988d-436b-a9cd-e4ff7bb9d7fe", "081d4fc7-4ba4-401e-8263-48a5bb51c1a2", "e378984c-db6a-423f-8b71-7a06bbd0cfc6"]
 
 l0_stages_lists = [
     ["first", "stage_1", "stage_2", "stage_3", "stage_4"], 

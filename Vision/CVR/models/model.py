@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
-
+import numpy as np
 from models.resnet import *
 from models.decisionMLP import MLP, L0Linear
 from transformers import ViTModel, ViTConfig
@@ -76,13 +76,14 @@ class Base(pl.LightningModule):
     def get_l0_norm(self):
         masks = []
         for layer in self.mlp.modules():
-                if hasattr(layer, "mask_weight"):
-                    masks.append(layer.mask)
+            if hasattr(layer, "mask_weight"):
+                masks.append(layer.mask)
         for layer in self.backbone.modules():
             if hasattr(layer, "mask_weight"):
                 masks.append(layer.mask)
-        l0_norm = sum(m.sum() for m in masks)
-        l0_max = torch.Tensor([sum([len(m.reshape(-1)) for m in masks])])
+        l0_norm = sum((m.bool()).float().sum().item() for m in masks)
+        l0_norm = torch.tensor(int(l0_norm))
+        l0_max = torch.tensor(int(sum([len(m.reshape(-1)) for m in masks])))
         return l0_norm, l0_max
 
     def step(self, batch, batch_idx):
@@ -133,6 +134,11 @@ class Base(pl.LightningModule):
         #acc = torch.sum((y == torch.argmax(y_hat, dim=1))).float() / len(y)
         acc = (y == torch.argmax(y_hat, dim=1)) * 1.
 
+        print("$$$NORM THEN MAX$$$")
+        print(l0_norm)
+        print(l0_max)
+        print(l0_max.reshape(1))
+
         logs = {
             "loss": loss.reshape(-1),
             "acc": acc.reshape(-1),
@@ -141,12 +147,15 @@ class Base(pl.LightningModule):
         }
 
         results = {f"test_{k}": v for k, v in logs.items()}
+        print(results)
         return results
 
     def test_epoch_end(self, outputs):
 
         keys = list(outputs[0].keys())
         results = {k: torch.cat([x[k] for x in outputs]).cpu().numpy() for k in keys}
+        print("TEST EPOCH END")
+        print(results)
         self.test_results = results
 
     def configure_optimizers(self):

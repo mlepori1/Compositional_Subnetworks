@@ -44,10 +44,13 @@ data = pd.read_csv(os.path.join(output_dir, "results.csv"))
 ids = list(data["0_Model_ID"].unique())
 ids.sort()
 
+print(ids)
+
 grouped_data = data.groupby("0_Model_ID")
 for model_id, grp in grouped_data:
     acc = grp[(grp["1_task"] == int(config["task"])) & (grp["0_train"] == 0)]["2_test_acc"].item()
     print(acc)
+    print(model_id)
     axs[ids.index(model_id)].bar(0, acc)
 
 # Save the figure and show
