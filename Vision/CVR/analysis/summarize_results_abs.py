@@ -54,7 +54,7 @@ for k in train_tasks:
     fig_title = TASK_ID_2_OVERALL_TASK[int(k)]
 
 # Sub Figure
-s_fig, s_axs = plt.subplots(nrows=1, ncols=2, figsize=(6, 5))
+s_fig, s_axs = plt.subplots(nrows=1, ncols=2, figsize=(5.5, 5))
 for ax in s_axs: 
     ax.set_ylim(0, 1.1)
     ax.set_xlim(-.1, .35)
@@ -64,7 +64,7 @@ for ax, col in zip(s_axs, cols):
     ax.set_ylabel(col, rotation=90, fontsize=13)
 
 # Abl Figure
-a_fig, a_axs = plt.subplots(nrows=1, ncols=2, figsize=(6, 5))
+a_fig, a_axs = plt.subplots(nrows=1, ncols=2, figsize=(5.5, 5))
 for ax in a_axs: 
     ax.set_ylim(0, 1.1)
     ax.set_xlim(-.1, .35)

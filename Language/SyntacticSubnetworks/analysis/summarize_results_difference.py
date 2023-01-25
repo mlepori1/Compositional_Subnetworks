@@ -65,7 +65,7 @@ abl_color = "r"
 model_markers = ["o", "^", "s"]
 
 # Create figure
-t_fig, t_axs = plt.subplots(nrows=1, ncols=2, figsize=(7, 5))
+t_fig, t_axs = plt.subplots(nrows=1, ncols=2, figsize=(6, 5))
 for ax in t_axs: 
     ax.set_ylim(-1, 1)
     ax.set_xlim(-.1, .35)

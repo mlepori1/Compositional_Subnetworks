@@ -1,4 +1,6 @@
 base_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50/Random_Training'
+outdir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Contact/Resnet50/Random_Figs'
+
 hypothesized_performance: {
   '104' : {
     'high_after_ablation' : '108',

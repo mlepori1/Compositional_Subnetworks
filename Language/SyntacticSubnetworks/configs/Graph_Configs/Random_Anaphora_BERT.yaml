@@ -1,0 +1,29 @@
+sing_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Singular/BERT_Small/Random_Training'
+pl_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Plural/BERT_Small/Random_Training'
+outdir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Language/Results/Anaphora_Plural/BERT_Small/Random_Figs'
+
+hypothesized_performance_sing: {
+  '11' : {
+    'high_after_ablation' : '13',
+    'low_after_ablation' : '14'
+  },
+  '12' : {
+    'high_after_ablation' : '14',
+    'low_after_ablation' : '13'
+  }
+}
+
+hypothesized_performance_pl: {
+  '16' : {
+    'high_after_ablation' : '18',
+    'low_after_ablation' : '19'
+  },
+  '17' : {
+    'high_after_ablation' : '19',
+    'low_after_ablation' : '18'
+  }
+}
+
+failed_models_sing_pt: [1, 2]
+
+model: "BERT Small"

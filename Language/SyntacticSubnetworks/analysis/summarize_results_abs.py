@@ -104,7 +104,7 @@ def add_data_to_figure(s_axes, a_axes, dir_path, hypoth_dict, edgecolor, alpha, 
         model_num = int(np.floor(idx/2)) + 1
         for mask_task in hypoth_dict:
             if "T" + str(mask_task) in result_dir:
-
+                print(TASK_ID_2_STRING[int(mask_task)])
                 sub_performance_target = [] 
                 abl_performance_target = [] 
                 sub_performance_other = [] 
