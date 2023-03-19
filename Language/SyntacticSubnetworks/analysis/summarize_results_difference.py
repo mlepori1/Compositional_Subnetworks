@@ -79,6 +79,14 @@ for ax, col in zip(t_axs, cols):
 
 
 def add_data_to_figure(axes, dir_path, hypoth_dict, edgecolor, alpha, tasks_list, x_locs, failed_models):
+    
+    data_for_significance = {
+        "Base_Model": [],
+        "Ablation": [],
+        "Task": [],
+        "Performance": [],
+    }
+
     # First add singular task data to figure
     result_dirs = os.listdir(dir_path)
 
@@ -136,12 +144,26 @@ def add_data_to_figure(axes, dir_path, hypoth_dict, edgecolor, alpha, tasks_list
                     sub = ax.scatter(np.repeat([x[0]], len(sub_performance)), sub_performance, c=sub_color, alpha=alpha, marker=model_markers[model_id], edgecolors=edgecolor)
                     abl = ax.scatter(np.repeat([x[1]],  len(abl_performance)), abl_performance, c=abl_color, alpha=alpha, marker=model_markers[model_id], edgecolors=edgecolor)
 
+                    data_for_significance["Base_Model"] += [model_id] * len(sub_performance)
+                    data_for_significance["Ablation"] += [0] * len(sub_performance)
+                    data_for_significance["Task"] += [cols[task_col]] * len(sub_performance)
+                    data_for_significance["Performance"] += sub_performance
+
+                    data_for_significance["Base_Model"] += [model_id] * len(abl_performance)
+                    data_for_significance["Ablation"] += [1] * len(abl_performance)
+                    data_for_significance["Task"] += [cols[task_col]] * len(abl_performance)
+                    data_for_significance["Performance"] += abl_performance
+
+    return data_for_significance
+
 # First add singular task data to figure
 if "failed_models_sing" in config.keys():
     failed_models = config["failed_models_sing"]
 else: 
     failed_models = []
-add_data_to_figure(t_axs, config["sing_dir"], config["hypothesized_performance_sing"], "black", 1.0, sing_tasks, np.arange(2)/4  - .05, failed_models)
+    
+sing_data_for_significance = add_data_to_figure(t_axs, config["sing_dir"], config["hypothesized_performance_sing"], "black", 1.0, sing_tasks, np.arange(2)/4  - .05, failed_models)
+sing_data_for_significance["singular"] = [1] * len(sing_data_for_significance["Base_Model"])
 
 # Then add plural task data to figure
 pl_tasks = list(config["hypothesized_performance_pl"].keys())
@@ -150,7 +172,8 @@ if "failed_models_pl" in config.keys():
     failed_models = config["failed_models_pl"]
 else: 
     failed_models = []
-add_data_to_figure(t_axs, config["pl_dir"], config["hypothesized_performance_pl"], "gray", 1.0, pl_tasks, np.arange(2)/4  - .025, failed_models)
+pl_data_for_significance = add_data_to_figure(t_axs, config["pl_dir"], config["hypothesized_performance_pl"], "gray", 1.0, pl_tasks, np.arange(2)/4  - .025, failed_models)
+pl_data_for_significance["singular"] = [0] * len(pl_data_for_significance["Base_Model"])
 
 # Create summary legend
 legend_elements = [
@@ -166,3 +189,7 @@ legend_elements = [
 t_fig.tight_layout()
 graph_path = os.path.join(config["outdir"], "task_difference.png")
 t_fig.savefig(graph_path)
+
+sing_df = pd.DataFrame.from_dict(sing_data_for_significance)
+pl_df = pd.DataFrame.from_dict(pl_data_for_significance)
+pd.concat([sing_df, pl_df]).to_csv(os.path.join(config["outdir"], "analysis_data.csv"), index=False)
