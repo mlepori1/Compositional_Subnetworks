@@ -1,0 +1,52 @@
+#### Base config file
+## Specific mask configs are derived from this file.
+
+dataset: 'CVRTDataModule'
+# trainer
+gpus: 1
+max_epochs: 90 # From Continuous Sparsification Paper
+num_workers: 1
+log_every_n_steps: 100
+ckpt_period: 1
+seed_list: [0] # For calculating statistics on results
+early_stopping: 0 # No early stopping when training masks
+refresh_rate: 10
+es_patience: 0
+check_val_every_n_epoch: 1
+#arch
+backbone: 'resnet50'
+lr_list: [0.01, 0.0001] # Search over two learning rates
+wd: 0.00
+n_tasks: 1
+mlp_dim: 128
+mlp_hidden_dim: 2048
+task_embedding: 0
+# data 
+data_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Data/Vision/'
+train_task: None # Set in script
+test_tasks: ['109', '110', '111', '112', '113', '114'] # Test resulting subnetwork on a variety of configurations
+batch_size_list: [64] # Stick with Batch size of 64 from initial results
+train_transform: null
+val_transform: null
+n_samples: 10000
+test_set: ''
+exp_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Pruning_Parameters' # Append to in script
+results_dir: '/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Results/Inside_Count/Resnet50/Pruning_Parameters' # Append to in script
+
+# Config variables introduced for mask identification
+l0_components: {"backbone": True, "mlp": True}
+train_masks: {"backbone": True, "mlp": True} 
+train_weights: {"backbone": False, "mlp": False, "embedding": False} # Not going to be training any weights when getting subnets
+pretrained_weights: { 
+  "backbone": False,
+  "mlp": False,
+  "embedding": False
+  } # Need to set these in script
+l0_init_list: None # Need to set these in script
+l0_lambda: .00000001 # From Continuous Sparsification Paper
+max_temp: 200 # From Continuous Sparsification Paper
+l0_stage_list: None # Need to set these in script
+ablation_strategies: ["zero", "random", "none"] # Include all ablation for tests, including no ablation
+use_last: True # Used for determining whether to load best model or final model
+save_models: False
+evaluation_type: "validate"

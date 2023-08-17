@@ -293,6 +293,34 @@ def cli_main():
                                 # Will overwrite this file after every evaluation
                                 df.to_csv(os.path.join(args.results_dir, 'results.csv'))
 
+                        # Overwrite saved weights with a pruned version.
+                        if hasattr(args, "prune") and args.prune == True:
+                            state_dict = best_model.backbone.state_dict()
+                            for k, v in state_dict:
+                                # Get Mask
+                                if k.split(".")[-1] == "mask_weight":
+                                    mask = v > 0
+                                    # Get relevant weight tensor and multiply by mask
+                                    state_dict[k.replace("mask_weight", "weight")] = state_dict[k.replace("mask_weight", "weight")] * mask
+                                    # Delete the mask weight tensor
+                                    del state_dict[k]
+
+                            # Overwrite previous state dict
+                            torch.save(state_dict, trained_weights["backbone"])
+
+                            state_dict = best_model.mlp.state_dict()
+                            for k, v in state_dict:
+                                # Get Mask
+                                if k.split(".")[-1] == "mask_weight":
+                                    mask = v > 0
+                                    # Get relevant weight tensor and multiply by mask
+                                    state_dict[k.replace("mask_weight", "weight")] = state_dict[k.replace("mask_weight", "weight")] * mask
+                                    # Delete the mask weight tensor
+                                    del state_dict[k]
+
+                            # Overwrite previous state dict
+                            torch.save(state_dict, trained_weights["mlp"])
+
                         # Get rid of trained models after testing
                         if not args.save_models:
                             shutil.rmtree(args.exp_dir)
