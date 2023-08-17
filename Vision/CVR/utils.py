@@ -22,7 +22,7 @@ def parse_args(parser, argv=None, config=None):
     if args.config is not None:
         with open(args.config, 'r') as stream:
             config_vars = yaml.load(stream, Loader=yaml.FullLoader)
-            
+        
         default_args = argparse.Namespace()
         default_args.__dict__.update(args.__dict__)
         default_args.__dict__.update(config_vars)

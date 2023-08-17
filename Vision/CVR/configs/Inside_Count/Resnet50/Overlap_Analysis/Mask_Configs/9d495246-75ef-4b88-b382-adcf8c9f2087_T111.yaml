@@ -1,0 +1,38 @@
+ablation_strategies:
+- none
+backbone: resnet50
+evaluation_type: test
+gpus: 1
+l0_components:
+  backbone: true
+  mlp: true
+l0_init: 0.0
+l0_lambda: 1.0e-08
+l0_stages: 
+ - stage_4
+max_temp: 200
+mlp_dim: 128
+mlp_hidden_dim: 2048
+n_tasks: 1
+pretrained_weights_list:
+  - backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/06a17615-5d82-4572-9cab-fc076eead8ee_backbone.pt
+    embedding: false
+    mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/06a17615-5d82-4572-9cab-fc076eead8ee_mlp.pt
+
+  - backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/6acb2bd4-f7b0-451a-8cb6-796e587f0f46_backbone.pt
+    embedding: false
+    mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/6acb2bd4-f7b0-451a-8cb6-796e587f0f46_mlp.pt
+
+  - backbone: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/cc4add7b-1d28-4f03-a3c5-addcbc0d03b4_backbone.pt
+    embedding: false
+    mlp: /users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Count/Resnet50/Mask_Training/9d495246-75ef-4b88-b382-adcf8c9f2087_T111/cc4add7b-1d28-4f03-a3c5-addcbc0d03b4_mlp.pt
+  
+task_embedding: 0
+train_masks:
+  backbone: false
+  mlp: false
+train_weights:
+  backbone: false
+  embedding: false
+  mlp: false
+wd: 0.0
