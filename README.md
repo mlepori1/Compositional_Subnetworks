@@ -24,7 +24,7 @@ For a given task (i.e. **inside-contact**), the config directory is structured a
   - `Mask_Hyperparameters`: A subdirectory containing config files for hyperparameters for each trained model. These files search over different mask configurations, mask intializations, and learning rates, for both subroutines (i.e. **inside** and **contact**)
   - `Mask_Training`: A subdirectory that contains the configurations relevant for actually generating the experimental results
     - `Mask_Configs`: For each model-task combination, these configurations generate three runs of mask training, using the best hyperparameters identified during the mask hyperparameter sweep
-    - `Random_Configs`: Contains configurationst the run mask training over a randomly initialized model, using the same hyperparameters as the corresponding `Mask_Configs` file.
+    - `Random_Configs`: Contains configurations that run mask training over a randomly initialized model, using the same hyperparameters as the corresponding `Mask_Configs` file.
     - `Sparsity_Configs`: Configurations used when generating the layer-by-layer sparsity data, which is reported in the Appendix.
     
 Inside the Resnet50 Count_Contact directory, the following subdirectories are included to reproduce our extended analysis assessing structural compositionality in neural networks that have already been pruned. These results are reported in the Appendix.
