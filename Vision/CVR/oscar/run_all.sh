@@ -1,5 +1,5 @@
 export PROJECT_DIR=/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision
-export CONFIG_DIR=configs/Inside_Contact/Resnet50/Pruning_Hyperparameters/Mask_Configs
+export CONFIG_DIR=configs/Inside_Contact/Resnet50/Pruned_Mask_Training/Mask_Configs
 for file in ../${CONFIG_DIR}/*;
 do
     echo "$file"

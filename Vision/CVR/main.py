@@ -296,27 +296,35 @@ def cli_main():
                         # Overwrite saved weights with a pruned version.
                         if hasattr(args, "prune") and args.prune == True:
                             state_dict = best_model.backbone.state_dict()
-                            for k, v in state_dict:
+                            keys_to_delete = []
+                            for k, v in state_dict.items():
                                 # Get Mask
                                 if k.split(".")[-1] == "mask_weight":
                                     mask = v > 0
                                     # Get relevant weight tensor and multiply by mask
                                     state_dict[k.replace("mask_weight", "weight")] = state_dict[k.replace("mask_weight", "weight")] * mask
-                                    # Delete the mask weight tensor
-                                    del state_dict[k]
+                                    keys_to_delete.append(k)
+
+                            # Delete mask tensors
+                            for k in keys_to_delete:
+                                del state_dict[k]
 
                             # Overwrite previous state dict
                             torch.save(state_dict, trained_weights["backbone"])
 
                             state_dict = best_model.mlp.state_dict()
-                            for k, v in state_dict:
+                            keys_to_delete = []
+                            for k, v in state_dict.items():
                                 # Get Mask
                                 if k.split(".")[-1] == "mask_weight":
                                     mask = v > 0
                                     # Get relevant weight tensor and multiply by mask
                                     state_dict[k.replace("mask_weight", "weight")] = state_dict[k.replace("mask_weight", "weight")] * mask
-                                    # Delete the mask weight tensor
-                                    del state_dict[k]
+                                    keys_to_delete.append(k)
+
+                            # Delete mask tensors
+                            for k in keys_to_delete:
+                                del state_dict[k]
 
                             # Overwrite previous state dict
                             torch.save(state_dict, trained_weights["mlp"])
