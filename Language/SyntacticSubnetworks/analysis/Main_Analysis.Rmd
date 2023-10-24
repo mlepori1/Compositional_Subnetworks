@@ -1,0 +1,153 @@
+---
+title: "Significance Testing of Main Language Results"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+This notebook implements a GLM with Robust Clustered Standard Errors to analyze
+the main results of the language experiments in "Break It Down: Evidence for Structural Compositionality in Neural Networks".
+```{r}
+#install.packages('lmtest')
+#install.packages('lme4')
+#install.packages("sandwich")
+#install.packages("car")
+library(car)
+library(sandwich)
+library(lmtest)
+```
+
+```{r}
+datapath <- "../../Results/Anaphora_Plural/BERT_Small/Mask_Figs/analysis_data.csv"
+```
+
+```{r}
+data <- read.csv(datapath)
+
+# Create new Base Model IDs for the singular models to prevent collapsing 
+# across base models for different tasks
+plural_data <- split(data, data$singular)[[1]]
+data$Base_Model <- data$Base_Model + data$singular * (max(plural_data$Base_Model) + 1)
+```
+
+Split the dataframe into one for each train task.
+
+```{r}
+per_task_data <- split(data, data$Task)
+task1_data <- per_task_data[[1]]
+task2_data <- per_task_data[[2]]
+```
+
+Analyze Task 1 data
+
+```{r}
+fit <- glm(Performance ~ Ablation, data=task1_data)
+clusters <- cbind(task1_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+```
+```{r}
+linearHypothesis(fit, "(Intercept) + Ablation = 0", vcov.=vcovCL(fit, cluster=clusters))
+```
+We can verify that the linear hypothesis test was carried out correctly by simply switching the dummy variable from (1 if ablation, 0 if subnetwork) to (1 if subnetwork, 0 if ablation). The intercept term should have the same significance level as the output of the previous cell.
+
+First, must create the new dummy variable
+```{r}
+Subnetwork <- rep(1, length(task1_data$Ablation)) - task1_data$Ablation
+task1_data <- cbind(task1_data, Subnetwork)
+```
+
+Next, fit the new model and perform the coefficient test
+```{r}
+fit <- glm(Performance ~ Subnetwork, data=task1_data)
+clusters <- cbind(task1_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+```
+
+Analyze Task 2 data
+
+```{r}
+fit <- glm(Performance ~ Ablation, data=task2_data)
+clusters <- cbind(task2_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+
+linearHypothesis(fit, "(Intercept) + Ablation = 0", vcov.=vcovCL(fit, cluster=clusters))
+
+Subnetwork <- rep(1, length(task2_data$Ablation)) - task2_data$Ablation
+task2_data <- cbind(task2_data, Subnetwork)
+
+fit <- glm(Performance ~ Subnetwork, data=task2_data)
+clusters <- cbind(task2_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+```
+
+Now, analyze the effect of using a trained base model vs. a random base model
+
+```{r}
+trainpath <- "../../Results/Anaphora_Plural/BERT_Small/Mask_Figs/analysis_data.csv"
+randpath <- "../../Results/Anaphora_Plural/BERT_Small/Random_Figs/analysis_data.csv"
+traindata <- read.csv(trainpath)
+randdata <- read.csv(randpath)
+
+# Add a dummy variable indicating whether the data is from a trained or
+# untrained model.
+Random <- rep(0, length(traindata$Base_Model))
+traindata <- cbind(traindata, Random)
+Random <- rep(1, length(randdata$Base_Model))
+randdata <- cbind(randdata, Random)
+
+# Create new Base Model IDs for the singular models to prevent collapsing 
+# across base models for different tasks
+plural_data <- split(traindata, traindata$singular)[[1]]
+traindata$Base_Model <- traindata$Base_Model + traindata$singular * (max(plural_data$Base_Model) + 1)
+
+plural_data <- split(randdata, randdata$singular)[[1]]
+randdata$Base_Model <- randdata$Base_Model + randdata$singular * (max(plural_data$Base_Model) + 1)
+
+# Edit the base model variable in the random dataset to give a different
+# model id for each different base model
+randdata$Base_Model <- randdata$Base_Model + (max(traindata$Base_Model) + 1)
+
+
+per_task_train <- split(traindata, traindata$Task)
+task1_train <- per_task_train[[1]]
+task2_train <- per_task_train[[2]]
+
+per_task_rand <- split(randdata, randdata$Task)
+task1_rand <- per_task_rand[[1]]
+task2_rand <- per_task_rand[[2]]
+
+task1_data <- rbind(task1_train, task1_rand)
+task2_data <- rbind(task2_train, task2_rand)
+```
+
+
+First Analyze Task 1 Data
+```{r}
+fit <- glm(Performance ~ Ablation*Random, data=task1_data)
+clusters <- cbind(task1_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+
+linearHypothesis(fit, "Random + Ablation:Random = 0", vcov.=vcovCL(fit, cluster=clusters))
+
+Subnetwork <- rep(1, length(task1_data$Ablation)) - task1_data$Ablation
+task1_data <- cbind(task1_data, Subnetwork)
+fit <- glm(Performance ~ Subnetwork*Random, data=task1_data)
+clusters <- cbind(task1_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+```
+
+Analyze Task 2 Data
+
+```{r}
+fit <- glm(Performance ~ Ablation*Random, data=task2_data)
+clusters <- cbind(task2_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+
+linearHypothesis(fit, "Random + Ablation:Random = 0", vcov.=vcovCL(fit, cluster=clusters))
+
+Subnetwork <- rep(1, length(task2_data$Ablation)) - task2_data$Ablation
+task2_data <- cbind(task2_data, Subnetwork)
+fit <- glm(Performance ~ Subnetwork*Random, data=task2_data)
+clusters <- cbind(task2_data$Base_Model)
+coeftest(fit, vcov.=vcovCL(fit, cluster=clusters))
+```
