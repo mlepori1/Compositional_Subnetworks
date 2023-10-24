@@ -1,3 +1,0 @@
-,0_Model_ID,0_train,0_train_task,0_ablation,0_exp_dir,0_seed,0_dataset,1_task,2_val_acc,2_val_loss,2_best_epoch,2_used_last_model,3_backbone,3_batch_size,3_lr,3_l0_init,3_l0_stages,0_eval_type,2_test_loss,2_test_acc,2_test_L0,2_test_L0_Max
-0,f4104619-fb60-4a74-89aa-a24610b855aa,1,103,,/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50/Model_Hyperparameters_BN,0,CVRTDataModule,103,1.0,0.05363573133945465,45.0,False,resnet50,64,0.001,-1,None,,,,,
-1,f4104619-fb60-4a74-89aa-a24610b855aa,0,103,,/users/mlepori/data/mlepori/projects/Compositional_Subnetworks/Vision/Models/Inside_Contact/Resnet50/Model_Hyperparameters_BN,0,CVRTDataModule,103,,,,,resnet50,64,0.001,-1,None,validate,0.053656265,1.0,0.0,0.0
