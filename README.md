@@ -1,4 +1,4 @@
-# Compositional_Subnetworks
+# Compositional Subnetworks
 
 ## Overview
 This repository contains the code needed to reproduce Break It Down: Evidence for Structural Compositionality in Neural Networks. There are three important top-level directories: `Language`, where all language experiments are implemented, `Vision`, where all vision experiments are implemented, and `transformers`, which is a copy of the Huggingface Transformers repository, with models edited to support continuous sparsification.
@@ -26,6 +26,12 @@ For a given task (i.e. **inside-contact**), the config directory is structured a
     - `Mask_Configs`: For each model-task combination, these configurations generate three runs of mask training, using the best hyperparameters identified during the mask hyperparameter sweep
     - `Random_Configs`: Contains configurationst the run mask training over a randomly initialized model, using the same hyperparameters as the corresponding `Mask_Configs` file.
     - `Sparsity_Configs`: Configurations used when generating the layer-by-layer sparsity data, which is reported in the Appendix.
+    
+Inside the Resnet50 directories, the following subdirectories are included to reproduce our extended analysis assessing structural compositionality in neural networks that have already been pruned. These results are reported in the Appendix.
+  - `Pruning_Hyperparameters`: A subdirectory containing config files that search over pruning parameters for each trained base model
+  - `Pruning_Training`: After finding the best pruning parameters, trains binary masks and saves one pruned version of each base model
+  - `Pruned_Mask_Hyperparameters`: Analogous to `Mask_Hyperparameters`, but for pruned models.
+  - `Pruned_Mask_Training`: Analogous to `Mask_Training`, but for pruned models.
 ## Transformers
 This is a copy of the Huggingface Transformers repository, where we edit ViT and BERT models to enable pruning. The relevant edited files are `transformers/src/transformers/models/modeling_bert.py` and `transformers/src/transformers/models/modeling_vit.py`. Make sure to install this local version of `transformers` before running the scripts found in the other directories!
 
